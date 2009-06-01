@@ -1,0 +1,400 @@
+Changes to the sources should be documented here.  The format should follow
+common "standards":  When recording changes in a ChangeLog, one entry is made
+per person.  Logical changes are grouped together, while logically distinct
+changes ("change sets") are separated by a single blank line.  Entries should
+be brief, and should not explain why the change has been made, only what the
+change was.  (The "why" can go in the sources as a comment.)
+
+2009-05-31  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: AM_SILENT_RULES([yes]).
+
+
+2009-05-07  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.13
+	* Basecode: Synced with 2.5.14/3.0.18.1 basecode release.
+	* t3compiler/Testsuite.am: Replaced every occurance of askf_tx.cpp and
+	indlg_tx.cpp with askf_tx3.cpp and indlg_tx3.cpp respectively.
+
+
+2009-04-30  Nikos Chantziaras  <realnc@gmail.com>
+	* Basecode: Synced with 2.5.12/3.0.18 basecode release.
+	* Common.am: Replaced tads3/askf_tx.cpp with tads3/askf_tx3.cpp and
+	tads3/indlg_tx.cpp with tads3/indlg_tx3.cpp in T2RCSOURCES.
+	* tads3/askf_tx.cpp: File renamed to tads3/askf_tx3.cpp.
+	* tads3/indlg_tx.cpp: File renamed to tads3/indlg_tx3.cpp.
+	* src/osdos.h: Define OS_NEWLINE_SEQ as "\r\n".
+	* src/osfrobtads.h: Define OS_NEWLINE_SEQ as "\n" if not already defined.
+
+	* configure.ac: AC_PREREQ(2.63) (from 2.61).
+
+
+2008-08-19  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.12.1
+	* Basecode: Synced with 3.0.17 basecode release.
+	* t3compiler/Makefile.am: Added multmeth.t to t3lib_DATA. Added tips.t
+	to t3libadv3_DATA.  Added tcommand.htm to t3libextensionstcommanddoc_DATA.
+
+
+2008-08-15  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.12
+	* Basecode: Synced with 2.5.11 basecode release.
+
+
+2008-04-16  Nikos Chantziaras  <realnc@gmail.com>
+	* src/frobtadsapp.cc (fRunTads2): construct argv using variables only, no
+	string constants.  Pass only variables to trdmain(), no string constants.
+	* src/frobtadsappcurses.cc (FrobTadsApplicationCurses): Pass static
+	variables to putenv() rather than string constants.
+
+
+2008-04-14  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.11
+
+	* configure.ac: Removed AC_SYS_LONG_FILE_NAMES check.
+
+	* src/osportable.cc (osfoprwt, osfoprwb): Don't open the file in append
+	mode.
+
+	* Basecode: Synced with 3.0.16 basecode release.
+	* t3compiler/Makefile.am: Added CustomStatus.t, SimpleAttachable.t,
+	combineReports.t, custmsg.t, showTranscript.t and smartAccompany.t to
+	t3libextensions_DATA.  Added t3libextensionstcommanddir.  Added
+	GiveToAskFor.t and TCommand.t to t3libextensionstcommand_DATA.  Added
+	t3libextensionstcommanddocdir.  Added cicon9.gif, contpage.htm,
+	givetoaskfor.htm, index.html, introduction.htm and telltoaction.htm to
+	t3libextensionstcommanddoc_DATA.
+
+
+2008-03-27  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.10
+
+	* configure.ac: Removed AX_CXXFLAGS_GCC_OPTION(-fno-strict-aliasing)
+
+	* src/main.cc: Use "us-ascii" as default character set instead "\0"
+	(auto-detection.)
+
+
+2008-03-27  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: Removed AC_HEADER_STDC check.  Check for uchar,
+	ushort, uint and ulong two times; one for C and one for C++.
+	* src/common.h: #include <sys/types.h>.  Define OS_UCHAR_DEFINE
+	(and friends) if needed.
+
+	* Common.am: Removed doc/README.64-bit from EXTRA_DIST.
+	* doc/README.64-bit: File deleted.
+
+	* src/osfrobtads.h: Wrap standard C header #includes inside an
+	extern "C++" block.
+
+	* configure.ac: Don't switch to C++ when checking for
+	clock_gettime(), gettimeofday() and ftime().
+
+
+2008-03-26  Nikos Chantziaras  <realnc@gmail.com>
+	* Common.am: Use -D_M_IX86_64 instead of -D_M_IX86.  Added
+	h_ix86_64.h to T2RCHEADERS.
+
+
+2008-03-22  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: Also look for pdcurses in AC_SEARCH_LIBS.
+
+	* configure.ac: Removed AC_FUNC_MALLOC and AC_FUNC_REALLOC checks.
+
+	* src/osunixt.h: New file.
+	* Common.am: Added osunixt.h to COMMONSOURCES.
+
+	* src/osscurses.cc (oss_eof_on_stdin): Use _eof() instead of select() on
+	MS-Windows.
+
+	* acinclude.m4: New file.
+	* configure.ac: Use -fno-strict-aliasing when compiling with GNU C++.
+
+	* configure.ac: AC_PREREQ(2.61) (previously 2.60).
+
+
+2007-10-10  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.9
+
+	* Basecode: Synced with 3.0.15.2 basecode release.
+
+	* Common.am: Added doc/README.64-bit to EXTRA_DIST.
+
+
+2007-10-09  Nikos Chantziaras  <realnc@gmail.com>
+	* Frob.am: Added src/frobtadsappcurses.cc, src/frobtadsappcurses.h and
+	src/frobtadsappplain.h in FROBSOURCES.
+	* src/frobtadsappcurses.cc src/frobtadsappcurses.h src/frobtadsappplain.h:
+	New files.
+	* src/frobtadsapp.cc: Removed #include for <termios.h> <sys/ioctl.h>
+	and "colors.h".
+	(winResizeHandler): Call globalApp->resizeEvent() instead of
+	globalApp->fCreateGameWindow(). Call globalApp->width(),
+	globalApp->height() and globalApp->flush() instead of
+	globalApp->fGameWindow->width(), globalApp->fGameWindow->height() and
+	globalApp->fGameWindow->flush().
+	(FrobTadsApplication): Removed fGameWindow(0) and fDispBuf(0) from
+	initialization list. Added fColorsEnabled(false) to initialization
+	list. Removed detection of terminal size and all curses API calls.
+	(getTermSize ~FrobTadsApplication fCreateGameWindow scrollRegionUp
+	scrollRegionDown clear getRawChar): Implementations removed.
+	(runTads): Call this->init(), this->width(), this->height() and
+	this->flush() instead of this->fCreateGameWindow(),
+	this->fGameWindow->width(), this->fGameWindow->height() and
+	this->fGameWindow->flush().
+	* src/frobtadsapp.h: Don't #include <string.h> and "tadswindow.h".
+	(FrobTadsApplication): Removed fGameWindow, fDispBuff,
+	fCreateGameWindow() and ~FrobTadsApplication(). Moved fColorsEnabled
+	and fRemainingTimeout from private to protected. Added init() and
+	resizeEvent() to protected section. Added width() and height() to
+	public. Made moveCursor(), print(), clear(), scrollRegionUp(),
+	scrollRegionDown(), getRawChar() and sleep() pure virtual. Renamed
+	inclusion sentry from FROBTADSAPPLICATION_H to FROBTADSAPP_H.
+	* src/main.cc: Don't #include "frobtadsapp.h". #include
+	"frobtadsappcurses.h" and "frobtadsappplain.h".
+
+	* src/main.cc: Added "i|interface" option and changed "-o|no-defcolors"
+	to "o|no-defcolors" in optv[]. screenInterface enum and interface var
+	added. Parsing of -i option added. Start the game by instanciating an
+	interface-specific subclass of FrobTadsApplication.
+
+
+2007-09-24  Nikos Chantziaras  <realnc@gmail.com>
+	* src/osfrobtads.h: #define UNIX
+
+	* t3compiler/Makefile.am: Added
+	t3compiler/tads3/lib/extensions/newNames.t to
+	t3libextensions_DATA.
+	* Basecode: Synced with 3.0.15.2 basecode release.
+
+
+2007-09-06  Nikos Chantziaras  <realnc@gmail.com>
+	* src/osportable.cc: Added os_create_tempfile() and
+	osfdel_temp().
+	* src/osfrobtads.h: #define OSNOUI_OMIT_TEMPFILE
+
+
+2007-08-01  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.8
+
+	* src/osscurses.cc: Added oss_eof_on_stdin().
+	* src/osfrobtads.h: Added osfflush().
+	* src/frobtadsapp.cc (FrobTadsApplication::fRunTads3) updated
+	for new vm_run_image() arguments.
+	* Basecode: Synced with 3.0.15.1 basecode release.
+
+	* Common.am: Add MacOSX in EXTRA_DIST.
+
+
+2007-01-21  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.7
+
+
+2006-12-29  Ilya V. Goz <ivg@list.ru>
+	* configure.ac: Check for <glob.h> and glob().
+	* t3compiler/src/osportable3.cc: Implemented
+	os_find_first_file(), os_find_next_file() and
+	os_find_close().
+	(oss_build_outpathbuf): New function.
+
+	* configure.ac: Check for <locale.h>, <langinfo.h>,
+	nl_langinfo(CODESET) and setlocale().
+	* src/main.cc: #include <locale.h>. Initialize locale. New
+	command-line option (-k, --character-set).
+	* src/osportable.cc: #include <langinfo.h>.
+	#include "frobtadsapp.h".  Implemented
+	os_gen_charmap_filename() and os_get_charmap().
+	(get_charset_alias): New function.
+	* src/frobtadsapp.h: New field in FrobOptions struct
+	(characterSet).
+
+
+2006-09-16  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.6
+	* Basecode: Synced with 3.0.12 basecode release.
+
+	* t3compiler/Makefile.am: Added t3libextensionsdir and
+	t3libextensions_DATA.
+
+
+2006-09-10  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.5
+	* Basecode: Synced with 3.0.11 basecode release.
+
+	* t3compiler/Makefile.am: Updated t3doc_DATA.
+
+	* Common.am: Replaced tads3/resnoexe.cpp with
+	tads3/resldexe.cpp in T3RCSOURCES.
+	* t3compiler/Makefile.am: Replaced
+	t3compiler/tads3/resldexe.cpp with
+	t3compiler/tads3/resnoexe.cpp in T3COMP_DISTFILES.
+	* t3compiler/Testsuite.am: Replaced
+	t3compiler/tads3/resldexe.cpp with tads3/resldexe.cpp in
+	nodist_test_t3pre_SOURCES and nodist_test_test_exec_SOURCES.
+	Replaced all occurances of tads3/resnoexe.cpp with
+	t3compiler/tads3/resnoexe.cpp.
+
+
+2006-08-27  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.4
+	* Basecode: Synced with 3.0.10 basecode release.
+
+	* Common.am: Include tads2/bifgdum.c in T2RCSOURCES.
+
+
+2005-09-24  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc (fCreateGameWindow): Clear window with
+	color.
+
+
+2005-09-18  Nikos Chantziaras  <realnc@gmail.com>
+	* t3compiler/Makefile.am: Install tadsiox.h, gramprod.t, and
+	settings.t.
+
+
+2005-09-10  Nikos Chantziaras  <realnc@gmail.com>
+	* src/missing.cc (wcslen, wcscpy): Fixed syntax error.
+
+
+2005-09-10  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.3
+
+
+2005-09-07  Nikos Chantziaras  <realnc@gmail.com>
+	* Basecode: Synced with 3.0.9 basecode release.
+
+	* scr/oscurses.h: Renamed to osfrobtads.h.
+	* Common.am: Changed -DCURSES to -DFROBTADS.
+
+	* src/frobtadsapp.cc (fRunTads3): Pass 0 as logfile charset arg
+	of vm_run_image().
+
+
+2005-09-07  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc (fCreateGameWindow): Do a wclear(stdscr)
+	after resetting curses. touch() the window after initialization.
+	(runTads): Display one character in reverse video then one in
+	normal colors prior to starting the VM.
+
+
+2005-08-10  Nikos Chantziaras  <realnc@gmail.com>
+	* src/frobtadsapp.h, src/frobtadsapp.cc (runTads): Removed third
+	argument.
+
+	* src/frobtadsapp.cc (getTermSize): New function.
+	(fCreateGameWindow): Use getTermSize() to get terminal
+	dimensions.
+	(FrobTadsApplication): Use getTermSize(). Pass string constants
+	to putenv() instead of static vars. Initialize LINES and
+	COLUMNS with larger values than 200.
+
+
+2005-08-09  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc (FrobTadsApplication): Set LINES and
+	COLUMNS env. variables prior to starting curses.
+
+
+2005-08-05  Nikos Chantziaras  <realnc@gmail.com>
+	* src/tadswindow.h: Removed everything related to stdscr.
+	* src/frobtadsapp.h, src/frobtadsapp.cc: Removed everything
+	related to fRootWindow.
+
+	* src/osscurses.cc (ossgetcolor): Only examine requested
+	background color in no-colors mode before using A_REVERSE.
+
+	* configure.ac: Check for putenv(). Check for TIOCGSIZE.
+	* src/frobtadsapp.cc (winResizeHandler): Removed endwin() and
+	refresh().
+	(fCreateGameWindow): Added endwin() and refresh().
+
+
+2005-08-04  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc (fCreateGameWindow): Added TIOCGSIZE ioctl.
+	Update LINES and COLUMNS env vars.
+
+
+2005-08-03  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: Added AC_HEADER_TIOCGWINSZ.  Check for
+	<termios.h>. Check for TIOCGWINSZ.
+	* src/frobtadsapp.cc: Include <termios.h> and <sys/ioctl.h> only
+	if needed.
+	(fCreateGameWindow): Only get the terminal's size with an ioctl
+	if the system supports this.
+
+	* configure.ac: Removed checks for <memory.h>, <stdlib.h>,
+	<unistd.h> and <string.h>.
+
+
+2005-08-01  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc: Include <termios.h>.
+	(fCreateGameWindow): Get the terminal's size with an ioctl.
+
+
+2005-07-31  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: Check for wcslen() and wcscpy() declarations.
+	* src/missing.h: Declare wcslen() and wcscpy() if system lacks
+	these declarations.
+
+
+2005-07-28  Nikos Chantziaras  <realnc@gmail.com>
+	* configure.ac: Check for SIGWINCH signal.
+	* src/frobtadsapp.cc (winResizeHandler, FrobTadsApplication):
+	Install SIGWINCH handler only if system supports this signal.
+
+
+2005-07-27  Nikos Chantziaras  <realnc@gmail.com>
+	* New upstream release: 0.2
+
+	* src/tadswindow.h: New ctor for top-level windows without
+	parent.
+	* src/frobtadsapp.cc (winResizeHandler): Flush the game window
+	after telling Tads to resize, don't blank it at all.
+	(fCreateGameWindow): Create game window as a parentless
+	fullscreen window. Initialize fDispBuf using the game window's
+	width, not COLS.
+
+
+2005-07-26  Dave Picton  <dave@aps7.ph.bham.ac.uk>
+	* src/frobtadsapp.cc (winResizeHandler): Reinstall signal
+	handler.
+
+
+2005-07-25  Nikos Chantziaras  <realnc@gmail.com>
+	* src/colors.h (makeColorPair): Map color pair 0 to color pair 7
+	and vice versa. Changed color pair range from 1-64 to 0-63.
+	* src/frobtadsapp.cc (FrobTadsApplication): Removed
+	initialization of color pair 0.
+
+	* configure.ac: Check for use_default_colors().
+	* src/main.cc: New command line option (o|nodefcolors).
+	* src/frobtadsapp.h (FrobTadsApplication): New field in
+	FrobOptions struct (defColors).
+	* src/frobtadsapp.cc (FrobTadsApplication): Call
+	use_default_colors().
+
+	* src/frobtadsapp.h, src/frobtadsapp.cc: Added SIGWINCH signal
+	handler (winResizeHandler).
+	* src/frobtadsapp.cc (getRawChar): Removed KEY_RESIZE resize
+	handling.
+	* configure.ac: Added AC_TYPE_SIGNAL.
+
+	* configure.ac: Detect wchar.h, wcslen(), wcscpy(). Added
+	WCHAR_HEADER_MISSING Automake conditional.
+	* src/missing.h, src/missing.cc: Added wcslen() and wcscpy().
+	* src/wchar/wchar.h: New header.
+	* Common.am: Check WCHAR_HEADER_MISSING conditional. Added
+	src/wchar/wchar.h to COMMONSOURCES.
+
+	* t3compiler/Makefile.am: Added t3docdir and t3doc_DATA.
+
+	* src/main.cc (main): Changed some command line options.
+
+	* doc/: New directory. Moved the documentation text files.
+	* doc/THANKS: New file.
+	* README: New file.
+	* configure.ac: Added "foreign" to Automake options.
+	* Common.am: Added doc/ files to EXTRA_DIST.
+
+	* src/oscurses.cc (timedGetcRaw): Map \n, \r and KEY_ENTER to
+	code 13. Minor structure improvents.
+	* src/osscurses.cc (oss_raw_key_to_cmd): Also toggle scrollback
+	with ESC.

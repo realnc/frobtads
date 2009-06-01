@@ -1,0 +1,324 @@
+How to install Frobtads on a Mac running OSX
+So that you too can write TADS games!!!
+
+(These are instructions for command-line novices, like me!)
+
+by Reg
+
+Corrections to this text should be sent to regan.toews@mail.mcgill.ca
+
+--------------------------------------------
+
+1) Find the program "Terminal".  Get to know it.
+
+It is probably stored in the utilities folder which is inside your applications folder.  Drag it to the dock as you'll be needing to open this often.
+
+Some info for Terminal Newbies:
+
+Using terminal, you are always located somewhere inside your computer.  For instance, you could be inside your applications folder, or perhaps your itunes folder... but it's important to know where you are because this affects how commands could be interpreted.
+
+Some common commands:
+
+CHANGING DIRECTORY
+	cd			- change directory (this is how you navigate around in your computer)
+	/Applications		- the slash refers to a folder, the name after the slash is the name of a folder
+	cd /Applications	- this is how you would enter the Applications folder
+	cd /Applications/Utilities - this is how you would enter the utilities folder
+	.			- a dot means "current folder"
+	..			- two dots mean "one folder before"
+	cd ../			- means move to the previous folder
+
+Try the cd command with different folders to get a feel for navigating.
+
+(If any folders have spaces in them, things are a little more complicated - you can drag a file or folder into the "terminal" window and it will show how you would type the location of the file or folder)
+
+FINDING A FILE (includes hidden files which spotlight won't show you)
+	cd /			- changes directories so you're located in the top-most directory
+	find . -name adv3.h	- searches for a file called "adv3.h"
+
+OTHER COMMANDS
+	tar -xzf		- expand a *.tar.gz compressed archive
+	ls			- list all files in a folder, except hidden files
+	ls -a			- list everything in a folder, including hidden files
+	sudo			- this command is added to the beginning of a command if it's something where you need to have administrative (root) access
+
+A list of more commands:
+http://www.ss64.com/bash
+
+A very good unix beginner page is here:
+http://forums.macosxhints.com/showthread.php?t=40648
+
+By the way:
+The word "binary" generally means "compiled file" as opposed to the "source code" which is the building blocks of a file.
+
+--------------------------------------------
+
+2) Download a free text-editing application.
+
+You will use this program to write your game code files with.  I use Smultron (available at: http://smultron.sourceforge.net/).
+
+--------------------------------------------
+
+3) Install xcode tools.
+
+This is on your install DVD that came with your mac but it's better to download the newest version via the internet.
+Goto: http://developer.apple.com/tools/xcode/
+This is free when you make an ADC account (account is also free).
+Follow the installation instructions that come with it.
+
+--------------------------------------------
+
+4) Download and install fink
+
+Goto: http://fink.sourceforge.net/download/
+
+IMPORTANT NOTE: the installer disk image of fink contains additional files, including an application called finkcommander.  Create a new folder in Applications called "fink extras" and drag the extra info including finkcommander to this folder after you've installed fink itself.
+
+The instructions on how to download and install the program are on the site but I've included it here so you don't have to be reading instructions from more than one place.
+
+I've edited it a little too:
+
+-----
+   1.
+      Download the installer disk image:
+      Fink 0.8.1 Binary Installer (PowerPC) - 17930 KB
+      Fink 0.8.1 Binary Installer (Intel) - 17510 KB
+      (10.3 users - use Fink 0.7.2)
+      (10.2 users - use Fink 0.6.4)
+      (10.1 users - use Fink 0.4.1)
+
+   2.
+      Double-click "Fink-0.8.1-XYZ-Installer.dmg" (where XYZ is either PowerPC or Intel) to mount the disk image, then double-click the "Fink 0.8.1 XYZ Installer.pkg" package inside. Follow the instructions on screen.
+
+      Then create a folder in your Applications folder called "fink extras" and drag the other information, including the application "finkcommander" contained in the disk image, into the fink extras folder.
+
+   3.
+      At the end of the installation, the pathsetup utility will be launched. You will be asked for permission before your shell's configuration files are edited (use your administrative password). When the utility has finished, you are set to go!
+
+   4.
+      If anything goes wrong during this process, you can try again by launching the pathsetup application which appears on the installer disk, or by running (from the command line in a Terminal.app window)
+
+      /sw/bin/pathsetup.sh
+
+      (This step should also be repeated by any other users on your system: each user must run pathsetup in his or her own account.)
+
+      If pathsetup generates errors messages, consult the documentation, particularly section 2.3 "Setting Up Your Environment" of the User's Guide.
+
+   5.
+      Open a new Terminal.app window and run the following: "fink scanpackages; fink index", or use the included Fink Commander GUI application (which must be placed in a real folder on your system, not run from the disk image) and run the following commands from its menu: Source->scanpackages followed by Source->Utilities->index.
+
+   6.
+      Once those two commands are finished you should update the fink package, in case there have been significant changes since the last point release. After you do this you can install other packages. There are several ways to do this:
+
+          *
+            Use the included Fink Commander to select and install packages. Fink Commander provides an easy to use GUI for Fink. This is the recommended method for new users, or users who are not comfortable with the command line. Fink Commander has Binary and Source menus. You should install from binaries if you don't have the Developer Tools installed, or don't want to build packages yourself.
+
+                o
+                  The Fink Commander sequence to update fink from binaries is as follows:
+                     1. Binary->Update descriptions
+                     2. Select the fink package.
+                     3. Binary->Install
+                o
+                  The recommended Fink Commander sequence to update fink from source is as follows:
+                     1. Source->Selfupdate
+                     2. Tools->Interact with Fink...
+                     3. Make sure "Accept default response" is selected, and click "Submit".
+                     4. fink and other base packages will be built and run automatically
+
+            Now that you've updated fink, you can install other packages.
+                o To install from binaries, select the package, and use Binary->Install.
+                o To install from source, select the package, and use Source->Install
+
+          *
+            Use apt-get. Apt-get will fetch and install binary packages for you, saving compiling time. You should either use this method or the Fink Commander binary method (above) if you don't have the Developer Tools installed.
+
+            To update fink open a Terminal.app window and type sudo apt-get update ; sudo apt-get install fink
+
+            Once you've updated fink, you can install other packages, using the same syntax, e.g sudo apt-get install gimp to install the Gimp. Note, however, that not all fink packages are in binary form.
+
+          *
+            Install from source (requires the XCode Tools [Developer Tools on 10.2] to be installed). To update fink run fink selfupdate. When prompted, select option (1), "rsync". This will automatically update the fink package.
+
+            Once fink is updated, you can use "fink install" to fetch and compile from source code. For example, to install the Gimp, run fink install gimp.
+
+--------------------------------------------
+
+5) Use finkcommander to install ncurses
+
+- start the finkcommander application (should be in the folder you made called "fink extras")
+- type "ncurses" in the search window
+- locate nucurses, ncurses-dev, and ncurses-shlibs and see if they say "current" on the left and have a date under "installed".  If so, you're good to go to the next step. If not, click on those that are not installed and click on the "install binary" icon (the little icon with the blue crss on it)
+
+--------------------------------------------
+
+6) Download and install Frobtads and the TADS2 and/or TADS3 compiler(s)
+
+Go to: http://www.tads.org/frobtads.htm
+
+- Download "FrobTADS" and then one or both of the TADS 2 and TAD 3 compiler add-ons depending on your preference.
+- Your computer will probably automatically decompress these items. If it hasn't done so for the frobtads folder, double-click on the disk image so it decompresses.  Throw out any expanded versions of the Tads 2 or 3 compilers as you must expand these using "terminal"
+- Drag your decompressed frobtads folder to your computer icon
+- start the "terminal" program
+- type "cd /frobtads-0.6" and press enter
+
+- Drag the disk image of the compiler(s) to the expanded frobtads folder
+- Expand the compiler disk images using the "terminal" application
+- Do this by changing the directory to frobtads folder where the disk images are now stored
+	cd /Applications/frobtads-0.6
+- expand the files depending on which ones you have by typing the following:
+	tar -xzf t3comp.tar.gz
+	tar -xzf t2comp.tar.gz
+
+To configure and compile the program, type the following one-at-a-time:
+
+	export PATH=$PATH:/usr/local/bin
+	./configure
+	make
+	sudo make install
+
+(after sudo make install you will be probably asked for your admin password)
+(If, after "make" all it says is: make  all-am, type "make clean" and then "make" again)
+(If, after "make" it says "no rule to make target" then you've written over the tad3compiler folder with the one you expanded and you need to go back to the beginning and re-expand the frobtads folder.  Make sure you expand the tads3 compiler using the "terminal" application and not stuffit)
+
+------------------------
+
+7) Make sure all is in working order
+
+Frobtads should now be installed on your computer.  Check by:
+downloading a Tads3 game, use the terminal program to change directories to the folder containing the game and then type "frob" and the game name in order to see if the game will run.
+
+Example:
+Download a game from here: http://www.ifarchive.org/indexes/if-archiveXgamesXtads.html
+If you saved it in a folder called "textadventuers" inside another called "games" you would do the following:
+	cd /games/textadventures
+	frob abrokenman.t3
+
+If it works, test the compilers:
+
+TADS 2 (I don't know how to test it other than write a game and see if it compiles since I only have TADS 3 installed myself).
+To write a game, read: 	TADS 2: http://www.tela.bc.ca/tads-manual/
+Note:  For Tads 3, you don't need to specify where the compiler's include files
+are installed.  But the Tads 2 compiler works different.  When invoking
+'tadsc', you'll have to use the -i option:
+	tadsc -i /usr/local/share/frobtads/tads2 somesource.t
+
+For Tads3 compiler:
+	make sample
+	./frob ./samples/sample.t3
+
+If a game starts, all is well!
+
+Write your game!
+	TADS 2: http://www.tela.bc.ca/tads-manual/
+	TADS 3: http://www.tads.org/t3doc/doc/index.htm
+
+NOTE ABOUT INVOKING (STARTING) T3MAKE, FROB ETC:
+If when you type t3make it says command not found, try typing /usr/local/bin/t3make
+If this works, t3make has been installed, it's just that your "path" isn't set-up.
+
+To set up your PATH in bash, you edit the file ~/.profile (using any text editor that can save in plain text - e.g. 'pico') and add a line like the following:
+	export PATH="$PATH:/usr/local/bin"
+
+For information on how to edit this file, go to:
+http://forums.macosxhints.com/showthread.php?t=40648
+
+
+--------------------------------------------
+
+8) Tidy Up!
+
+Once all is in working order, you can trash the frobtads folders and disk images as they are no longer neccessary.  (Everything is now stored in folders in your computer, namely /usr/local)
+
+--------------------------------------------
+
+9) Notes
+
+Once a compiler or run-time is installed, you can just type the command like "frob" or "t3make" for example and you don't have to tell the computer where the command is stored, nor do you have to be in the directory where it's stored - you have to tell it where the game file is stored though or be located in the correct folder where the game is located
+
+When compiling using the Tads3 compiler the "-f" is vital... don't forget it!
+   t3make -f heidi.t3m
+   (or specify location: t3make -f /Games/heidi.t3m)
+
+Usually, in your own game, you name your project file (actually a
+makefile) "Makefile.t3m".  That way, you only need to type:
+   t3make
+to compile the game.  No "-f Makefile.t3m" required.
+
+Where to get games:
+	http://www.ifarchive.org/indexes/if-archiveXgamesXtads.html
+
+How to start writing your own games:
+	TADS 2: http://www.tela.bc.ca/tads-manual/
+	TADS 3: http://www.tads.org/t3doc/doc/index.htm
+
+To play games:
+	In the "terminal" program, type "frob" followed by the location of the game file.  For instance, if I create a folder called "games" on my harddrive and I want to play a game called greatgame.gam, I would type:
+frob /games/greatgame.gam
+
+To get a list of command-line options: "frob --help".
+
+--------------------------------------------
+
+10) Troubleshooting
+
+1
+
+If both curses and ncurses are installed, ncurses will be preferred.
+If neither is found, the 'configure' script will inform you
+that the interpreter cannot be built.  You need to go back to the fink program and make sure they are installed.
+
+2
+
+If you're "denied permission" at any time, add the word "sudo" to the front of the command
+
+3
+
+For Tads 3, you don't need to specify where the compiler's include files
+are installed.  But the Tads 2 compiler works different.  When invoking
+'tadsc', you'll have to use the -i option:
+
+  tadsc -i /usr/local/share/frobtads/tads2 somesource.t
+
+(Remember to use the actual path if you installed somewhere else.)
+
+4
+
+If, when you type "make" it just says "make  all-am" and nothing else, type "make clean" and then "./configure" again
+
+5
+
+If you decide later you want to install one or the other of the compilers but you have already installed the frobtads program, type "./config-status --recheck" and then recompile.
+
+5
+
+If you're trying to do "make install" and nothing seems to work, type
+export PATH=$PATH:/usr/local/bin
+If you're told certain folders are missing too, type the line above and start again from ./configure
+
+6
+
+If it says t3make not found, you probably forgot
+export PATH=$PATH:/usr/local/bin
+
+7
+
+If the game isn't compiling, don't forget the "-f" part of the command.  Also make sure to create an obj folder in the same folder as the heidi game.
+
+8
+
+If you've installed frobtads (when you type "cd /usr/local/bin" and then "ls" it is listed), but when you type t3make, it says command not found, you need to set up your "path"
+
+To set up your PATH in bash, you edit the file ~/.profile (using any text editor that can save in plain text - e.g. 'pico') and add a line like the following:
+	export PATH="$PATH:/usr/local/bin"
+
+For information on how to edit this file, go to:
+http://forums.macosxhints.com/showthread.php?t=40648
+
+
+---------------------------
+
+Most important websites:
+
+www.tads.org
+http://www.ifarchive.org/
+http://forums.macosxhints.com/showthread.php?t=40648

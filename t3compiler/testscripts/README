@@ -1,0 +1,20 @@
+The scripts were created by using the existing scripts from the generic
+Unix port of TADS as a template.  They have been modified in order to
+fix portability issues.  So if you see a script that looks like this:
+
+  if test -f "$T3_OUT/$1.log"; then
+      :
+  else
+      foo
+  fi
+
+don't bother changing it to:
+
+  if [ ! -f $T3_OUT/$1.log ]; then
+    foo
+  fi
+
+and sending it to the maintainer.  The second example may look much
+better, but it's not portable.  ('!' is not portable, '[' is not
+portable... welcome to Unix!)  Of course, it's unlikely that people use
+4.3BSD or Solaris 8, but still...

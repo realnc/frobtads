@@ -1,0 +1,23 @@
+A special thanks to Dave Picton for his patches and more than thorough
+testing on Solaris and its broken curses lib :)
+
+Thanks fly out to:
+
+    Adam D. Ashworth
+    James Cunningham
+    M. Damian Dollahite
+    Stephen Dranger
+    Sophie Fruehling
+    Ilya V. Goz
+    Donavan Hall
+    Andrew Huang
+    Michael Martin
+    Andrew Pontious
+    Mike Roberts
+    Andreas Sewe
+    Regan Toews
+
+for the bug reports, patches, suggestions and everything else; privately
+and/or through the IF newsgroups.  Thanks, folks!
+
+Also thanks to Chris Grau for the Fedora Core rpm.

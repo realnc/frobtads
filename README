@@ -1,0 +1,45 @@
+FrobTADS - A portable TADS toolkit
+http://www.tads.org
+http://www.tads.org/frobtads.htm
+
+The "doc" directory contains the documentation for this package:
+
+    AUTHORS
+      People who wrote FrobTADS' code.
+
+    BUGS
+      A list of known bugs.  You shouldn't report them.
+
+    ChangeLog
+      Documents changes in the source code between versions.
+
+    COMPILERS
+      Explains how to build the TADS 2 and TADS 3 compilers and where
+      to obtain documentation for them.
+
+    CONFIGURE_DOC
+      Contains detailed documentation about the 'configure' script (this
+      script is used to configure the package prior to compilation).
+
+    COPYING
+      Legal blurb.
+
+    INSTALL
+      Installation and usage instructions.  The first thing you should
+      read (after this README file).
+
+    MacOSX
+      Instructions for Mac OS X command-line novices.
+
+    NEWS
+      Contains the list of changes between FrobTADS versions.
+
+    README
+      Overview of the package.
+
+    SRC_GUIDELINES
+      A must-read for everyone who wants to contribute source code.  It
+      mostly deals with how to write portable C++ and such.
+
+    THANKS
+      Lists people who contributed to FrobTADS in one way or another.

@@ -1,0 +1,179 @@
+FrobTADS - A portable TADS toolkit.
+Maintained by Nikos Chantziaras <realnc@gmail.com>.
+
+For the newest version, visit:
+
+    http://www.tads.org/frobtads.htm
+
+By default, the FrobTADS source-package only contains the interpreter.
+See the file COMPILERS on where to obtain and how to install the TADS 2
+and TADS 3 development tools, and on where to look for documentation in
+order to get started with developing your own games.
+
+For more information about TADS, visit its home page:
+
+    http://www.tads.org
+
+
+Platforms
+=========
+
+FrobTADS is known to compile and run on various platforms, including:
+
+Linux (all flavors), Mac OS X, various BSDs, old and modern Solaris,
+BeOS and Microsoft Windows.
+
+If you manage to run FrobTADS on a system not mentioned above, please
+let the maintainer know about it.
+
+
+About TADS and FrobTADS
+=======================
+
+TADS stands for "Text Adventure Development System".  It's a set of
+tools that allow easy implementation of text adventures, or "Interactive
+Fiction".  The tools include a compiler along with supporting libraries,
+a debugger and an interpreter.  An interpreter is needed to run the
+compiler's output, as it generates "byte code" programs (much like
+Java).
+
+The primary target of TADS nowadays is Microsoft Windows (although
+MS-DOS is still supported).  FrobTADS is a "portable port" of the TADS
+toolkit.  The term "portable port" sure sounds funny, but it's a quite
+accurate description; although the main target of FrobTADS is Unix, it
+compiles and runs even in MS Windows.  Therefore, it's a portable
+port :-)  The main development takes place on a Linux PC.
+
+Not everything is included in FrobTADS yet; for now, there are no
+debuggers available.  On the other hand, the compilers and interpreters
+are (I hope) feature-complete.
+
+FrobTADS is not written from scratch; it uses Mike Roberts' portable
+reference implementations of the two TADS virtual machines; the T2 VM
+(written in C) and T3 VM (written in C++).  FrobTADS hooks-in into that
+code by providing a portable implementation of the TADS I/O API.
+
+
+Goals
+=====
+
+FrobTADS has been written as a replacement for the "traditional"
+Unix-port of TADS, which has many problems and limitations, and is
+difficult to maintain and change.  The FrobTADS interpreter also
+provides some features that the traditional Unix-port lacks, the most
+important of them being:
+
+  - Automatic configuration prior to building; no need to edit
+    makefiles.
+
+  - TADS 3 color support and configurable default colors.
+
+  - Correct timing with timed operations (millisecond-precision).
+
+  - Input like in Frotz; cursor keys, insert, delete, etc., instead
+    of Emacs-like input.
+
+  - TADS 3 banners look as they should.
+
+  - You are not required to install the package prior to running the
+    TADS 3 test suite.
+
+  - File I/O initiated by the game will happen in the game's directory.
+    This means that you don't have to change to the game's directory
+    prior to starting the interpreter.
+
+  - Less source code (and also less complex), more comments.
+
+  - More portable.
+
+The ultimate goal is to make FrobTADS compile and run out-of-the-box on
+every system that has a curses library and a Unix-like shell available.
+
+
+What is Multimedia TADS?
+========================
+
+Multimedia TADS (also known as "HTML TADS") is an extension of TADS that
+uses HTML to provide multimedia capabilities.  Multimedia TADS is not an
+extension of the two TADS languages (TADS 2 and 3), but rather of their
+output system.  Although FrobTADS, being a character-mode interpreter,
+doesn't support most of the HTML extensions, it *can* run games that use
+HTML; on the binary level, Multimedia TADS and "plain" TADS executables
+are actually the same thing.  You won't see any graphics nor hear sounds
+and music, but the game will play just fine.  In TADS 2 games, you also
+won't see any banners that the game would otherwise display (TADS 3
+games don't use HTML for banners; FrobTADS provides full support for
+TADS 3 banners).  The vast majority of games don't use the multimedia
+extensions though, or use only the subset supported by FrobTADS.
+
+
+What's Interactive Fiction?
+===========================
+
+Well, this is just a poor README file and therefore not the appropriate
+place for an introduction to Interactive Fiction.  For more information
+about Interactive Fiction (or "IF" for short), just go to the TADS page
+(http://www.tads.org) and follow some links.  Or go to the Google search
+engine (http://www.google.com) and search for "interactive fiction";
+you'll be amazed about how many results you'll get.  And you'll be even
+more amazed about how active the IF community is.
+
+There are two Usenet newsgroups for IF related things.  The first is
+RGIF, which is short for:
+
+    rec.games.int-fiction
+
+where people are talking about IF games in general; things they like in
+games, things they don't like, things they hope to see in future games,
+requests for hints and solutions, reviews of games, announcements of new
+games/software or happenings...  Stuff like that.
+
+The other newsgroup is RAIF, which stands for:
+
+    rec.arts.int-fiction
+
+This newsgroup is for everyone who is interested in creating games.
+Most IF authors use to hang around there, so this newsgroup is an
+excellent place to post questions about IF theory, authorship and
+programming.
+
+Your ISP should usually provide a newsserver which you can use to
+access Usenet.  If not, you can use Google's web-based Usenet
+interface:
+
+    http://groups.google.com/group/rec.games.int-fiction
+    http://groups.google.com/group/rec.arts.int-fiction
+
+
+Where do I find games for FrobTADS?
+===================================
+
+There's a large repository for IF-related stuff (with *lots* of games!)
+called "The Interactive Fiction Archive"; people usually just refer to
+it as "the Archive".  You can access it by HTTP:
+
+    http://www.ifarchive.org (very slow)
+
+or by FTP:
+
+    ftp://ftp.ifarchive.org (also very slow)
+
+The archive has mirrors that are usually much faster.  You should always
+access it through:
+
+    http://mirror.ifarchive.org
+
+Please use this mirror instead of the main archive!  You'll save
+yourself (and others) quite a few headaches.  (The full list of mirrors
+is displayed in the main archive's title-page.)
+
+Since the archive is actually just a (huge) bunch of data thrown
+together (more or less), a nice fellow has created a site that will
+guide you through the archive.  The site is called "Baf's Guide to the
+IF Archive" and is located at:
+
+    http://wurb.com/if
+
+It contains many cool things, like a "Genre Map" for the games located
+in the archive along with descriptions, reviews and ratings, as well as
+many useful links.

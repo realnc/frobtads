@@ -1,0 +1,6 @@
+*.[oa]
+Makefile
+Makefile.in
+/frob
+/t3make
+/tadsc

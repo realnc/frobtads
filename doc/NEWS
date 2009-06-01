@@ -1,0 +1,220 @@
+v0.13
+=====
+
+  - Tads virtual machines and compilers updated to 2.5.14/3.0.18.1.
+
+
+v0.12
+=====
+
+  - Tads 2 virtual machine and compiler updated to 2.5.11.
+
+
+v0.11
+=====
+
+  - Tads 3 virtual machine and compiler updated to 3.0.16.
+
+  - Embedding resources in Tads 3 game files (like a GameInfo.txt) was
+    somewhat broken; the EOF identifier just before the resource wasn't
+    removed.  In the case of the GameInfo.txt resource, this resulted
+    in third-party tools like Babel and Zoom not being able to read
+    this resource.  This has been fixed.  Make sure to recompile your
+    games with the now fixed t3make in order to have the resources
+    correctly embedded in your game files.
+
+
+v0.10
+=====
+
+  - Since Unicode doesn't work yet correctly in the curses interface,
+    the interpreter will use regular ASCII by default to avoid display
+    problems with apostrophes and quotes.
+
+  - Compilation problems on Mac OS X 10.5 (Leopard), Intel C++, Solaris
+    10 and on the Linux version of the Sun Studio compilers have been
+    fixed.
+
+  - FrobTADS should now compile and run correctly as a 64-bit binary,
+    at least under x86-64.  Tested under x86-64 Linux, FreeBSD/AMD64 and
+    Solaris 10.
+
+  - It should be easier now to cross-compile FrobTADS without modifying
+    any code.  If your cross-compiler is called "i586-pc-mingw32-gcc",
+    you can cross-compile with:
+
+      ./configure --host=i586-pc-mingw32
+      make
+
+    and it should build out-of-the-box.
+
+    If you don't know what cross-compiling is, then you probably don't
+    need it ;P
+
+  - The PDCurses library is now correctly detected when building.  It
+    will be used if neither ncurses nor curses is found.
+
+
+v0.9
+====
+
+  - Tads 3 virtual machine and compiler updated to 3.0.15.3 (beta).
+
+  - The default project file t3make looks for when invoked without an -f
+    argument is now Makefile.t3m instead of makefile.t3m on every
+    system.  Capitalizing the first letter of the makefile is common
+    practice on Unix.  This means that if you use "Makefile.t3m" as the
+    filename for your project file, you only need to type "t3make" with
+    no arguments to build your project.
+
+  - You can now choose between screen interfaces by using the new -i (or
+    --interface) option.  Available interfaces right now are curses (the
+    default if not using the option) and plain (which only does stdio
+    input/output).
+
+    This new "plain" interface is still experimental and not complete at
+    this point; screen size and text input are not handled correctly.
+    Note that even in it's complete implementation, input will be very
+    basic in plain mode and none of the more advanced features will ever
+    be available (colors, banners, statusline, etc.)  This mode is
+    useful for screen readers that might get confused by the more
+    complicated output of curses and for using FrobTADS as a back-end
+    for other programs (a CGI script to play IF on the web, for
+    example).
+
+
+v0.8
+====
+
+  - Tads 3 virtual machine and compiler updated to 3.0.15.1 (beta).
+
+
+v0.7
+====
+
+  - On most POSIX systems, the Tads 3 compiler (t3make) should now be
+    able to include resources in the build when -res is used to specify
+    a whole directory.  The -recurse option should work also.  (Patch
+    was submitted by Ilya V. Goz.)
+
+  - Tads 2 character mapping files are now supported and loaded by the
+    interpreter when a game requests them.  Charmap files are
+    distributed with some games and the interpreter tries to find them
+    in the current directory.  The interpreter changes the current
+    directory to the game's directory by default, so if you place the
+    mapping files in the game's directory the interpreter should load
+    them.  (Patch was submitted by Ilya V. Goz.)
+
+    Note that FrobTADS still has problems with 8-bit character sets,
+    since curses deals only with 7-bit characters.  This will hopefully
+    be fixed in a feature release.
+
+
+v0.6
+====
+
+  - Tads 3 virtual machine and compiler updated to 3.0.12.
+
+
+v0.5
+====
+
+  - Tads 3 virtual machine and compiler updated to 3.0.11.
+
+  - The compiler was unable to compile sourcefiles that were using a
+    non-built-in character set.  For example, a sourcefile beginning
+    with #charset "koi8-r" would generate an error message.  This has
+    been fixed.
+
+  - The Tads 3 "proto-documentation" has been wiped.  More thourough
+    documentation is now available at www.tads.org (it's a 10MB
+    download so it has not been included in FrobTADS).
+
+
+v0.4
+====
+
+  - Tads virtual machines and compilers updated to 2.5.10/3.0.10.
+
+  - Fixed a problem where it was not possible to compile TADS 3 games.
+    Some required library files, although included in the package, did
+    not get installed at the "make install" step.
+
+  - Fixed a compilation problem with "src/missing.cc" ("unknown
+    identifier: wc" and "unknown identifier: dst").  This only occured
+    on some systems that lack the wchar C99 functions (like some
+    Mac OS X systems).
+
+  - Fixed possible color-curruption problems with old/broken curses
+    libraries.
+
+
+v0.3
+====
+
+  - Tads virtual machines and compilers updated to 2.5.9/3.0.9 (the
+    included Tads 2.5.9 version is more up-to-date than the official
+    2.5.9 release, but it's not yet 2.5.10).
+
+  - Statusline now looks good even when colors are disabled
+    ("--no-colors" option) or not available.
+
+  - Fixed compilation problem on systems that don't support the SIGWINCH
+    signal ("unknown identifier: SIGWINCH"), like MS Windows with MinGW
+    and/or Dev-C++.
+
+  - Fixed the fix of the compilation problem with the <wchar.h>
+    functions (wcslen and wcscpy); this time for good, I hope.
+
+  - Hopefully improved terminal resize handling.
+
+
+v0.2
+====
+
+Thanks to Mike Roberts, FrobTADS now has its own homepage and main
+distribution point:
+
+ http://www.tads.org/frobtads.htm
+
+  - Some command line options have been changed (type "frob --help" to
+    list them).
+
+  - Scrollback mode can now also be activated with the Escape (ESC) key.
+    Fixed some possible problems with the ENTER key not being recognized
+    on some systems.
+
+  - White text on white background ("frob -t7 -b7") should work now.
+
+  - Fixed a curses compilation problem (compilation failed with
+    something like: "unknown identifier: KEY_RESIZE").
+
+  - Screen resizing (when running in an xterm) has been improved; a
+    signal handler does the job now and some code has been improved for
+    better resizing.
+
+  - Fixed a compilation problem on systems that lack the wchar.h header
+    and/or the wchar functions wcslen and wcscpy.
+
+  - If you don't override the default colors, or use white on black
+    (-b0 -t7), *and* your curses/ncurses version supports it, the
+    interpreter will use the default colors of your terminal.  This
+    makes it possible to use bitmap pictures as background, or make the
+    terminal transparent (if your terminal supports this, of course).
+    Note that, by default, this won't work for the statusline, as it
+    reverses the colors.  If you want to use this feature for the entire
+    screen, you'll have to start frob with "frob -g0 -l7".
+
+    This feature can be disabled using the "-o" (or "--no-defcolors")
+    option.
+
+  - The Tads 3 documentation (HTML format) is now installed along with
+    the compiler ([prefix]/share/frobtads/tads3/doc).
+
+  - Documentation files have been moved into the new "doc" directory.
+
+
+v0.1
+====
+
+  Initial release.

@@ -1,0 +1,41 @@
+Known bugs.  Don't report them; fix them! :)
+
+  - On some versions of GCC in combination with certain x86 CPUs, the
+    Tads 3 VM will crash at startup when an optimization level of -O2
+    or higher is used.  This can be fixed by using the
+    "-fno-strict-aliasing" option of g++ (gcc isn't affected).
+
+  - Currently, the interpreter cannot display characters outside the
+    7-bit ASCII range.
+
+  - When a game has set a timeout for an input, and the terminal the
+    interpreter runs in is resized, the timeout will be reset to its
+    initial value rather than the remaining time.
+
+  - The "--no-defcolors" option doesn't work with all curses versions.
+
+  - On some systems it is not possible to bundle multi-media resources
+    into the image file using the -recurse command line option of
+    t3make.  The systems affected are those that lack the <glob.h>
+    system header.
+
+  - Currently, there's no way to pass arguments to the main() function
+    of a TADS 3 game.  The derised behavior should be something like:
+
+      frob [frob options] gamefile.t3 [T3VM options]
+
+  - An interpreter crash (a segfault for example) is likely to leave the
+    terminal in a weird state.  Entering "reset" (even if you can't see
+    what you're typing) followed by a "unicode_start" (if applicable for
+    your system) should bring the terminal back to normal.
+
+  - Plain-mode (pure stdout output without curses) is only partially
+    supported (frob --interface plain) and buggy.
+
+  - The package does not compile on SuSE Linux 7.2 (GCC 2.9x) with -ansi
+    enabled; works just fine without it.  Looks like a bug in the
+    system's header files.  The compiler is ancient and buggy though,
+    so I don't think it's worth fixing.
+
+  - Some test suite programs fail to link with GCC 2.x.  Again, GCC 2.x
+    is ancient and buggy so a fix it's not a priority right now.

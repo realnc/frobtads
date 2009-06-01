@@ -1,0 +1,80 @@
+The FrobTADS main package does not contain the compilers, so that people
+only interested in the interpreter won't have to download sources they
+don't need (the TADS 3 compiler is quite big).  You can download the
+package of the compiler you're interested in (TADS 2 or TADS 3) from the
+same place where you got this main package.  You can download both
+compilers, if you wish.  You need to extract the contents of the
+compiler packages into the FrobTADS top-level directory.  See below for
+more information.
+
+There is no documentation on the TADS programming languages included in
+any of the FrobTADS packages.  Luckily, the TADS homepage offers
+various downloads and links:
+
+http://www.tads.org
+  The TADS homepage; has the latest news, updates and documentation for
+  everything TADS-related.
+
+http://www.tads.org/t3doc/doc
+  The TADS 3 Bookshelf.  Everything you need to know about writing IF
+  in TADS 3 can be found there.  A must-visit.  It contains various
+  books, browsable online (HTML) and downloadable (PDF).
+
+http://teladesign.com/tads-manual/tadsman.zip
+  The TADS 2 Author's Manual (HTML format).
+
+http://www.tela.bc.ca/tads-manual
+  This leads to the online-version of the TADS 2 Author's Manual.
+
+
+Unpacking and building
+======================
+
+There are no extra configuration steps required to build the compilers.
+Just unpack them inside the FrobTADS directory and reconfigure the
+package.  The FrobTADS configuration script will detect the presence of
+the compiler sources and build them along with the interpreter.  For
+example, if you previously unpacked FrobTADS in
+
+  ~/downloads/frobtads-0.11
+
+and your downloaded TADS 3 compiler package is
+
+  ~/downloads/frobtads-t3compiler-0.11.tar.gz
+
+you can unpack the compiler with:
+
+  cd ~/downloads/frobtads-0.11
+  tar -xzf ~/downloads/frobtads-t3compiler-0.11.tar.gz
+
+If you previously configured FrobTADS, you can reconfigure by typing:
+
+  ./config.status --recheck
+
+in the build directory in order to use your previously supplied
+configuration options.  Or you can simply run ./configure again if you
+want to use different options.
+
+See the INSTALL file for more information on configuring and compiling.
+
+
+Invocation
+==========
+
+The compilers can be invoked with:
+
+  tadsc   (TADS 2 compiler)
+  t3make  (TADS 3 compiler)
+
+Note that, unlike the interpreter, the compilers don't support GNU-like
+command line options, which means that "short options" aren't available.
+For example, use "-help" instead of "--help".  This is to ensure
+compatibility of compiler command line syntax between different ports.
+
+For Tads 3, you don't need to specify where the compiler's include files
+are installed.  But the Tads 2 compiler works different.  When invoking
+'tadsc', you'll have to use the -i option:
+
+  tadsc -i /usr/local/share/frobtads/tads2 mygame.t
+
+(Remember to use the actual path if you installed somewhere else.)

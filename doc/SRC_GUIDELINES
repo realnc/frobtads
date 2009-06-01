@@ -1,0 +1,172 @@
+To keep the code as portable as possible, follow these rules.  All these
+"don't"s may seem brain-damaged, but there's really no other way to keep
+the code compileable on old and/or brain-damaged compilers.
+
+These rules are not a panacea, mind you.  The intention is to make the
+code as portable as *possible*, so that any compiler-incompatibilities
+are easier to fix.  They don't give a "100% portability guarantee."
+
+Furthermore, I'm no portability-wizard.  These rules are a combination
+of my own and (most importantly) other people's experiences.  If you
+have ideas regarding portability, please contact the maintainer.
+
+If you spot any code that does not follow these rules, please report it
+as a bug and/or send a patch.  An exception to this are the files in the
+tads2/ and tads3/ directories; they are read-only.  Don't touch them.
+Any changes made to them will be lost next time FrobTADS gets in sync
+with the TADS base code.  Problems in any of these files should only be
+reported, not fixed.
+
+Sidenote: If you're looking for object oriented programming guidelines,
+forget it.  FrobTADS is object based, not object oriented.  It uses C++
+mostly as a "better C".  Classes and objects are only used to make
+things simpler, not with OOP in mind.
+
+OK, here goes:
+
+
+The "common.h" header file
+==========================
+
+In new source files, always, Always, ALWAYS, #include "common.h" as the
+first header.  Everywhere; both in C and C++ sources, in headers and
+*.c/*.cc/*.cpp files.
+
+
+'and', 'or' and 'not'
+=====================
+
+If you prefer these keywords over the usual '&&', '||' and '!' operators
+(I do), just use them as if they were available everywhere.  You must
+always #include "common.h" for this to work.  This only applies to C++
+code of course.  Don't use these keywords in C (they *are* in the C++
+standard, even if old compilers don't support them, but not in ANSI C).
+
+
+C++ template library
+====================
+
+Don't use the C++ standard library.  That means no <iostream>, no
+<vector>, no <algorithm>, no <string>, no fun.
+
+
+#including standard C-headers in C++
+====================================
+
+Don't use new-style C++ includes to include C-library headers.  Do this:
+
+	#include <string.h>
+
+rather than this:
+
+	#include <cstring>
+
+
+Namespaces
+==========
+
+Don't use namespaces.
+
+
+for-loops
+=========
+
+Don't rely on the modern semantics of for-loops.  Don't do this:
+
+	for (int i = 0; i < frob; ++i) {
+		// ...
+	}
+	// ...
+	for (int i = 0; [...]
+
+as it will only compile on modern compilers.  Do this instead:
+
+	int i;
+	for (i = 0; i < frob; ++i) [...]
+	for (i = 0; [...]
+
+This compiles on both modern and old compilers.  If you really need a
+variable that expires after the loop, use this:
+
+	{for (int i = 0; i < frob; ++i) {
+		// ...
+	}}
+
+Attention!  If you have an old compiler, don't do this:
+
+	for (int i = 0; [...]
+	for (i = 0; [...]
+
+as it will *only* work with *old* compilers.  Modern compilers can't
+compile this code.
+
+
+C++ casts
+=========
+
+Don't use static_cast<> and friends.  Do this instead:
+
+	static_cast(foo)(bar)
+	dynamic_cast(frob*)(baz)
+	reinterpret_cast(const xyzzy*)(plugh)
+
+This will work on every compiler (as long as you #include "common.h" in
+your sources).  On modern compilers, this:
+
+	static_cast(int)(bar)
+
+will be macro-transformed into:
+
+	static_cast<int>(bar)
+
+while on old compilers, it will become:
+
+	(int)(bar)
+
+
+Exception handling
+==================
+
+Don't use exception handling.  There's a portable exception-framework in
+the TADS 3 base code (transparently utilizing labels and gotos through
+macros); you might want to use it if you really can't do without exception
+handling.
+
+
+Templates
+=========
+
+Don't use templates.  Don't try to work around this by emulating them
+with macros; you'll just shoot yourself in the foot (and since this is
+C++, this will blow away your whole leg).
+
+
+Non-standard compiler features
+==============================
+
+Don't use compiler-specific non-ANSI features; not everyone has GCC
+installed.  You should always compile with GCC's "-ansi -pedantic"
+switches (both C and C++).  Note that "-ansi -pedantic" cannot check
+your code for full ANSI correctness; they are only meant to catch
+obvious blunders.
+
+
+Non-ANSI/ISO functions
+======================
+
+If you feel like using a non-ANSI function (for example a BSD one), use
+it, but provide a working ANSI-only fall-back, as is already done with
+some functions in src/missing.[h/cc].  Also look at the implementation
+of os_get_sys_clock_ms() in src/oscurses.cc on how to handle portability
+issues.
+
+Generally, if such a function has equivalent ones in other standards,
+just check for them in "configure.ac" and structure your code to use the
+information the configuration script detects.
+
+
+Filenames
+=========
+Don't use filenames longer than 14 characters.  I'm not talking about
+DOS (which has the 8+3 limit).  There are some Unices that have this
+limitation.

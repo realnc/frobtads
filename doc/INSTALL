@@ -1,0 +1,378 @@
+(See the file COMPILERS on info about the TADS compilers.)
+
+For impatient people who don't like to read through INSTALL files prior
+to installing software on their system:
+
+Enter the directory where you unpacked this package (for example,
+"cd ~/downloads/frobtads-0.10").  Type: "./configure" followed by
+"make", then "make install".  Play TADS games:
+"frob ~/games/tads/arrival.gam".  Get a list of command-line options:
+"frob --help".
+
+Or simply use a GUI tool like Kconfigure to make the above a 1-click
+process.
+
+If you want some more information, read through the rest of this file.
+
+You can find generic and very detailed documentation about the
+configuration script in the file CONFIGURE_DOC.
+
+
+!!!!**** IMPORTANT! ****!!!!
+============================
+
+Some versions of GCC are known to crash the T3 VM on some systems
+(depends on the system's CPU).  If this happens to you and Tads 3
+crashes when loading/compiling a TADS 3 game, then you should manually
+add the "-fno-strict-aliasing" switch to the CXXFLAGS variable and
+re-build.  For example:
+
+  ./configure CXXFLAGS="-O2 -pipe -fno-strict-aliasing"
+  make clean
+  make
+
+
+Requirements
+============
+
+Libraries
+.........
+
+FrobTADS requires a curses compatible library along with its <curses.h>
+or <ncurses.h> header file (that means you have to install a curses
+development package, not only the runtime package).  No third-party
+libraries other than curses are needed to build and run the
+interpreter.  ncurses, plain old curses as well as PDCurses are
+supported.
+
+If no curses library is found, you can still build and use the
+compilers, since only the interpreter needs curses.
+
+
+Compiler
+........
+
+To compile the package you'll need a C and a C++ compiler.  It shouldn't
+matter what kind of compilers are installed on the system, or how recent
+they are; older compilers should work just as well, as long as they can
+compile a reasonable subset of ANSI C (like function prototypes).
+*Really* old K&R-only compilers will probably not work.  As for C++, the
+code does not use the template library, nor any other "modern" C++
+features like templates and exception handling, and should therefore
+compile on pre-standard C++ compilers.
+
+Among the compilers known to work are GCC 2.x, GCC 3.x, GCC 4.x and
+Intel C/C++.
+
+
+The quickie
+===========
+
+Compile and install:
+
+  ./configure [options]
+  make
+  make install
+
+You are not required to build in the same directory where you unpacked
+the source package.  For example, you can do something like this:
+
+  mkdir ~/build
+  cd ~/build
+  ../downloads/frobtads-0.10/configure
+  make
+  make install
+
+Not all versions of Make support this though; check if your version of
+Make supports the VPATH feature (GNU Make does, by the way).
+
+Some 'configure' options (cAsE sENsiTiVe):
+
+  --help           Lists every supported option.
+  --help=short     Lists only FrobTADS specific options.
+  --prefix=PATH    Top-level installation directory.  Default is
+                    "/usr/local".
+  --bindir=PATH    Exact installion point of the binaries.  Default is
+                    "PREFIX/bin".
+  --datadir=PATH   Installation directory for the various data-files.
+                    Default is "PREFIX/share".  Note that a subdirectory
+                    called "frobtads" will be created automaticly.
+  --enable-t3debug Will build the debug version of the T3VM.  This
+                    results in slower code, but is useful for people who
+                    want to make changes to the source code.  This will
+                    also enable the TADS 3 test suite if you installed
+                    the TADS 3 compiler's source code.
+
+If you don't intent to hack around in the interpreter's source code, you
+can also specify this option:
+
+  --disable-dependency-tracking
+
+This will result in a faster compile.  But if you make changes to the
+source code, a "make" won't be able to always tell which source files
+changed.
+
+You may specify your own C and C++ compiler flags like so:
+
+  ./configure CFLAGS="-O3 -pipe -march=pentium4" CXXFLAGS="-O3 -pipe -march=pentium4"
+
+If you used the "--enable-t3debug" configure option and the TADS 3
+compiler source code is available, you can run the test suite with:
+
+  make check
+
+You are *not* required to do a "make install" prior to running the test
+suite.
+
+Play Tads games:
+
+  frob [sometadsgame]
+
+The file extension (.gam or .t3) is optional.
+
+
+
+Detailed instructions
+=====================
+
+To install FrobTADS, you'll have to compile it first, and to compile it
+you'll have to configure it.  The procedure is very easy and is
+described in detail below.
+
+
+Configuration
+.............
+
+First, the package has to find out some information about your system.
+Then, a "makefile" has to be created, since the "make" utility is used
+for building FrobTADS.  Both steps are accomplished by entering the
+following command:
+
+  ./configure
+
+If you want to build the debug version of TADS 3:
+
+  ./configure --enable-t3debug
+
+This will result in slower code (as it performs additional checks in
+this mode) and is not recommended for production builds.  This will also
+enable the TADS 3 test suite (see below).
+
+You can specify where FrobTADS will be installed by passing arguments to
+'configure'.  For example, if you want the executable(s) to be installed
+in "/usr/bin" and the data-files in "/usr/share", you can call
+'configure' like this:
+
+  ./configure --prefix=/usr
+
+If you don't specify a prefix-directory, "/usr/local" will be used.
+
+You can fine-tune the installation points of the various files.  For
+example, if you want the executable(s) to be installed in "/usr/bin",
+but the various data-files in "/opt", you can do:
+
+  ./configure --bindir=/usr/bin --datadir=/opt
+
+Note that a subdirectory called "frobtads" will be created automaticly,
+so don't use "--datadir=/opt/frobtads"; just "--datadir=/opt".
+
+You can also pass compiler-flags to 'configure', and they will be passed
+on to the compiler.  For example, to compile the C sources with
+"-O3 -ansi" and the C++ sources with "-O2 -ansi -fno-exceptions", call
+'configure' like this:
+
+  ./configure CFLAGS="-O3 -ansi" CXXFLAGS="-O2 -ansi -fno-exceptions"
+
+(Don't forget to quote the options if they contain spaces, like in the
+above example.)
+
+Even if the shell allows it, please don't use this:
+
+  CFLAGS="-O3 -ansi" ./configure
+
+*Always* specify these variables *after* the "./configure" part.
+
+If you're using GCC, you should add -fno-exceptions to the C++ options,
+since FrobTADS doesn't make use of C++ exceptions.  You'll save some RAM
+and get a smaller executable, which is a Good Thing on low-end systems.
+You may want to check out the GCC docs to see what optimization options
+are available; typing "info gcc" on the console should get you started.
+
+With GCC, if you want FrobTADS to be compiled with optimized code that
+is tailored to your system's CPU, use the "-march=CPU" option.  Recent
+GCC versions allow you to use "-march=native", in which case the
+compiler will detect your CPU and optimize the code accordingly.  For
+GCC versions that do not support "native", you have to specify your CPU
+by name.  A few examples for the CPU value on PCs:
+
+  i386, i486, pentium, pentium-mmx, pentiumpro, pentium2, pentium3,
+  pentium4, prescott, nocona (that's the 64bit P4; what, you have one?)
+  athlon, athlon-4, athlon-xp, athlon64
+
+For example: "-march=pentium4" of you have a Pentium4 or Celeron D.
+
+Note that older GCC versions don't support all of the above.  For the
+full list of CPUs, type:
+
+  info gcc invoking submodel
+
+To find out the GCC version you have, type
+
+  gcc --version
+
+
+Compilation
+...........
+
+Now that the makefile has been created, you can compile the package with
+the following command:
+
+  make
+
+The compilation should finish without errors (although there might be
+warning messages; you can usually ignore them).  If compilation aborts
+with an error-message, send a bug report to the maintainer (include the
+error-message, the name and version of your compiler, and details about
+your system).
+
+If you installed the source code of the TADS 3 compiler and built the
+debug version of TADS 3, you can run the test suite by typing:
+
+  make check
+
+This will build the test programs and then run some test scripts.  If
+not all of the tests succeed, there's something wrong.  Contact the
+maintainer in this case.
+
+You don't need to install the package prior to running the test suite.
+
+Since running the test suite requires you to build the debug version of
+the T3VM, you should do a
+
+  make clean
+
+to delete the debug version and then configure and compile the package
+again without the "--enable-t3debug" option.  Installing and using the
+debug version for regular work is not recommended.
+
+If you want to do a sanity-check on the TADS 3 compiler, you can type:
+
+  make sample
+
+This will compile the TADS 3 library sample game.  It will be placed in
+the "samples" subdirectory of the build directory.  You can run it with:
+
+  ./frob ./samples/sample.t3
+
+"make sample" does not require the debug-version of T3, so it's always a
+good idea to try it out before installing the package.
+
+
+Installation
+............
+
+To install the package, type:
+
+  make install
+
+You'll probably have to login as root first, if you're installing in a
+directory where you don't have write-access.  If you're installing
+everything in your own home-directory, you don't have to be root.  On
+most systems, you can use the "sudo" command to execute the above as
+root:
+
+  sudo make install
+
+You will be prompted to enter root's password (or your own if you're on
+Ubuntu).
+
+This will install FrobTADS on your system and you're ready to play all
+those Tads games.  If you also downloaded the compiler package(s), they
+will be installed too, along with their data files and development
+libraries.
+
+If the above procedure doesn't work for you, contact the maintainer.
+See the README file for an email address.  Or type:
+
+  ./configure --help
+
+This will print the maintainer's email address as the last line.
+
+
+Usage
+.....
+
+To play a Tads game, just pass the game's filename as an argument to
+'frob', like this:
+
+  frob /usr/local/games/tads/zebulon.gam
+
+The extension ".gam" (or ".t3" for Tads 3 games) is optional.  Typing:
+
+  frob --help
+
+will list the supported command-line options.
+
+If you also installed the compilers, look at their documentation on how
+to use them.  For starters, take a look at the COMPILERS file.
+
+
+
+Operating systems
+=================
+
+
+Mac OS X
+........
+
+OS X should work just like "regular" Unix.  Nothing special is required
+to build the interpreter on OS X, and therefore the above instructions
+also apply for OS X.  Don't forget to install the OS X curses/ncurses
+development package first.
+
+
+BeOS
+....
+
+BeOS is supported and Like OS X, there should be no extra steps needed.
+Just make sure you have curses/ncurses installed.
+
+
+Microsoft Windows
+.................
+
+Yes, you can compile FrobTADS even in Windows.  If you're using
+MinGW/MSYS or cygwin, just configure and compile like in Unix.  Of
+course, you must have a curses or ncurses library installed in a place
+where the compiler and linker can find it (PDCurses is known to work).
+
+Note that the TADS 3 test suite won't work in Windows, because of the
+difference in text line terminators.
+
+You can also cross-compile from Unix to Windows.  If your
+cross-compiler is, for example "i586-pc-mingw32-gcc", configure with:
+
+  ./configure --host=i586-pc-mingw32
+
+and after "make" you should have your Windows *.exe files.  This is in
+fact supported, tested and known to work.
+
+
+DOS
+...
+
+MS-DOG and other brain damages (grin) aren't supported.  A DOS
+interpreter for TADS games already exists, by the way.
+
+
+Other systems
+.............
+
+No one tried yet to compile FrobTADS in systems like Amiga, Atari, OS2,
+etc.  Or if someone did, we never heard of it.  Any volunteers?
+
+Note that if you run Linux on those systems (there's a Linux for Amigas,
+I think), or some other Unix-like OS, then just follow the normal steps
+like for every other Unix system.  It should build and run just fine.
+MorphOS on newer Amigas for example is known to work.  (At least it did
+in the past.)
