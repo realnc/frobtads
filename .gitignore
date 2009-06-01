@@ -4,3 +4,16 @@ Makefile.in
 /frob
 /t3make
 /tadsc
+/aclocal.m4
+/autom4te.cache/
+/config.h.in
+/config.h
+/config.log
+/config.status
+.deps/
+/config/
+/configure
+/stamp-h1
+.dirstamp
+/samples/
+/test/
