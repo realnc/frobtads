@@ -16,7 +16,7 @@ include $(srcdir)/Common.am
 ## Because each individual makefile expands bin_PROGRAMS with '+=', it
 ## must have been previously set, even if it's empty.
 ##
-bin_PROGRAMS = frob
+bin_PROGRAMS =
 
 ## If we should build the compilers, include their makefiles.
 ##
