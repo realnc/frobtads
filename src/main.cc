@@ -36,8 +36,8 @@ const char versionOutput[] =
 "FrobTADS " PACKAGE_VERSION "\n"
 "TADS 2 virtual machive v" TADS_RUNTIME_VERSION "\n"
 "TADS 3 virtual machine v" T3VM_VSN_STRING " (" T3VM_IDENTIFICATION ")\n"
-"Copyright (C) 2005 Nikos Chantziaras.\n"
-"TADS copyright (C) 2005 Michael J. Roberts.\n"
+"Copyright (C) 2009 Nikos Chantziaras.\n"
+"TADS copyright (C) 2009 Michael J. Roberts.\n"
 "FrobTADS comes with NO WARRANTY, to the extent permitted by law.\n"
 "You may redistribute copies of FrobTADS under certain terms and conditions.\n"
 "See the file named COPYING for more information.";
