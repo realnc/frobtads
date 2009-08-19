@@ -3,6 +3,7 @@
 #include "common.h"
 
 #include <string.h>
+#include <stdlib.h>
 #if HAVE_TIOCGWINSZ || HAVE_TIOCGSIZE
 # if (!defined(GWINSZ_IN_SYS_IOCTL) || HAVE_TIOCGSIZE) && HAVE_TERMIOS_H
 #  include <termios.h>
@@ -42,10 +43,16 @@ getTermSize( unsigned& width, unsigned& height )
 	w = size.ts_cols;
 	h = size.ts_lines;
 #endif
-	if (res < 0 or w == 0 or h == 0) {
-		// The call failed or the system doesn't seem to know
-		// the terminal's size.
+	if (res < 0) {
+		// The call failed.
 		return false;
+	}
+	if (w == 0 or h == 0) {
+		// Kernel doesn't seem to know the terminal's size.		
+		// Assume 80x24.
+		width = 80;
+		height = 24;
+		return true;
 	}
 	width = w;
 	height = h;
