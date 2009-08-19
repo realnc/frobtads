@@ -1364,6 +1364,7 @@ void CVmObjTable::alloc_new_page()
     {
         /* mark the object as free so we don't try to free it later */
         entry->free_ = TRUE;
+        entry->in_root_set_ = TRUE;
         
         /* don't put the invalid object in the free list */
         ++i;

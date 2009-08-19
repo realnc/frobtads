@@ -1317,7 +1317,7 @@ void CVmObjFile::read_data_mode(VMG_ vm_val_t *retval)
     }
 
     /* see what we have */
-    switch((vm_datatype_t)buf[0])
+    switch(buf[0])
     {
     case VMOBJFILE_TAG_INT:
         /* read the INT4 value */
