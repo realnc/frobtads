@@ -603,13 +603,13 @@ protected:
 
 private:
     /* flag: debugger has control */
-    int in_debugger_ : 1;
+    unsigned int in_debugger_ : 1;
     
     /* 
      *   single-step mode - if this is true, we're stepping through code;
      *   otherwise, we're running until we hit a breakpoint 
      */
-    int single_step_ : 1;
+    unsigned int single_step_ : 1;
 
     /* 
      *   step-in mode - if this is true, and single_step_ is true, we'll
@@ -618,7 +618,7 @@ private:
      *   level as the current statement (in other words, we're stepping
      *   over subroutine calls made by the current statement) 
      */
-    int step_in_ : 1 ;
+    unsigned int step_in_ : 1 ;
 
     /* 
      *   Step-out mode - if this is true, and single_step_ is true, we'll
@@ -627,28 +627,28 @@ private:
      *   native code interaction, because we actually know to stop on a
      *   step-out using step-over with an enclosing stack level.)  
      */
-    int step_out_ : 1;
+    unsigned int step_out_ : 1;
 
     /* 
      *   step-over-breakpoint mode - if this is true, we're stepping over
      *   a breakpoint 
      */
-    int step_over_bp_ : 1;
+    unsigned int step_over_bp_ : 1;
 
     /* 
      *   Original step flags - these store the step flags that will be in
      *   effect after we finish a step_over_bp operation 
      */
-    int orig_single_step_ : 1;
-    int orig_step_in_ : 1;
-    int orig_step_out_ : 1;
+    unsigned int orig_single_step_ : 1;
+    unsigned int orig_step_in_ : 1;
+    unsigned int orig_step_out_ : 1;
 
     /* 
      *   flag: we've been initialized during program load; when this flag is
      *   set, we'll have to make corresponding uninitializations when the
      *   program terminates 
      */
-    int program_inited_ : 1;
+    unsigned int program_inited_ : 1;
 
     /* breakpoint being stepped over */
     CVmDebugBp *step_over_bp_bp_;
@@ -673,7 +673,7 @@ private:
      *   functions might not have debug tables at all.  
      */
     CVmDbgTablePtr dbg_ptr_;
-    int dbg_ptr_valid_ : 1;
+    unsigned int dbg_ptr_valid_ : 1;
 
     /* function header pointer for current function */
     pool_ofs_t entry_ofs_;

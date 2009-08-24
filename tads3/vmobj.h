@@ -1380,14 +1380,14 @@ struct CVmObjPageEntry
     CVmObject *get_vm_obj() const { return (CVmObject *)ptr_.obj_; }
 
     /* flag: the object is in the free list */
-    int free_ : 1;
+    unsigned int free_ : 1;
 
     /* 
      *   flag: the object is part of the root set (that is, there's a
      *   reference to this object from some static location outside of the
      *   root set, such as in p-code or in a constant list) 
      */
-    int in_root_set_ : 1;
+    unsigned int in_root_set_ : 1;
 
     /*
      *   Reachability state.  This indicates whether the object is

@@ -1470,10 +1470,10 @@ private:
     void clear_linebuf();
 
     /* flag: ALL_ONCE mode - we include each file only once */
-    int all_once_ : 1;
+    unsigned int all_once_ : 1;
 
     /* flag: warn on ignoring a redundant #include file */
-    int warn_on_ignore_incl_ : 1;
+    unsigned int warn_on_ignore_incl_ : 1;
 
     /*
      *   Flag: in preprocess-only mode.  In this mode, we'll leave certain
@@ -1482,13 +1482,13 @@ private:
      *   For example, we'll leave #line directives, #pragma C, #error, and
      *   #pragma message directives in the preprocessed result.  
      */
-    int pp_only_mode_ : 1;
+    unsigned int pp_only_mode_ : 1;
 
     /* 
      *   Flag: in test reporting mode.  In this mode, we'll expand __FILE__
      *   macros with the root name only. 
      */
-    int test_report_mode_ : 1;
+    unsigned int test_report_mode_ : 1;
 
     /*
      *   Flag: in preprocess-for-includes mode.  In this mode, we'll do
@@ -1496,7 +1496,7 @@ private:
      *   header files that are included, along with header files they
      *   include, and so on.  
      */
-    int list_includes_mode_ : 1;
+    unsigned int list_includes_mode_ : 1;
 
     /*
      *   Flag: treat newlines in strings as whitespace.  When this is true,
@@ -1508,13 +1508,13 @@ private:
      *   whitespace is not conventionally used as a token separator in
      *   ordinary text.  
      */
-    int string_newline_spacing_ : 1;
+    unsigned int string_newline_spacing_ : 1;
 
     /* 
      *   flag: we're parsing a preprocessor constant expression (for a
      *   #if, for example; this doesn't apply to simple macro expansion) 
      */
-    int in_pp_expr_ : 1;
+    unsigned int in_pp_expr_ : 1;
 
     /* resource loader */
     class CResLoader *res_loader_;

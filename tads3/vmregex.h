@@ -299,21 +299,21 @@ struct re_compiled_pattern_base
      *   case-sensitive, so alphabetic characters in the pattern are matched
      *   without regard to case.  
      */
-    int case_sensitive : 1;
+    unsigned int case_sensitive : 1;
 
     /* 
      *   <MIN> or <MAX> match mode -- if this flag is set, we match the
      *   longest string in case of ambiguity; otherwise we match the
      *   shortest.  
      */
-    int longest_match : 1;
+    unsigned int longest_match : 1;
 
     /* 
      *   <FirstEnd> or <FirstBeg> match mode -- if this flag is set, we
      *   match (in a search) the string that starts first in case of
      *   ambiguity; otherwise, we match the string that ends first 
      */
-    int first_begin : 1;
+    unsigned int first_begin : 1;
 };
 
 /*

@@ -628,7 +628,7 @@ protected:
      *   Flag: the log stream is enabled.  We can temporarily disable the
      *   log stream, such as when writing to the statusline stream.  
      */
-    int log_enabled_ : 1;
+    unsigned int log_enabled_ : 1;
     
     /*
      *   Flag: display two spaces after a period-like punctuation mark.

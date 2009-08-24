@@ -743,7 +743,7 @@ protected:
     CTcConstVal const_val_;
 
     /* flag: all elements of the list are constant */
-    int is_const_ : 1;
+    unsigned int is_const_ : 1;
 };
 
 /*
@@ -2020,7 +2020,7 @@ protected:
      *   flag: we are explicitly defined with the root object ('object') as
      *   our superclass 
      */
-    int sc_is_root_ : 1;
+    unsigned int sc_is_root_ : 1;
 
     /* flag: the object is transient */
     uint transient_ : 1;
@@ -2470,10 +2470,10 @@ protected:
     int argc_;
 
     /* flag: variable arguments (in which case argc_ is only a minimum) */
-    int varargs_ : 1;
+    unsigned int varargs_ : 1;
 
     /* flag: function has a return value (false -> void function) */
-    int has_retval_ : 1;
+    unsigned int has_retval_ : 1;
 };
 
 /*
@@ -2508,7 +2508,7 @@ protected:
      *   track of this so that we warn when a label is defined but never
      *   used as a target) 
      */
-    int referenced_ : 1;
+    unsigned int referenced_ : 1;
 };
 
 
@@ -2980,7 +2980,7 @@ protected:
      *   flag: we have our own private symbol table (it's not the
      *   enclosing scope's symbol table) 
      */
-    int has_own_scope_ : 1;
+    unsigned int has_own_scope_ : 1;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -3147,7 +3147,7 @@ protected:
     class CTcPrsSymtab *symtab_;
 
     /* flag: we have our own private symbol table (not our parent's) */
-    int has_own_scope_ : 1;
+    unsigned int has_own_scope_ : 1;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -3211,7 +3211,7 @@ protected:
     int iter_local_id_;
     
     /* flag: we have our own private symbol table (not our parent's) */
-    int has_own_scope_ : 1;
+    unsigned int has_own_scope_ : 1;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -4000,19 +4000,19 @@ protected:
     int prop_cnt_;
 
     /* flag: I'm a class */
-    int is_class_ : 1;
+    unsigned int is_class_ : 1;
 
     /* flag: I've been replaced by another object */
-    int replaced_ : 1;
+    unsigned int replaced_ : 1;
 
     /* flag: I've been modified by another object */
-    int modified_ : 1;
+    unsigned int modified_ : 1;
 
     /* flag: the object is transient */
-    int transient_ : 1;
+    unsigned int transient_ : 1;
 
     /* flag: this object definition used a template that wasn't matched */
-    int bad_template_ : 1;
+    unsigned int bad_template_ : 1;
 
     /* 
      *   Flag: this object definition includes an undescribed superclass.
@@ -4021,7 +4021,7 @@ protected:
      *   a template, since we know nothing about the class other than that it
      *   is indeed a class.  
      */
-    int undesc_sc_ : 1;
+    unsigned int undesc_sc_ : 1;
 };
 
 /*
