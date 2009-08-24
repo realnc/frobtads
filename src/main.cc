@@ -62,7 +62,7 @@ const char helpOutput[] =
 "  -e, --scroll-buffer  Size of the scroll-back buffer. Must be between 8 and\n"
 "                       8192kB (default is 512kB)\n"
 "  -r, --restore        Load a saved game position\n"
-"  -u, --t3undo         Multiply the availabe T3VM undo buffer by n. Must be\n"
+"  -u, --undo-size      Multiply the availabe T3VM undo buffer by n. Must be\n"
 "                       between 1 and 64 (default is 16; about 100 UNDOs)\n"
 "  -k, --character-set  Use given charset as the keyboard and display\n"
 "                       character set.\n"
