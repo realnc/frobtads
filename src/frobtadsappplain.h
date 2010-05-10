@@ -40,7 +40,7 @@ class FrobTadsApplicationPlain: public FrobTadsApplication {
 
 	virtual void
 	flush()
-	{ }
+	{ fflush(stdout); }
 
 	virtual void
 	clear( int, int, int, int, int )
