@@ -1,6 +1,10 @@
 *.[oa]
 Makefile
 Makefile.in
+frobtads.config
+frobtads.creator
+frobtads.files
+frobtads.includes
 /frob
 /t3make
 /tadsc
