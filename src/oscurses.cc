@@ -170,6 +170,14 @@ timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
 }
 
 
+/* Flush any buffered display output.
+ */
+void os_flush( void )
+{
+	globalApp->flush();
+}
+
+
 /* Read a character from the keyboard and return the low-level,
  * untranslated key code whenever possible.
  */
