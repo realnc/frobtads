@@ -59,12 +59,14 @@ int os_getc(void)
 
 /* Uses os_getc_raw() semantics, but with a timeout.
  *
- * If 'timeout' is 0 or negative, then the routine behaves exactly like
+ * If 'timeout' is negative, then the routine behaves exactly like
  * os_getc_raw().  If 'timeout' is positive, then we only wait for a key
- * for 'timeout' milliseconds.  If the operation times out before a key
- * has been pressed, we return 0 and set 'timedOut' to true.  If a key
- * is pressed before the timeout is reached, we return the same as
- * os_getc_raw() and set 'timedOut' to false.
+ * for 'timeout' milliseconds.  It 'timeout' is 0, we don't wait for a
+ * key but still return one if there was one in the system's input buffer.
+ * If the operation times out before a key has been pressed, we return 0
+ * and set 'timedOut' to true.  If a key is pressed before the timeout is
+ * reached, we return the same as os_getc_raw() and set 'timedOut' to
+ * false.
  *
  * 'showCursor' enables/disables the cursor while waiting for input.
  */
@@ -85,7 +87,7 @@ timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
 		extKey = 0;
 
 		if (c == ERR) {
-			if (timeout > 0) {
+			if (timeout > -1) {
 				// The operation timed out.
 				if (timedOut != 0) *timedOut = true;
 				return 0;
@@ -99,7 +101,7 @@ timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
 
 		// If a timeout was specified and the caller wants to
 		// know, report that no timeout occured.
-		if (timeout > 0 and timedOut != 0) *timedOut = false;
+		if (timeout > -1 and timedOut != 0) *timedOut = false;
 		
 		switch (c) {
 		  // Paranoia.
@@ -202,7 +204,7 @@ os_get_event( unsigned long timeout, int use_timeout, os_event_info_t* info )
 	int res;
 	bool timedOut = false;
 
-	res = timedGetcRaw(true, use_timeout ? timeout : 0, &timedOut);
+	res = timedGetcRaw(true, use_timeout ? timeout : -1, &timedOut);
 
 	// If the timeout expired, tell TADS about it.
 	if (use_timeout and timedOut) return OS_EVT_TIMEOUT;

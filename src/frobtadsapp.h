@@ -150,10 +150,12 @@ class FrobTadsApplication {
 	 * If 'cursorVisible' is false, no cursor is shown while waiting
 	 * for a key-press.
 	 *
-	 * If 'timeout' is > 0, then the routine will wait for a key
+	 * If 'timeout' is > -1, then the routine will wait for a key
 	 * only for 'timeout' milliseconds.  If a key has been pressed
 	 * before the timeout expires it is returned as usual.  If the
 	 * timeout expires and there's still no key, ERR is returned.
+	 * A 0 timeout should not block, but still check if there's
+	 * input waiting in an input buffer (if applicable.)
 	 *
 	 * Note that KEY_BACKSPACE and KEY_DL are handled correctly; you
 	 * don't need to use the low-level curses routines erasechar()

@@ -53,11 +53,13 @@ class FrobTadsWindow {
 
 	/* Sets a timeout for subsequent input operations.  If 'timeout'
 	 * milliseconds pass and there's no input, ERR is returned.  If
-	 * 'timeout' is < 1 (zero or negative), the input methods will
-	 * not use a timeout but wait indefinitely for input.
+	 * 'timeout' is negative, the input methods will not use a timeout
+	 * but wait indefinitely for input.  A 0 'timeout' will only check
+	 * whether there's input already available in the input buffer and
+	 * fetch it, but will otherwise not block.
 	 */
 	void
-	setTimeout( int timeout ) { if (timeout == 0) timeout = -1; wtimeout(this->fWin, timeout); }
+	setTimeout( int timeout ) { wtimeout(this->fWin, timeout); }
 
 	/* Writes the string 'str' to the window at the specified
 	 * position.  Note the type of 'str'; it's not a 'char*'.  The

@@ -379,7 +379,7 @@ FrobTadsApplicationCurses::getRawChar( bool cursorVisible, int timeout )
 	// timeout is very small, even if the caller requested it.
 	// "Small" means under 1 second, which is what most terminals
 	// use for a cursor blink.
-	if (cursorVisible and (timeout > 1000 or timeout < 1)) curs_set(1);
+	if (cursorVisible and (timeout > 1000 or timeout < 0)) curs_set(1);
 
 	// On some systems, ncurses is configured to supply its own
 	// SIGWINCH handler.  If this is the case, getch() returns
