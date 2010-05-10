@@ -199,7 +199,7 @@ os_waitc( void )
 {
 	// Just read a character with no timeout and ignore its value.
 	// Don't show a cursor.
-	globalApp->getRawChar(false, 0);
+	globalApp->getRawChar(false, -1);
 }
 #endif
 
