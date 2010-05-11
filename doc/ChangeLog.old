@@ -1,9 +1,8 @@
-Changes to the sources should be documented here.  The format should follow
-common "standards":  When recording changes in a ChangeLog, one entry is made
-per person.  Logical changes are grouped together, while logically distinct
-changes ("change sets") are separated by a single blank line.  Entries should
-be brief, and should not explain why the change has been made, only what the
-change was.  (The "why" can go in the sources as a comment.)
+This file is no longer used to record changes in the FrobTADS sources.
+We have the Git log for that now :)
+
+This file is kept for historical purposes.
+
 
 2009-05-31  Nikos Chantziaras  <realnc@gmail.com>
 	* configure.ac: AM_SILENT_RULES([yes]).
