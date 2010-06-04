@@ -79,94 +79,88 @@ timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
 	static bool done = true;
 	static int extKey;
 
-	if (done) {
-		int c;
-
-		// Read a character.
-		c = globalApp->getRawChar(showCursor, timeout);
-		extKey = 0;
-
-		if (c == ERR) {
-			if (timeout > -1) {
-				// The operation timed out.
-				if (timedOut != 0) *timedOut = true;
-				return 0;
-			}
-			// Paranoia (ERR is only returned to indicate
-			// that the operation timed out).
-			// Something else happened.  Prepare to return
-			// an EOF on our next call.
-			extKey = CMD_EOF;
-		}
-
-		// If a timeout was specified and the caller wants to
-		// know, report that no timeout occured.
-		if (timeout > -1 and timedOut != 0) *timedOut = false;
-		
-		switch (c) {
-		  // Paranoia.
-		  // ERR should always be 0, and therefore
-		  // already handled.  Anyway, we explicitly
-		  // check for 0 here just in case ERR != 0.
-		  case 0:         extKey = CMD_EOF; break;
-		  // A Tab is not an extended character, but Tads requires
-		  // that it is handled as one.
-		  case '\t':      extKey = CMD_TAB; break;
-		  case '\n':
-		  case '\r':
-		  case KEY_ENTER: return 13;
-		  case KEY_DOWN:  extKey = CMD_DOWN; break;
-		  case KEY_UP:    extKey = CMD_UP; break;
-		  case KEY_LEFT:  extKey = CMD_LEFT; break;
-		  case KEY_RIGHT: extKey = CMD_RIGHT; break;
-		  case KEY_HOME:  extKey = CMD_HOME; break;
-		  // We don't return '\b' because of paranoia;
-		  // some systems might not use ASCII code 8 for
-		  // '\b'.
-		  case '\b':
-		  case KEY_BACKSPACE: return 8;
-		  case KEY_F(1):  extKey = CMD_F1; break;
-		  case KEY_F(2):  extKey = CMD_F2; break;
-		  case KEY_F(3):  extKey = CMD_F3; break;
-		  case KEY_F(4):  extKey = CMD_F4; break;
-		  case KEY_F(5):  extKey = CMD_F5; break;
-		  case KEY_F(6):  extKey = CMD_F6; break;
-		  case KEY_F(7):  extKey = CMD_F7; break;
-		  case KEY_F(8):  extKey = CMD_F8; break;
-		  case KEY_F(9):  extKey = CMD_F9; break;
-		  case KEY_F(10): extKey = CMD_F10; break;
-		  case KEY_DL:    extKey = CMD_KILL; break;
-		  case KEY_DC:    extKey = CMD_DEL; break;
-		  case KEY_EOL:   extKey = CMD_DEOL; break;
-		  case KEY_NPAGE: extKey = CMD_PGDN; break;
-		  case KEY_PPAGE: extKey = CMD_PGUP; break;
-		  case KEY_END:   extKey = CMD_END; break;
-		  default:
-			// TODO: This assumes that the system only returns
-			// unsigned characters for "normal" inputs.
-			if (c < 0 or c > 255) {
-				// Who knows?  Report a space so that
-				// there's at least some feedback.
-		  		return ' ';
-			}
-		}
-
-		if (extKey == 0) {
-			// It's a normal ASCII code (this includes Escape,
-			// which has code 27).
-			return c;
-		}
-
-		// Prepare to return the extended key-code on
-		// our next call.
-		done = false;
-		return 0;
+	if (not done) {
+		// We have a pending return from our last call.  Prepare to do a
+		// normal read on our next call and return the pending result.
+		done = true;
+		return extKey;
 	}
 
-	// We have a pending return from our last call.  Prepare to do a
-	// normal read on our next call and return the pending result.
-	done = true;
-	return extKey;
+	// Read a character.
+	int c = globalApp->getRawChar(showCursor, timeout);
+	extKey = 0;
+
+	if (c == ERR) {
+		if (timeout > -1) {
+			// The operation timed out.
+			if (timedOut != 0) *timedOut = true;
+			return 0;
+		}
+		// Paranoia (ERR is only returned to indicate that the operation
+		// timed out).  Something else happened.  Prepare to return an EOF
+		// on our next call.
+		extKey = CMD_EOF;
+	}
+
+	// If a timeout was specified and the caller wants to know, report that
+	// no timeout occured.
+	if (timeout > -1 and timedOut != 0) *timedOut = false;
+		
+	switch (c) {
+	  // Paranoia.
+	  // ERR should always be 0, and therefore already handled.  Anyway, we
+	  // explicitly check for 0 here just in case ERR != 0.
+	  case 0:         extKey = CMD_EOF; break;
+	  // A Tab is not an extended character, but Tads requires that it is
+	  // handled as one.
+	  case '\t':      extKey = CMD_TAB; break;
+	  case '\n':
+	  case '\r':
+	  case KEY_ENTER: return 13;
+	  case KEY_DOWN:  extKey = CMD_DOWN; break;
+	  case KEY_UP:    extKey = CMD_UP; break;
+	  case KEY_LEFT:  extKey = CMD_LEFT; break;
+	  case KEY_RIGHT: extKey = CMD_RIGHT; break;
+	  case KEY_HOME:  extKey = CMD_HOME; break;
+	  // We don't return '\b' because of paranoia; some systems might not
+	  // use ASCII code 8 for '\b'.
+	  case '\b':
+	  case KEY_BACKSPACE: return 8;
+	  case KEY_F(1):  extKey = CMD_F1; break;
+	  case KEY_F(2):  extKey = CMD_F2; break;
+	  case KEY_F(3):  extKey = CMD_F3; break;
+	  case KEY_F(4):  extKey = CMD_F4; break;
+	  case KEY_F(5):  extKey = CMD_F5; break;
+	  case KEY_F(6):  extKey = CMD_F6; break;
+	  case KEY_F(7):  extKey = CMD_F7; break;
+	  case KEY_F(8):  extKey = CMD_F8; break;
+	  case KEY_F(9):  extKey = CMD_F9; break;
+	  case KEY_F(10): extKey = CMD_F10; break;
+	  case KEY_DL:    extKey = CMD_KILL; break;
+	  case KEY_DC:    extKey = CMD_DEL; break;
+	  case KEY_EOL:   extKey = CMD_DEOL; break;
+	  case KEY_NPAGE: extKey = CMD_PGDN; break;
+	  case KEY_PPAGE: extKey = CMD_PGUP; break;
+	  case KEY_END:   extKey = CMD_END; break;
+	  default:
+		// TODO: This assumes that the system only returns unsigned
+		// characters for "normal" inputs.
+		if (c < 0 or c > 255) {
+			// Who knows?  Report a space so that there's at least some
+			// feedback.
+			return ' ';
+		}
+	}
+
+	if (extKey == 0) {
+		// It's a normal ASCII code (this includes Escape, which has code
+		// 27).
+		return c;
+	}
+
+	// Prepare to return the extended key-code on our next call.
+	done = false;
+	return 0;
 }
 
 
