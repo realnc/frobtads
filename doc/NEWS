@@ -1,3 +1,11 @@
+v1.0
+====
+
+  - Games requesting 0ms input-timeouts would result in the input
+    operation blocking; this was incorrect behavior and has been fixed.
+    0ms requests really mean "don't block and don't wait."
+
+
 v0.13
 =====
 
