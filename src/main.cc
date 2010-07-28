@@ -62,6 +62,7 @@ const char helpOutput[] =
 "  -e, --scroll-buffer  Size of the scroll-back buffer. Must be between 8 and\n"
 "                       8192kB (default is 512kB)\n"
 "  -r, --restore        Load a saved game position\n"
+"  -R, --replay         Replay commands from the specified file\n"
 "  -u, --undo-size      Multiply the availabe T3VM undo buffer by n. Must be\n"
 "                       between 1 and 64 (default is 16; about 100 UNDOs)\n"
 "  -k, --character-set  Use given charset as the keyboard and display\n"
@@ -110,6 +111,7 @@ int main( int argc, char** argv )
 		"n|no-colors",
 		"o|no-defcolors",
 		"p|no-pause",
+		"R:replay <filename>",
 		"r:restore <filename>",
 		"s:safety-level <0..4>",
 		"t:tcolor <0..7>",
@@ -174,7 +176,8 @@ int main( int argc, char** argv )
 		VM_IO_SAFETY_READWRITE_CUR,
   		// TODO: Revert the default back to "\0" when Unicode output
   		// is finally implemented.
-		"us-ascii"  // Character set.
+		"us-ascii",  // Character set.
+		0            // Replay file.
 	};
 
 	// Name of the game to run.
@@ -315,7 +318,7 @@ int main( int argc, char** argv )
 	  }
 
 	  // --restore
-	  case 'r': {
+	  case 'r':
 		if (optionError) break;
 		if (optArg == 0) {
 			// Argument is missing.
@@ -324,7 +327,17 @@ int main( int argc, char** argv )
 		}
 		savedPosFilename = optArg;
 		break;
-	  }
+
+	  // --replay
+	  case 'R':
+		if (optionError) break;
+		if (optArg == 0) {
+			// Argument is missing.
+			optionError = true;
+			break;
+		}
+		frobOpts.replayFile = optArg;
+		break;
 
 	  // --undo-size
 	  case 'u': {

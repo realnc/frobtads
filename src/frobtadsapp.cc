@@ -9,6 +9,7 @@
 
 #include "os.h"
 #include "trd.h"
+#include "tio.h" // for qasopn
 #include "t3std.h"
 #include "vmmain.h"
 #include "vmvsn.h"
@@ -88,6 +89,11 @@ FrobTadsApplication::fRunTads2( char* filename )
 	char argv0[] = "frob";
 	char* argv[2] = {argv0, filename};
 
+	// If a replay file was specified, load it.
+	if (this->options.replayFile != 0) {
+		qasopn((char *)this->options.replayFile, 1);
+	}
+
 	// Run the Tads 2 VM.
 	char savExt[] = "sav";
 	int vmRet = trdmain(2, argv, &appctx, savExt);
@@ -107,7 +113,8 @@ FrobTadsApplication::fRunTads3( char* filename )
 	hostifc->set_io_safety(this->options.safetyLevel);
 
 	// Run the Tads 3 VM.
-	int vmRet = vm_run_image(&clientifc, filename, hostifc, 0, 0, 0, false, 0, 0, false, false, 0, 0, 0, 0);
+	int vmRet = vm_run_image(&clientifc, filename, hostifc, 0, 0, this->options.replayFile, false, 0, 0,
+							 false, false, 0, 0, 0, 0);
 
 	delete hostifc;
 	return vmRet;

@@ -42,6 +42,7 @@ class FrobTadsApplication {
 		unsigned scrollBufSize; // Scroll-back buffer size.
 		int safetyLevel;        // File I/O safety level.
 		char characterSet[40];  // Local character set name.
+		const char* replayFile; // Replay file.
 	};
 
 	// Our options.  Once set, they remain constant during run-time
