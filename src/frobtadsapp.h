@@ -24,7 +24,7 @@ class FrobTadsApplication {
   public:
 	// Signal handlers are such a pain in the ass...  Has to be
 	// friend.
-	friend RETSIGTYPE winResizeHandler(int);
+	friend void winResizeHandler(int);
 
 	// Instead of using a gazillion of constructor-arguments, we
 	// group them inside this structure.

@@ -129,12 +129,6 @@ AC_C_CONST
 AC_TYPE_SIZE_T
 AC_C_VOLATILE
 
-# Check what type the system's <signal.h> uses for signal handlers.
-# This macro defines RETSIGTYPE to the appropriate type (void, int, or
-# whatever).
-#
-AC_TYPE_SIGNAL
-
 # Some systems don't provide the SIGWINCH signal (like MS Windows).
 #
 AC_CACHE_CHECK([for SIGWINCH signal support], ac_cv_sigwinch_signal,

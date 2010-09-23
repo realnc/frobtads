@@ -30,7 +30,8 @@ FrobTadsApplication* globalApp;
 /* Wee need a signal handler to handle window resizes when running
  * inside a terminal.
  */
-RETSIGTYPE winResizeHandler( int )
+void
+winResizeHandler( int )
 {
 	// Re-initialize the screen.
 	globalApp->resizeEvent();
