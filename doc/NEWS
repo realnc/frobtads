@@ -1,9 +1,30 @@
 v1.0
 ====
+  - Git is now used for version control.  The repository is hosted at:
+
+      http://www.assembla.com/spaces/frobtads
+
+  - If the terminal size can't be detected, the interpreter will now
+    assume 80x24.
+
+  - The --undo-size option was wrongly documented as --t3undo.  This was
+    changed in the code a while back, but the --help output stil refered
+    to the old name.
 
   - Games requesting 0ms input-timeouts would result in the input
     operation blocking; this was incorrect behavior and has been fixed.
     0ms requests really mean "don't block and don't wait."
+
+  - The flush() operation was not implemented correctly, which could in
+    some cases lead to a game not displaying output.  This would happen
+    if the game paused using timing functionality without using any
+    input routines to achieve the pause effect.
+
+  - The ChangeLog file has been deprecated and changes will not be
+    recorded there any longer, since now we have "git log".
+
+  - A new option has been introduced: -R/--replay which can be used to
+    load replay files at startup.  Thanks to Marc Simpson for the patch.
 
 
 v0.13
