@@ -133,7 +133,7 @@ AC_C_VOLATILE
 #
 AC_CACHE_CHECK([for SIGWINCH signal support], ac_cv_sigwinch_signal,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include <signal.h>]], [[int foo = SIGWINCH;]]),
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <signal.h>]], [[int foo = SIGWINCH;]])],
     [ac_cv_sigwinch_signal=yes],
     [ac_cv_sigwinch_signal=no]
   )
@@ -194,7 +194,7 @@ AC_CHECK_DECLS([wcslen, wcscpy], [], [], [#include <wchar.h>])
 #
 AC_CACHE_CHECK([for TIOCGWINSZ ioctl support], ac_cv_tiocgwinsz_ioctl,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM(
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[#ifndef GWINSZ_IN_SYS_IOCTL
 #if HAVE_TERMIOS_H
 #include <termios.h>
@@ -203,7 +203,7 @@ AC_CACHE_CHECK([for TIOCGWINSZ ioctl support], ac_cv_tiocgwinsz_ioctl,
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif]],
-    [[struct winsize size; ioctl(0, TIOCGWINSZ, &size);]]),
+    [[struct winsize size; ioctl(0, TIOCGWINSZ, &size);]])],
     [ac_cv_tiocgwinsz_ioctl=yes],
     [ac_cv_tiocgwinsz_ioctl=no]
   )
@@ -217,14 +217,14 @@ fi
 #
 AC_CACHE_CHECK([for TIOCGSIZE ioctl support], ac_cv_tiocgsize_ioctl,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM(
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
 [[#if HAVE_TERMIOS_H
 #include <termios.h>
 #endif
 #if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif]],
-    [[struct ttysize size; ioctl(0, TIOCGSIZE, &size);]]),
+    [[struct ttysize size; ioctl(0, TIOCGSIZE, &size);]])],
     [ac_cv_tiocgsize_ioctl=yes],
     [ac_cv_tiocgsize_ioctl=no]
   )
@@ -348,13 +348,13 @@ AC_SEARCH_LIBS(clock_gettime, rt,
     AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Define to 1 if you have clock_gettime.])
     AC_MSG_CHECKING([whether clock_gettime supports CLOCK_MONOTONIC])
     AC_COMPILE_IFELSE(
-      AC_LANG_PROGRAM(
+      [AC_LANG_PROGRAM(
         [[#include <time.h>]],
-	[[clockid_t clockType = CLOCK_MONOTONIC;]]
-      ),
+        [[clockid_t clockType = CLOCK_MONOTONIC;]]
+      )],
       [
         AC_MSG_RESULT(yes)
-	AC_DEFINE([HAVE_CLOCK_MONOTONIC], [1], [Define to 1 if clock_gettime supports CLOCK_MONOTONIC.])
+        AC_DEFINE([HAVE_CLOCK_MONOTONIC], [1], [Define to 1 if clock_gettime supports CLOCK_MONOTONIC.])
       ],
       AC_MSG_RESULT(no)
     )
@@ -377,7 +377,7 @@ AC_CHECK_FUNCS([use_default_colors])
 #
 AC_CACHE_CHECK([for nl_langinfo and CODESET], frob_cv_langinfo_codeset,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[#include <langinfo.h>]], [[char* cs = nl_langinfo(CODESET);]]),
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <langinfo.h>]], [[char* cs = nl_langinfo(CODESET);]])],
     [frob_cv_langinfo_codeset=yes],
     [frob_cv_langinfo_codeset=no]
   )
@@ -408,7 +408,7 @@ AC_LANG(C++)
 #
 AC_CACHE_CHECK([whether the C++ compiler supports the and keyword], ac_cv_cxx_and_keyword,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[int i;]], [[i = 0 and 1;]]),
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = 0 and 1;]])],
     [ac_cv_cxx_and_keyword=yes],
     [ac_cv_cxx_and_keyword=no]
   )
@@ -419,7 +419,7 @@ fi
 
 AC_CACHE_CHECK([whether the C++ compiler supports the or keyword], ac_cv_cxx_or_keyword,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[int i;]], [[i = 0 or 1;]]),
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = 0 or 1;]])],
     [ac_cv_cxx_or_keyword=yes],
     [ac_cv_cxx_or_keyword=no]
   )
@@ -430,7 +430,7 @@ fi
 
 AC_CACHE_CHECK([whether the C++ compiler supports the not keyword], ac_cv_cxx_not_keyword,
 [
-  AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[int i;]], [[i = not 1;]]),
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = not 1;]])],
     [ac_cv_cxx_not_keyword=yes],
     [ac_cv_cxx_not_keyword=no]
   )
@@ -453,7 +453,7 @@ AC_CHECK_TYPES(bool)
 #
 AC_CACHE_CHECK(whether the compiler supports dynamic_cast<>, ac_cv_cxx_dynamic_cast,
 [AC_COMPILE_IFELSE(
-    AC_LANG_PROGRAM(
+    [AC_LANG_PROGRAM(
     [[#include <typeinfo>
       class Base {public: Base(){} virtual void f() = 0;};
       class Derived: public Base {public: Derived(){} virtual void f(){}};
@@ -461,7 +461,7 @@ AC_CACHE_CHECK(whether the compiler supports dynamic_cast<>, ac_cv_cxx_dynamic_c
       Derived d;
       Base& b=d;
       return dynamic_cast<Derived*>(&b) ? 0 : 1;
-    ]]),
+    ]])],
     [ac_cv_cxx_dynamic_cast=yes],
     [ac_cv_cxx_dynamic_cast=no]
   )
@@ -472,7 +472,7 @@ fi
 
 AC_CACHE_CHECK(whether the compiler supports static_cast<>, ac_cv_cxx_static_cast,
 [AC_COMPILE_IFELSE(
-    AC_LANG_PROGRAM(
+    [AC_LANG_PROGRAM(
     [[#include <typeinfo>
       class Base {public: Base(){} virtual void f() = 0;};
       class Derived: public Base {public: Derived(){} virtual void f(){}};
@@ -482,7 +482,7 @@ AC_CACHE_CHECK(whether the compiler supports static_cast<>, ac_cv_cxx_static_cas
       Base& b = d;
       Derived& s = static_cast<Derived&> (b);
       return g(s);
-    ]]),
+    ]])],
     [ac_cv_cxx_static_cast=yes],
     [ac_cv_cxx_static_cast=no]
   )
@@ -493,7 +493,7 @@ fi
 
 AC_CACHE_CHECK(whether the compiler supports reinterpret_cast<>, ac_cv_cxx_reinterpret_cast,
 [AC_COMPILE_IFELSE(
-    AC_LANG_PROGRAM(
+    [AC_LANG_PROGRAM(
     [[#include <typeinfo>
       class Base {public: Base(){} virtual void f() = 0;};
       class Derived: public Base {public: Derived(){} virtual void f(){}};
@@ -504,7 +504,7 @@ AC_CACHE_CHECK(whether the compiler supports reinterpret_cast<>, ac_cv_cxx_reint
       Base& b=d;
       Unrelated& e=reinterpret_cast<Unrelated&>(b);
       return g(e);
-    ]]),
+    ]])],
     [ac_cv_cxx_reinterpret_cast=yes],
     [ac_cv_cxx_reinterpret_cast=no]
   )
