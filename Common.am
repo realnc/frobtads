@@ -130,7 +130,7 @@ EXTRA_DIST = \
 	bootstrap \
 	doc/AUTHORS \
 	doc/BUGS \
-	doc/ChangeLog \
+	doc/ChangeLog.old \
 	doc/COMPILERS \
 	doc/CONFIGURE_DOC \
 	doc/COPYING \
