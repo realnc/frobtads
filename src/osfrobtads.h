@@ -26,9 +26,9 @@ extern "C++" {
 #endif
 
 /* Some parts in the basecode behave differently when UNIX is defined,
-   like using "Makefile.t3m" instead "makefile.t3m" as the default
-   project file and turning off stdout buffering in the test suite.
-*/
+ * like using "Makefile.t3m" instead "makefile.t3m" as the default
+ * project file and turning off stdout buffering in the test suite.
+ */
 #ifndef UNIX
 #define UNIX
 #endif
@@ -352,5 +352,13 @@ osfoprwb( const char* fname, os_filetype_t typ );
  *
  * We don't need this (I think). */
 #define os_tzset()
+
+/* Allocating sprintf/vsprintf.  NB: These definitions are
+ * placeholders.  asprintf() and vasprintf() are GNU/BSD extensions
+ * that aren't available on all Unix variants.  Eventually these will
+ * need to be replaced with more thorough versions that encompass
+ * other Unix variants. */
+#define os_asprintf asprintf
+#define os_vasprintf vasprintf
 
 #endif /* OSFROBTADS_H */
