@@ -1,0 +1,249 @@
+## This file contains Automake rules for the TADS 3 compiler.
+
+## Include rules for the TADS 3 test suite if we're building the debug
+## version.
+##
+if T3_DEBUG_BUILD
+include $(srcdir)/Testsuite.am
+endif
+
+bin_PROGRAMS += t3make
+
+AM_CPPFLAGS += -I$(srcdir)/src -I$(srcdir)/tads3 -I$(srcdir)/tads3/test
+
+## Tell the compiler's base code to use the T3VM as target.
+##
+AM_CPPFLAGS += -DTC_TARGET_T3
+
+## TADS 3 compiler headers.
+##
+T3CHEADERS = \
+	tads3/t3_os.h \
+	tads3/tct3ty.h \
+	tads3/tct3drv.h \
+	tads3/tct3int.h \
+	tads3/tctarg.h \
+	tads3/tct3base.h \
+	tads3/tclibprs.h \
+	tads3/tcunas.h \
+	tads3/tcpndrv.h \
+	tads3/tcpnint.h \
+	tads3/tcpnbase.h \
+	tads3/tccmdutl.h \
+	tads3/tct3unas.h \
+	tads3/tcerr.h \
+	tads3/tcgen.h \
+	tads3/tcprs.h \
+	tads3/tcsrc.h \
+	tads3/tctok.h \
+	tads3/tcvsn.h \
+	tads3/tcerrnum.h \
+	tads3/core.h \
+	tads3/tct3.h \
+	tads3/tchostsi.h \
+	tads3/tcglob.h \
+	tads3/tchost.h \
+	tads3/tcmain.h \
+	tads3/tcmake.h \
+	tads3/tctargty.h \
+	tads3/rcmain.h \
+	tads3/vmpreini.h
+
+## TADS 3 compiler sources.
+##
+T3CSOURCES = \
+	src/ost3comp.cc \
+	tads3/os_stdio.cpp \
+	tads3/rcmain.cpp \
+	tads3/std_dbg.cpp \
+	tads3/tccmdutl.cpp \
+	tads3/tcerr.cpp \
+	tads3/tcerrmsg.cpp \
+	tads3/tcgen.cpp \
+	tads3/tcglob.cpp \
+	tads3/tchostsi.cpp \
+	tads3/tclibprs.cpp \
+	tads3/tcmain.cpp \
+	tads3/tcmakecl.cpp \
+	tads3/tcmake.cpp \
+	tads3/tcprs.cpp \
+	tads3/tcprsimg.cpp \
+	tads3/tcprsstm.cpp \
+	tads3/tcsrc.cpp \
+	tads3/tct3.cpp \
+	tads3/tct3img.cpp \
+	tads3/tct3stm.cpp \
+	tads3/tct3unas.cpp \
+	tads3/tctok.cpp \
+	tads3/vmbifc.cpp \
+	tads3/vmimgrb.cpp \
+	tads3/vmpreini.cpp \
+	tads3/vmwrtimg.cpp
+
+## Compiler sources don't go into the main distribution, so we use
+## 'nodist'.
+##
+nodist_t3make_SOURCES = $(COMMONSOURCES) $(T3CHEADERS) $(T3RCSOURCES) $(T3CSOURCES)
+
+## Very simple targets for creating a package containing the compiler
+## sources.
+##
+T3COMP_DISTFILES = \
+	$(T3CHEADERS) \
+	$(T3CSOURCES) \
+	tads3/doc \
+	tads3/include \
+	tads3/lib \
+	tads3/samples \
+	tads3/test \
+	testscripts \
+	tads3/resnoexe.cpp \
+	tads3/tcprs_d.cpp \
+	tads3/tcprsnl.cpp \
+	tads3/tct3nl.cpp \
+	tads3/tct3_d.cpp
+
+t3comp-dist:
+	@cd "$(srcdir)" && $(AMTAR) chof - $(T3COMP_DISTFILES) | GZIP=$(GZIP_ENV) gzip -c >"@abs_builddir@/$(PACKAGE)-t3compiler-$(VERSION).tar.gz"
+
+t3comp-dist-gzip: t3comp-dist
+
+t3comp-dist-bzip2:
+	@cd "$(srcdir)" && $(AMTAR) chof - $(T3COMP_DISTFILES) | bzip2 -9 -c >"@abs_builddir@/$(PACKAGE)-t3compiler-$(VERSION).tar.bz2"
+
+## We cannot install whole directories at once; Automake requires us to
+## list each and every file we wish to install.  This is normally a Good
+## Thing for most projects.  But in this case, it's a brain damage, as
+## the files we wish to install are not ours, but belong to the TADS 3
+## base package.  Ah, well.
+##
+t3incdir = $(T3_INC_DIR)
+t3libdir = $(T3_LIB_DIR)
+t3libextensionsdir = $(T3_LIB_DIR)/extensions
+t3libextensionstcommanddir = $(T3_LIB_DIR)/extensions/TCommand
+t3libextensionstcommanddocdir = $(T3_LIB_DIR)/extensions/TCommand/doc
+t3libadv3dir = $(T3_LIB_DIR)/adv3
+t3libadv3enusdir = $(T3_LIB_DIR)/adv3/en_us
+t3docdir = $(pkgdatadir)/tads3/doc
+
+t3inc_DATA = \
+	tads3/include/t3.h \
+	tads3/include/strcomp.h \
+	tads3/include/t3test.h \
+	tads3/include/tok.h \
+	tads3/include/charset.h \
+	tads3/include/tadsgen.h \
+	tads3/include/vector.h \
+	tads3/include/systype.h \
+	tads3/include/dict.h \
+	tads3/include/file.h \
+	tads3/include/tadsio.h \
+	tads3/include/tadsiox.h \
+	tads3/include/gramprod.h \
+	tads3/include/bytearr.h \
+	tads3/include/tads.h \
+	tads3/include/reflect.h \
+	tads3/include/lookup.h \
+	tads3/include/bignum.h
+
+t3lib_DATA = \
+	tads3/lib/tok.t \
+	tads3/lib/system.tl \
+	tads3/lib/_main.t \
+	tads3/lib/file.t \
+	tads3/lib/gameinfo.t \
+	tads3/lib/gramprod.t \
+	tads3/lib/multmeth.t \
+	tads3/lib/reflect.t
+
+t3libextensions_DATA = \
+	tads3/lib/extensions/combineReports.t \
+	tads3/lib/extensions/cquotes.t \
+	tads3/lib/extensions/custmsg.t \
+	tads3/lib/extensions/customBanner.t \
+	tads3/lib/extensions/CustomStatus.t \
+	tads3/lib/extensions/newNames.t \
+	tads3/lib/extensions/pathfind.t \
+	tads3/lib/extensions/showTranscript.t \
+	tads3/lib/extensions/SimpleAttachable.t \
+	tads3/lib/extensions/smartAccompany.t \
+	tads3/lib/extensions/subtime.t
+
+t3libextensionstcommand_DATA = \
+	tads3/lib/extensions/TCommand/GiveToAskFor.t \
+	tads3/lib/extensions/TCommand/TCommand.t
+
+t3libextensionstcommanddoc_DATA = \
+	tads3/lib/extensions/TCommand/doc/cicon9.gif \
+	tads3/lib/extensions/TCommand/doc/contpage.htm \
+	tads3/lib/extensions/TCommand/doc/givetoaskfor.htm \
+	tads3/lib/extensions/TCommand/doc/index.html \
+	tads3/lib/extensions/TCommand/doc/introduction.htm \
+	tads3/lib/extensions/TCommand/doc/tcommand.htm \
+	tads3/lib/extensions/TCommand/doc/telltoaction.htm
+
+t3libadv3_DATA = \
+	tads3/lib/adv3/resolver.t \
+	tads3/lib/adv3/travel.t \
+	tads3/lib/adv3/lister.t \
+	tads3/lib/adv3/extras.t \
+	tads3/lib/adv3/report.t \
+	tads3/lib/adv3/menusys.t \
+	tads3/lib/adv3/pov.t \
+	tads3/lib/adv3/score.t \
+	tads3/lib/adv3/sense.t \
+	tads3/lib/adv3/precond.t \
+	tads3/lib/adv3/parser.t \
+	tads3/lib/adv3/adv3.h \
+	tads3/lib/adv3/thing.t \
+	tads3/lib/adv3/tips.t \
+	tads3/lib/adv3/exits.t \
+	tads3/lib/adv3/modid.t \
+	tads3/lib/adv3/exec.t \
+	tads3/lib/adv3/verify.t \
+	tads3/lib/adv3/misc.t \
+	tads3/lib/adv3/events.t \
+	tads3/lib/adv3/actor.t \
+	tads3/lib/adv3/adv3.tl \
+	tads3/lib/adv3/output.t \
+	tads3/lib/adv3/action.t \
+	tads3/lib/adv3/disambig.t \
+	tads3/lib/adv3/objects.t \
+	tads3/lib/adv3/hintsys.t \
+	tads3/lib/adv3/status.t \
+	tads3/lib/adv3/to_do.txt \
+	tads3/lib/adv3/actions.t \
+	tads3/lib/adv3/banner.t \
+	tads3/lib/adv3/footnote.t \
+	tads3/lib/adv3/input.t \
+	tads3/lib/adv3/numbers.t \
+	tads3/lib/adv3/settings.t \
+	tads3/lib/adv3/changes.htm
+
+t3libadv3enus_DATA = \
+	tads3/lib/adv3/en_us/msg_neu.t \
+	tads3/lib/adv3/en_us/en_us.h \
+	tads3/lib/adv3/en_us/en_us.t \
+	tads3/lib/adv3/en_us/en_us.tl \
+	tads3/lib/adv3/en_us/instruct.t
+
+t3doc_DATA = \
+	tads3/doc/getacro.gif \
+	tads3/doc/index.htm \
+	tads3/doc/nodoc.htm \
+	tads3/doc/nolibref.htm \
+	tads3/doc/t3changes.htm \
+	tads3/doc/title2.gif
+
+## Target to build the TADS 3 sample game.  We'll always rebuild it, no
+## matter if it already exists or not.
+##
+sample: t3make
+	test -z "@abs_builddir@/samples/obj" || $(mkinstalldirs) "@abs_builddir@/samples/obj"
+	rm -f "@abs_builddir@/samples/sample.t3m"
+	cp "$(srcdir)/tads3/samples/sample.t3m" "@abs_builddir@/samples/sample.t3m"
+	cd "@abs_builddir@/samples" && "@abs_builddir@/t3make" -f sample.t3m -a -FL "@abs_srcdir@/tads3/lib" -FI "@abs_srcdir@/tads3/include" -I "@abs_srcdir@/tads3/samples" -Fs "@abs_srcdir@/tads3/samples" -Fy "@abs_builddir@/samples/obj" -Fo "@abs_builddir@/samples/obj"
+
+sample-clean:
+	rm -f "@abs_builddir@/samples/sample.t3m" "@abs_builddir@/samples/sample.t3" "@abs_builddir@/samples/gameinfo.txt"
+	rm -rf "@abs_builddir@/samples/obj"

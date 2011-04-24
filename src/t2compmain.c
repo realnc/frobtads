@@ -8,5 +8,5 @@
 
 int main( int argc, char** argv )
 {
-	return tcdmain(argc, argv, 0);
+    return tcdmain(argc, argv, 0);
 }
