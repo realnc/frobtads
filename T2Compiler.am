@@ -7,25 +7,25 @@ AM_CPPFLAGS += -I$(srcdir)/src -I$(srcdir)/tads2
 ## TADS 2 compiler headers.
 ##
 T2CHEADERS = \
-	tads2/tcd.h \
-	tads2/tcg.h
+    tads2/tcd.h \
+    tads2/tcg.h
 
 ## TADS 2 compiler sources.
 ##
 T2CSOURCES = \
-	tads2/tcd.c \
-	tads2/tcgdum.c \
-	tads2/linf.c \
-	tads2/tok.c \
-	tads2/tokth.c \
-	tads2/fiowrt.c \
-	tads2/objcomp.c \
-	tads2/sup.c \
-	tads2/voccomp.c \
-	tads2/prscomp.c \
-	tads2/prs.c \
-	tads2/emt.c \
-	tads2/dbg.c
+    tads2/tcd.c \
+    tads2/tcgdum.c \
+    tads2/linf.c \
+    tads2/tok.c \
+    tads2/tokth.c \
+    tads2/fiowrt.c \
+    tads2/objcomp.c \
+    tads2/sup.c \
+    tads2/voccomp.c \
+    tads2/prscomp.c \
+    tads2/prs.c \
+    tads2/emt.c \
+    tads2/dbg.c
 
 ## Compiler sources don't go into the main distribution, so we use
 ## 'nodist'.
