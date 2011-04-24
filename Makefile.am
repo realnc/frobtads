@@ -20,13 +20,13 @@ bin_PROGRAMS =
 
 ## If we should build the compilers, include their makefiles.
 ##
-##if BUILD_T2_COMPILER
+if BUILD_T2_COMPILER
 include $(srcdir)/T2Compiler.am
-##endif
+endif
 
-##if BUILD_T3_COMPILER
+if BUILD_T3_COMPILER
 include $(srcdir)/T3Compiler.am
-##endif
+endif
 
 ## Ditto for the interpreter.
 ##

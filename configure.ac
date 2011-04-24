@@ -571,10 +571,32 @@ AM_CONDITIONAL([T2_RUNTIME_CHECKING], [test x$t2runtimechecks = xtrue])
 #
 AM_CONDITIONAL([BUILD_INTERPRETER], [test x$curseslibfound = xtrue])
 
-# Build the compilers only if the sources are present.
+# Build the compilers only if the user didn't disable them.
 #
-AM_CONDITIONAL([BUILD_T2_COMPILER], [test -f "$srcdir/t2compiler/src/main.c"])
-AM_CONDITIONAL([BUILD_T3_COMPILER], [test -f "$srcdir/t3compiler/src/osportable3.cc"])
+AC_ARG_ENABLE(t2-compiler, [  --disable-t2-compiler   Do not build the TADS 2 compiler],
+  [case "${enableval}" in
+      yes) buildt2compiler=true
+           break ;;
+      no)  buildt2compiler=false
+           break ;;
+      *)   AC_MSG_ERROR(bad value ${enableval} for --enable-t2-compiler)
+           break ;;
+  esac],
+  [buildt2compiler=true]
+)
+AC_ARG_ENABLE(t3-compiler, [  --disable-t3-compiler   Do not build the TADS 3 compiler],
+  [case "${enableval}" in
+      yes) buildt3compiler=true
+           break ;;
+      no)  buildt3compiler=false
+           break ;;
+      *)   AC_MSG_ERROR(bad value ${enableval} for --enable-t3-compiler)
+           break ;;
+  esac],
+  [buildt3compiler=true]
+)
+AM_CONDITIONAL([BUILD_T2_COMPILER], [test x$buildt2compiler = xtrue])
+AM_CONDITIONAL([BUILD_T3_COMPILER], [test x$buildt3compiler = xtrue])
 
 # If the system lacks the <wchar.h> header, let Automake know.
 #
