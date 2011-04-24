@@ -51,7 +51,8 @@ T3RHEADERS = \
 	tads3/vmstack.h tads3/vmstrcmp.h tads3/vmstr.h tads3/vmstrres.h tads3/vmtobj.h tads3/vmtype.h \
 	tads3/vmundo.h tads3/vmuni.h tads3/vmvec.h tads3/vmvsn.h tads3/vmwrtimg.h tads3/tchostsi.h \
 	tads3/tclibprs.h tads3/tccmdutl.h tads3/tcprs.h tads3/tcgen.h tads3/tcglob.h tads3/tcerr.h \
-	tads3/tctok.h tads3/tcmain.h tads3/tcsrc.h tads3/tct3.h tads3/tct3unas.h tads3/osifcnet.h
+	tads3/tctok.h tads3/tcmain.h tads3/tcsrc.h tads3/tct3.h tads3/tct3unas.h tads3/osifcnet.h \
+	tads3/vmdatasrc.h tads3/vmstrref.h tads3/vmtmpfil.h vmmcnet.h
 
 ## TADS 3 runtime sources.
 ##

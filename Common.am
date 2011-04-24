@@ -35,16 +35,20 @@ AUTOMAKE_OPTIONS = subdir-objects
 ##     useful for debuggers though, so we choose a flat pool.  (See
 ##     tads3/vmpoolsl.h for details.)
 ##
-AM_CPPFLAGS = -DFROBTADS
+##   TC_TARGET_T3
+##     Instructs the TADS3 compiler to generate T3VM bytecode.  This is
+##     also needed by the runtime, since it does dynamic compiling.
+##
+##   TADSNET
+##     Include the T3 networking layer.
+##
+AM_CPPFLAGS = -DFROBTADS -DTC_TARGET_T3 -DTADSNET
 
 if T3_DEBUG_BUILD
 AM_CPPFLAGS += -DT3_DEBUG -DVMGLOB_PARAM
 else
 AM_CPPFLAGS += -DVMGLOB_VARS
 endif
-
-## Include the networking layer
-AM_CPPFLAGS += -DTADSNET
 
 ## Not yet; causes some (minor) memory leaks.  For now, only the paged
 ## pool is safe.
@@ -275,9 +279,7 @@ T3RCSOURCES = \
 	tads3/vmerrmsg.cpp \
 	tads3/vmfile.cpp \
 	tads3/vmfilobj.cpp \
-	\
 	tads3/vmtmpfil.cpp \
-	\
 	tads3/vmfunc.cpp \
 	tads3/vmglob.cpp \
 	tads3/vmgram.cpp \
@@ -314,7 +316,6 @@ T3RCSOURCES = \
 	tads3/vmtypedh.cpp \
 	tads3/vmundo.cpp \
 	tads3/vmvec.cpp \
-	\
 	tads3/vmfref.cpp \
 	tads3/vmisaac.cpp \
 	tads3/vmdynfunc.cpp \

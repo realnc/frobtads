@@ -11,10 +11,6 @@ bin_PROGRAMS += t3make
 
 AM_CPPFLAGS += -I$(srcdir)/src -I$(srcdir)/tads3 -I$(srcdir)/tads3/test
 
-## Tell the compiler's base code to use the T3VM as target.
-##
-AM_CPPFLAGS += -DTC_TARGET_T3
-
 ## TADS 3 compiler headers.
 ##
 T3CHEADERS = \
