@@ -5,8 +5,9 @@
 #include "frobappctx.h"
 #include "frobtadsapp.h"
 
-int
-getIoSafetyLevel( void* )
+void
+getIoSafetyLevel( void*, int* read, int* write )
 {
-    return globalApp->options.safetyLevel;
+    *read = globalApp->options.safetyLevelR;
+    *write = globalApp->options.safetyLevelW;
 }

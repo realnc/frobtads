@@ -16,6 +16,6 @@
 #include "common.h"
 
 // Reports the current file I/O safety level.
-int getIoSafetyLevel( void* );
+void getIoSafetyLevel( void*, int* read, int* write );
 
 #endif // FROBAPPCTX_H
