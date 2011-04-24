@@ -279,8 +279,7 @@ static const char *check_nth(const char *&fmt, int ival)
 /*
  *   buffer-checked vsprintf implementation 
  */
-size_t t3vsprintf(char *buf, size_t buflen, const char *fmt,
-                  va_list args0)
+size_t t3vsprintf(char *buf, size_t buflen, const char *fmt, va_list args0)
 {
     size_t rem;
     size_t need = 0;

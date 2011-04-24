@@ -59,7 +59,12 @@ T3RHEADERS = \
 T3RSOURCES = \
 	tads3/vmbifl.cpp \
 	tads3/vmmain.cpp \
-	tads3/vmsa.cpp
+	tads3/vmsa.cpp \
+	tads3/tcprsnl.cpp \
+	tads3/tct3nl.cpp \
+	tads3/tcprs_rt.cpp \
+	tads3/tcprsnf.cpp \
+	tads3/tct3_d.cpp
 
 frob_SOURCES = $(FROBSOURCES) $(COMMONSOURCES) $(T2RCHEADERS) $(T2RSOURCES) $(T2RCSOURCES) $(T3RHEADERS) $(T3RSOURCES) $(T3RCSOURCES)
 frob_CPPFLAGS = -DRUNTIME $(AM_CPPFLAGS)

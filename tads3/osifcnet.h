@@ -994,6 +994,8 @@ class TadsThreadList;
  *   start page.  When the client receives the redirect, it turns around and
  *   loads the start page from the game server.
  *   
+ *   ---
+ *   
  *   The implementation of this function is specific to both the
  *   CONFIGURATION and the SYSTEM.  For example, there might be two separate
  *   Unix implementations: one for stand-alone play that opens an integrated

@@ -492,10 +492,17 @@ void t3strlwr(char *p);
  *   sprintf and vsprintf replacements.  These versions provide subsets of
  *   the full 'printf' format capabilities, but check for buffer overflow,
  *   which the standard library's sprintf functions do not.
+ *   
+ *   NB: the 'args' parameter is effectively const, even though it's not
+ *   declared as such.  That is, you can safely call t3vsprintf multiple
+ *   times with the same 'args' parameter without worrying that the contents
+ *   will be changed on platforms where va_list is a reference type.  (It's
+ *   not declared const due to an implementation detail, specifically that
+ *   the routine internally needs to make a private copy with va_copy(),
+ *   which doesn't accept a const source value.)  
  */
 size_t t3sprintf(char *buf, size_t buflen, const char *fmt, ...);
-size_t t3vsprintf(char *buf, size_t buflen, const char *fmt,
-                  va_list args);
+size_t t3vsprintf(char *buf, size_t buflen, const char *fmt, va_list args);
 
 /* 
  *   Automatic memory allocation versions of sprintf and vsprintf: we'll

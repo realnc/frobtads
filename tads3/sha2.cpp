@@ -89,14 +89,6 @@
 #include "t3std.h"
 #include "vmdatasrc.h"
 
-#if defined(CPU_IS_BIGENDIAN)
-#  if (CPU_IS_BIGENDIAN == 1)
-#    define PLATFORM_BYTE_ORDER SHA_BIG_ENDIAN
-#  elif (CPU_IS_BIGENDIAN == 0)
-#    define PLATFORM_BYTE_ORDER SHA_LITTLE_ENDIAN
-#  endif
-#endif
-
 /*  1. PLATFORM SPECIFIC INCLUDES */
 
 #if defined(__GNU_LIBRARY__)
@@ -137,6 +129,14 @@
 */
 #define SHA_LITTLE_ENDIAN   1234 /* byte 0 is least significant (i386) */
 #define SHA_BIG_ENDIAN      4321 /* byte 0 is most significant (mc68k) */
+
+#if defined(CPU_IS_BIGENDIAN)
+#  if (CPU_IS_BIGENDIAN == 1)
+#    define PLATFORM_BYTE_ORDER SHA_BIG_ENDIAN
+#  elif (CPU_IS_BIGENDIAN == 0)
+#    define PLATFORM_BYTE_ORDER SHA_LITTLE_ENDIAN
+#  endif
+#endif
 
 #if !defined(PLATFORM_BYTE_ORDER)
 #if defined(LITTLE_ENDIAN) || defined(BIG_ENDIAN)

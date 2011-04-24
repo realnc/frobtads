@@ -47,7 +47,11 @@ T3CSOURCES = \
 	tads3/vmbifc.cpp \
 	tads3/vmimgrb.cpp \
 	tads3/vmpreini.cpp \
-	tads3/vmwrtimg.cpp
+	tads3/vmwrtimg.cpp \
+	tads3/tcprsprg.cpp \
+	tads3/tcprsfil.cpp \
+	tads3/tcgenfil.cpp \
+	tads3/tct3prg.cpp
 
 ## Compiler sources don't go into the main distribution, so we use
 ## 'nodist'.

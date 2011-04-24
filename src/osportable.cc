@@ -844,16 +844,18 @@ os_advise_load_charmap( char* /*id*/, char* /*ldesc*/, char* /*sysinfo*/ )
 }
 
 
-/* T3 post-load UI initialization.  This is a hook provided bv the T3
+/* T3 post-load UI initialization.  This is a hook provided by the T3
  * VM to allow the UI layer to do any extra initialization that depends
  * upon the contents of the loaded game file.  We don't currently need
  * any extra initialization here.
  */
+#ifdef RUNTIME
 void
 os_init_ui_after_load( class CVmBifTable*, class CVmMetaTable* )
 {
     // No extra initialization required.
 }
+#endif
 
 
 /* Get the full filename (including directory path) to the executable

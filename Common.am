@@ -336,10 +336,7 @@ T3RCSOURCES = \
 	tads3/tclibprs.cpp \
 	tads3/tccmdutl.cpp \
 	tads3/tcprs.cpp \
-	tads3/tcprs_rt.cpp \
-	tads3/tcprsnf.cpp \
 	tads3/tcprsstm.cpp \
-	tads3/tcprsnl.cpp \
 	tads3/tcgen.cpp \
 	tads3/tcglob.cpp \
 	tads3/tcerr.cpp \
@@ -350,6 +347,4 @@ T3RCSOURCES = \
 	tads3/tct3.cpp \
 	tads3/tct3stm.cpp \
 	tads3/tct3unas.cpp \
-	tads3/tct3nl.cpp \
-	tads3/tct3_d.cpp \
 	tads3/sha2.cpp
