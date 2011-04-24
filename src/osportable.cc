@@ -304,36 +304,32 @@ osfdel_temp( const char* fname )
 }
 
 
-/* generate a temporary filename */
-int os_gen_temp_filename(char *buf, size_t buflen)
+/* Generate a temporary filename.
+ */
+int
+os_gen_temp_filename( char* buf, size_t buflen )
 {
-    /*
-     *  get the temporary directory: use the environment variable TMPDIR
-     *  if it's defined, otherwise use P_tmpdir; if even that's not
-     *  defined, return failure
-     */
-    const char *tmp = getenv("TMPDIR");
+    // Get the temporary directory: use the environment variable TMPDIR
+    // if it's defined, otherwise use P_tmpdir; if even that's not
+    // defined, return failure.
+    const char* tmp = getenv("TMPDIR");
     if (tmp == 0)
         tmp = P_tmpdir;
     if (tmp == 0)
         return false;
 
-    /* build a template filename for mkstemp */
+    // Build a template filename for mkstemp.
     snprintf(buf, buflen, "%s/tads-XXXXXX", tmp);
 
-    /* generate a unique name and open the file */
+    // Generate a unique name and open the file.
     int fd = mkstemp(buf);
-    if (fd >= 0)
-    {
-        /* got it - close the placeholder file and return success */
+    if (fd >= 0) {
+        // Got it - close the placeholder file and return success.
         close(fd);
         return true;
     }
-    else
-    {
-        /* failed */
-        return false;
-    }
+    // Failed.
+    return false;
 }
 
 /* Get the temporary file path.
@@ -538,10 +534,8 @@ os_paramfile( char* )
 }
 
 
-/* ------------------------------------------------------------------------ */
-/*
- *   Canonicalize a path: remove ".." and "." relative elements
- *   (copied from tads2/osnoui.c)
+/* Canonicalize a path: remove ".." and "." relative elements.
+ * (Copied from tads2/osnoui.c)
  */
 static void
 canonicalize_path(char *path)
@@ -607,9 +601,9 @@ canonicalize_path(char *path)
     }
 }
 
-/* ------------------------------------------------------------------------ */
-/*
- *   Safe strcpy 
+
+/* Safe strcpy.
+ * (Copied from tads2/msdos/osdos.c)
  */
 static void
 safe_strcpy(char *dst, size_t dstlen, const char *src)
@@ -643,34 +637,29 @@ safe_strcpy(char *dst, size_t dstlen, const char *src)
     dst[copylen] = '\0';
 }
 
-/* ------------------------------------------------------------------------ */
-/*
- *   Is the given file in the given directory?  
+
+/* Is the given file in the given directory?
  */
 int
-os_is_file_in_dir(const char *filename, const char *path, int allow_subdirs)
+os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
 {
     char filename_buf[OSFNMAX], path_buf[OSFNMAX];
     size_t flen, plen;
 
-    /* absolute-ize the filename, if necessary */
-    if (!os_is_file_absolute(filename))
-    {
+    // Absolute-ize the filename, if necessary.
+    if (not os_is_file_absolute(filename)) {
         os_get_abs_filename(filename_buf, sizeof(filename_buf), filename);
         filename = filename_buf;
     }
 
-    /* absolute-ize the path, if necessary */
-    if (!os_is_file_absolute(path))
-    {
+    // Absolute-ize the path, if necessary.
+    if (not os_is_file_absolute(path)) {
         os_get_abs_filename(path_buf, sizeof(path_buf), path);
         path = path_buf;
     }
 
-    /* 
-     *   canonicalize the paths, to remove .. and . elements - this will make
-     *   it possible to directly compare the path strings 
-     */
+    // Canonicalize the paths, to remove .. and . elements - this will make
+    // it possible to directly compare the path strings.
     safe_strcpy(filename_buf, sizeof(filename_buf), filename);
     canonicalize_path(filename_buf);
     filename = filename_buf;
@@ -679,104 +668,79 @@ os_is_file_in_dir(const char *filename, const char *path, int allow_subdirs)
     canonicalize_path(path_buf);
     path = path_buf;
 
-    /* get the length of the filename and the length of the path */
+    // Get the length of the filename and the length of the path.
     flen = strlen(filename);
     plen = strlen(path);
 
-    /* if the path ends in a separator character, ignore that */
-    if (plen > 0 && (path[plen-1] == '\\' || path[plen-1] == '/'))
+    // If the path ends in a separator character, ignore that.
+    if (plen > 0 and (path[plen-1] == '\\' or path[plen-1] == '/'))
         --plen;
 
-    /* 
-     *   Check that the filename has 'path' as its path prefix.  First, check
-     *   that the leading substring of the filename matches 'path', ignoring
-     *   case.  Note that we need the filename to be at least two characters
-     *   longer than the path: it must have a path separator after the path
-     *   name, and at least one character for a filename past that.  
-     */
-    if (flen < plen + 2 || memicmp(filename, path, plen) != 0)
+    // Check that the filename has 'path' as its path prefix.  First, check
+    // that the leading substring of the filename matches 'path', ignoring
+    // case.  Note that we need the filename to be at least two characters
+    // longer than the path: it must have a path separator after the path
+    // name, and at least one character for a filename past that.
+    if (flen < plen + 2 or memicmp(filename, path, plen) != 0)
         return false;
 
-    /* 
-     *   Okay, 'path' is the leading substring of 'filename'; next make sure
-     *   that this prefix actually ends at a path separator character in the
-     *   filename.  (This is necessary so that we don't confuse "c:\a\b.txt"
-     *   as matching "c:\abc\d.txt" - if we only matched the "c:\a" prefix,
-     *   we'd miss the fact that the file is actually in directory "c:\abc",
-     *   not "c:\a".) 
-     */
-    if (filename[plen] != '\\' && filename[plen] != '/')
+    // Okay, 'path' is the leading substring of 'filename'; next make sure
+    // that this prefix actually ends at a path separator character in the
+    // filename.  (This is necessary so that we don't confuse "c:\a\b.txt"
+    // as matching "c:\abc\d.txt" - if we only matched the "c:\a" prefix,
+    // we'd miss the fact that the file is actually in directory "c:\abc",
+    // not "c:\a".)
+    if (filename[plen] != '\\' and filename[plen] != '/')
         return false;
 
-    /*
-     *   We're good on the path prefix - we definitely have a file that's
-     *   within the 'path' directory or one of its subdirectories.  If we're
-     *   allowed to match on subdirectories, we already have our answer
-     *   (true).  If we're not allowed to match subdirectories, we still have
-     *   one more check, which is that the rest of the filename is free of
-     *   path separator charactres.  If it is, we have a file that's directly
-     *   in the 'path' directory; otherwise it's in a subdirectory of 'path'
-     *   and thus isn't a match.  
-     */
-    if (allow_subdirs)
-    {
-        /* 
-         *   filename is in the 'path' directory or one of its
-         *   subdirectories, and we're allowed to match on subdirectories, so
-         *   we have a match 
-         */
+    // We're good on the path prefix - we definitely have a file that's
+    // within the 'path' directory or one of its subdirectories.  If we're
+    // allowed to match on subdirectories, we already have our answer
+    // (true).  If we're not allowed to match subdirectories, we still have
+    // one more check, which is that the rest of the filename is free of
+    // path separator charactres.  If it is, we have a file that's directly
+    // in the 'path' directory; otherwise it's in a subdirectory of 'path'
+    // and thus isn't a match.
+    if (allow_subdirs) {
+        // Filename is in the 'path' directory or one of its
+        // subdirectories, and we're allowed to match on subdirectories, so
+        // we have a match.
         return true;
     }
-    else
-    {
-        const char *p;
 
-        /* 
-         *   We're not allowed to match subdirectories, so scan the rest of
-         *   the filename for path separators.  If we find any, the file is
-         *   in a subdirectory of 'path' rather than directly in 'path'
-         *   itself, so it's not a match.  If we don't find any separators,
-         *   we have a file directly in 'path', so it's a match. 
-         */
-        for (p = filename ; *p != '\0' && *p != '/' && *p != '\\' ; ++p) ;
+    const char* p;
 
-        /* 
-         *   if we reached the end of the string without finding a path
-         *   separator character, it's a match 
-         */
-        return (*p == '\0');
-    }
+    // We're not allowed to match subdirectories, so scan the rest of
+    // the filename for path separators.  If we find any, the file is
+    // in a subdirectory of 'path' rather than directly in 'path'
+    // itself, so it's not a match.  If we don't find any separators,
+    // we have a file directly in 'path', so it's a match.
+    for (p = filename; *p != '\0' and *p != '/' and *p != '\\'; ++p)
+        ;
+
+    // If we reached the end of the string without finding a path
+    // separator character, it's a match .
+    return *p == '\0';
 }
 
-/* ------------------------------------------------------------------------ */
-/*
- *   Get the absolute path for a given filename
+
+/* Get the absolute path for a given filename.
  */
 int
-os_get_abs_filename(char *buf, size_t buflen, const char *filename)
+os_get_abs_filename( char* buf, size_t buflen, const char* filename )
 {
-    /* get the canonical path from the OS (allocating the result buffer) */
-    char *newpath = realpath(filename, 0);
+    // Get the canonical path from the OS (allocating the result buffer).
+    char* newpath = realpath(filename, 0);
 
-    if (newpath != 0)
-    {
-        /* copy the output (truncating if it's too long) */
+    if (newpath != 0) {
+        // Copy the output (truncating if it's too long).
         safe_strcpy(buf, buflen, newpath);
-
-        /* free the allocated buffer */
         free(newpath);
-
-        /* success */
         return true;
     }
-    else
-    {
-        /* failed - copy the original filename unchanged */
-        safe_strcpy(buf, buflen, filename);
-
-        /* indicate failure */
-        return false;
-    }
+    // Failed - copy the original filename unchanged.
+    safe_strcpy(buf, buflen, filename);
+    return false;
 }
 
 
@@ -816,14 +780,14 @@ os_get_special_path( char* buf, size_t buflen, const char* argv0, int id )
       case OS_GSP_T3_USER_LIBS:
         // There's no compile-time default for user libs.
         res = getenv("T3_USERLIBDIR");
-                break;
-          case OS_GSP_T3_SYSCONFIG:
-              res = getenv("T3_CONFIG");
-              if (res == 0 && argv0 != 0) {
-                  os_get_path_name(buf, buflen, argv0);
-                  return;
-              }
-              break;
+        break;
+      case OS_GSP_T3_SYSCONFIG:
+        res = getenv("T3_CONFIG");
+        if (res == 0 and argv0 != 0) {
+            os_get_path_name(buf, buflen, argv0);
+            return;
+        }
+        break;
       default:
         // TODO: We could print a warning here to inform the
         // user that we're outdated.
@@ -880,17 +844,17 @@ os_advise_load_charmap( char* /*id*/, char* /*ldesc*/, char* /*sysinfo*/ )
 }
 
 
-/*
- *  T3 post-load UI initialization.  This is a hook provided bv the T3
- *  VM to allow the UI layer to do any extra initialization that depends
- *  upon the contents of the loaded game file.  We don't currently need
- *  any extra initialization here.
+/* T3 post-load UI initialization.  This is a hook provided bv the T3
+ * VM to allow the UI layer to do any extra initialization that depends
+ * upon the contents of the loaded game file.  We don't currently need
+ * any extra initialization here.
  */
 void
-os_init_ui_after_load(class CVmBifTable *, class CVmMetaTable *)
+os_init_ui_after_load( class CVmBifTable*, class CVmMetaTable* )
 {
-    /* no extra initialization required */
+    // No extra initialization required.
 }
+
 
 /* Get the full filename (including directory path) to the executable
  * file, given the argv[0] parameter passed into the main program.
