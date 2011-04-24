@@ -73,6 +73,10 @@ AC_PROG_CXX_C_O
 #
 AC_SEARCH_LIBS([initscr], [ncurses curses pdcurses], [curseslibfound=true], [curseslibfound=false])
 
+# Check for libcurl (network client library for http et al).
+#
+AC_SEARCH_LIBS([curl_global_init], [curl], [curllibfound=true], [curllibfound=false])
+
 
 #
 # Checks for header files.
@@ -609,8 +613,12 @@ AM_CONDITIONAL([WCHAR_HEADER_MISSING], [test x$wcharheaderfound = xfalse])
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
-
 if test x$curseslibfound = xfalse; then
   AC_MSG_NOTICE([***])
   AC_MSG_NOTICE([*** A curses library is missing.  The interpreter cannot be built.])
+fi
+
+if test x$curllibfound = xfalse; then
+  AC_MSG_NOTICE([***])
+  AC_MSG_NOTICE([*** libcurl is missing.  The interpreter cannot be built.])
 fi
