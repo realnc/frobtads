@@ -19,6 +19,20 @@
 #include "colors.h"
 #include "options.h"
 
+// Huge hack - one of the compiler headers seems to #define getstr
+// in a way that's incompatible with the inclusion of vmhash.h
+// (included via vmdbg.h via vmnet.h).  Undefing it here fixes it
+// and doesn't seem to cause any other harm.  This appears to be
+// the only source file affected, so I'm putting the undef here.
+// This should be investigated and fixed properly at some point
+// (i.e., by some solution that doesn't involve undefing anything,
+// such as just not including whatever the offending header is
+// in the first place, or fixing that header to remove the getstr
+// macro).  [mjr]
+#ifdef getstr
+#undef getstr
+#endif
+
 #include "os.h"
 #include "trd.h"
 #include "t3std.h"
@@ -26,6 +40,7 @@
 #include "vmvsn.h"
 #include "vmmaincn.h"
 #include "vmhostsi.h"
+#include "vmnet.h"
 extern "C"
 {
 #include "osgen.h"
@@ -59,6 +74,7 @@ const char helpOutput[] =
 "  -p, --no-pause       Don't pause prior to quiting\n"
 "  -d, --no-chdir       Don't change the current directory\n"
 "  -s, --safety-level   File I/O safety level (default is 2)\n"
+"  -N, --net-safety-level Network safety level\n"
 "  -e, --scroll-buffer  Size of the scroll-back buffer. Must be between 8 and\n"
 "                       8192kB (default is 512kB)\n"
 "  -r, --restore        Load a saved game position\n"
@@ -91,6 +107,38 @@ const char helpOutput[] =
 "Please include the output of the --version option with the report.";
 
 
+#ifdef TADSNET
+static void
+create_netconfig( TadsNetConfig*& c, const char* const* argv)
+{
+    // If we don't have a network config object yet, create it.
+    if (c == 0) {
+        // Create a new config object.
+        c = new TadsNetConfig();
+        
+        // Get the path to the network config file.
+        char confname[OSFNMAX], confpath[OSFNMAX];
+        os_get_special_path(confpath, sizeof(confpath), argv[0],
+                            OS_GSP_T3_SYSCONFIG);
+        os_build_full_path(confname, sizeof(confname),
+                           confpath, "tadsweb.config");
+        
+        // If the config file exists, load it.
+        osfildef* fp = osfoprb(confname, OSFTTEXT);
+        if (fp != 0) {
+            // Read the file.
+            CVmMainClientIfcStdio ifc;
+            c->read(fp, &ifc);
+        } else {
+            // Warn that the file is missing.
+            fprintf(stderr, "Warning: -webhost mode specified, but couldn't "
+                    "read web config file \"%s\"\n", confname);
+        }
+    }
+}
+#endif
+
+
 int main( int argc, char** argv )
 {
     // These are the command-line options we recognize.  See
@@ -109,16 +157,29 @@ int main( int argc, char** argv )
         "k:character-set <charset>",
         "l:stat-tcolor <0..7>",
         "n|no-colors",
+        "N:net-safety-level <00..44>",
         "o|no-defcolors",
         "p|no-pause",
         "R:replay <filename>",
         "r:restore <filename>",
-        "s:safety-level <0..4>",
+        "s:safety-level <00..44>",
+        "S:no-seed-rand",
         "t:tcolor <0..7>",
         "u:undo-size <1..64>",
         "v|version",
+#ifdef TADSNET
+        "w:webhost <hostname>",
+        "W:websid <sid>",
+#endif
         0
     };
+
+    // We won't need a net config object unless we're serving
+    // as the host in a client/server setup (-w option).
+    class TadsNetConfig* netconfig = 0;
+
+    // We don't have a network storage server session yet.
+    const char* storage_sid = 0;
 
 #ifdef HAVE_SETLOCALE
     // First, initialise locale, if available. We need only
@@ -173,11 +234,14 @@ int main( int argc, char** argv )
         512*1024,   // Scroll-back buffer size.
         // Default file I/O safety level is read/write access
         // in current directory only.
-        VM_IO_SAFETY_READWRITE_CUR,
+        VM_IO_SAFETY_READWRITE_CUR, VM_IO_SAFETY_READWRITE_CUR,
+        // Default network I/O safety level is no access
+        2, 2,
         // TODO: Revert the default back to "\0" when Unicode output
         // is finally implemented.
         "us-ascii",  // Character set.
-        0            // Replay file.
+        0,           // Replay file.
+        true         // seedRand.
     };
 
     // Name of the game to run.
@@ -187,7 +251,7 @@ int main( int argc, char** argv )
     const char* savedPosFilename = 0;
 
     // Start parsing.  Stop when there are no more options to parse.
-    while ((optChar = opts(iter, optArg)) != Options::ENDOPTS) switch (optChar) {
+    while (filename == 0 && (optChar = opts(iter, optArg)) != Options::ENDOPTS) switch (optChar) {
       // --version
       case 'v':
         cout << versionOutput << "\n\n";
@@ -268,25 +332,70 @@ int main( int argc, char** argv )
       // --safety-level
       case 's': {
         if (optionError) break;
-        int tmp;
+        int tmpR, tmpW;
         if (optArg == 0) {
             // Argument is missing.
             optionError = true;
             break;
         }
-        if (sscanf(optArg, "%d", &tmp) == 0) {
+        if (strlen(optArg) == 2) {
+            tmpR = optArg[0] - '0';
+            tmpW = optArg[1] - '0';
+        } else {
+            tmpR = tmpW = optArg[0] - '0';
+        }
+        if (tmpR < 0 or tmpR > 9 or tmpW < 0 or tmpW > 9) {
             // The argument was not a number.
             cerr << opts.name() << ": safety level must be numerical.\n";
             optionError = true;
             break;
         }
-        if (tmp < 0 or tmp > 4) {
+        if (tmpR < 0 or tmpW < 0 or tmpR > 4 or tmpW > 4) {
             // Out of range.
             cerr << opts.name() << ": safety level must be between 0-4.\n";
             optionError = true;
             break;
         }
-        frobOpts.safetyLevel = tmp;
+        frobOpts.safetyLevelR = tmpR;
+        frobOpts.safetyLevelW = tmpW;
+        break;
+      }
+
+      // --net-safety-level
+      case 'N': {
+        if (optionError) break;
+        int tmpC, tmpS;
+        if (optArg == 0) {
+            // Argument is missing.
+            optionError = true;
+            break;
+        }
+        if (strlen(optArg) == 2) {
+            tmpC = optArg[0] - '0';
+            tmpS = optArg[1] - '0';
+        } else {
+            tmpC = tmpS = optArg[0] - '0';
+        }
+        if (tmpC < 0 or tmpC > 9 or tmpS < 0 or tmpS > 9) {
+            // The argument was not a number.
+            cerr << opts.name() << ": net safety level must be numerical.\n";
+            optionError = true;
+            break;
+        }
+        if (tmpC < 0 or tmpS < 0 or tmpC > 4 or tmpS > 4) {
+            // Out of range.
+            cerr << opts.name() << ": net safety level must be between 0-4.\n";
+            optionError = true;
+            break;
+        }
+        frobOpts.netSafetyLevelC = tmpC;
+        frobOpts.netSafetyLevelS = tmpS;
+        break;
+      }
+
+      // --no-seed-rand
+      case 'S': {
+        frobOpts.seedRand = false;
         break;
       }
 
@@ -393,6 +502,38 @@ int main( int argc, char** argv )
         }
         break;
 
+#ifdef TADSNET
+      // --webhost
+      case 'w':
+        if (optionError) break;
+        if (optArg == 0) {
+            optionError = true;
+            break;
+        }
+
+        // if necessary, create the network configuration object
+        create_netconfig(netconfig, argv);
+
+        // set the host name
+        netconfig->set("hostname", optArg);
+        break;
+
+      // --websid
+      case 'W':
+        if (optionError) break;
+        if (optArg == 0) {
+            optionError = true;
+            break;
+        }
+
+        // if necessary, create the network configuration object
+        create_netconfig(netconfig, argv);
+
+        // set the storage server SID
+        netconfig->set("storage.sessionid", optArg);
+        break;
+#endif /* TADSNET */
+
       // This occurs when the argument is something other than an
       // option.  We treat it as the filename of the game to run.
       case Options::POSITIONAL:
@@ -427,7 +568,8 @@ int main( int argc, char** argv )
             // after exiting this if-block.
             static char detectedFilename[OSFNMAX + 1];
             const char* const argvDummy[] = {"frob", "-r", savedPosFilename};
-            if (vm_get_game_arg(3, argvDummy, detectedFilename, OSFNMAX + 1)) {
+            int engtyp;
+            if (vm_get_game_arg(3, argvDummy, detectedFilename, OSFNMAX + 1, &engtyp)) {
                 // Success.  Store the filename.
                 filename = detectedFilename;
             } else {
@@ -471,12 +613,16 @@ int main( int argc, char** argv )
       case VM_GGT_TADS3: {
         // It's Tads 3.
         int t3vmRet;
+        char **progArgv = argv + iter.index();
+        int progArgc = argc - iter.index();
         switch (interface) {
           case cursesInterface:
-            t3vmRet = FrobTadsApplicationCurses(frobOpts).runTads(actualFilename, 1);
+            t3vmRet = FrobTadsApplicationCurses(frobOpts)
+                      .runTads(actualFilename, 1, progArgc, progArgv, netconfig);
             break;
           case plainInterface:
-            t3vmRet = FrobTadsApplicationPlain(frobOpts).runTads(actualFilename, 1);
+            t3vmRet = FrobTadsApplicationPlain(frobOpts)
+                      .runTads(actualFilename, 1, progArgc, progArgv, netconfig);
             break;
         }
         // Show any unfreed memory blocks.  This does nothing if
