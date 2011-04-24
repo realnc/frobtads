@@ -104,26 +104,31 @@ FrobTadsApplication::fRunTads2( char* filename )
 
 
 int
-FrobTadsApplication::fRunTads3( char* filename )
+FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* argv,
+                                class TadsNetConfig* netconfig )
 {
     // Create the Tads 3 host and client services interfaces.
     CVmMainClientConsole clientifc;
     CVmHostIfc* hostifc = new CVmHostIfcStdio("");
 
     // Set the file I/O safety level.
-    hostifc->set_io_safety(this->options.safetyLevel);
+    hostifc->set_io_safety(this->options.safetyLevelR, this->options.safetyLevelW);
+
+    // Set the network safety level.
+    hostifc->set_net_safety(this->options.netSafetyLevelC, this->options.netSafetyLevelS);
 
     // Run the Tads 3 VM.
-    int vmRet = vm_run_image(&clientifc, filename, hostifc, 0, 0, this->options.replayFile, false, 0, 0,
-                             false, false, 0, 0, 0, 0);
-
+    int vmRet = vm_run_image(&clientifc, filename, hostifc, argv, argc,
+                             this->options.replayFile, false, 0, 0, false, false,
+                             this->options.seedRand, 0, 0, 0, 0, netconfig);
     delete hostifc;
     return vmRet;
 }
 
 
 int
-FrobTadsApplication::runTads( const char* filename, int vm )
+FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char *const *argv,
+                              class TadsNetConfig* netconfig )
 {
     // We might strip the path from the filename later, in case we
     // change the current directory.
@@ -176,7 +181,8 @@ FrobTadsApplication::runTads( const char* filename, int vm )
     globalApp->flush();
 
     // Run the VM.
-    int vmRet = vm == 0 ? this->fRunTads2(finalFilenamePtr) : this->fRunTads3(finalFilenamePtr);
+    int vmRet = vm == 0 ? this->fRunTads2(finalFilenamePtr)
+                        : this->fRunTads3(finalFilenamePtr, argc, argv, netconfig);
 
     // Done with the filename.
     delete[] finalFilename;

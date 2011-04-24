@@ -40,9 +40,13 @@ class FrobTadsApplication {
         int statTextColor;      // Default text color of statusline.
         int statBgColor;        // Default background color of statusline.
         unsigned scrollBufSize; // Scroll-back buffer size.
-        int safetyLevel;        // File I/O safety level.
+        int safetyLevelR;       // File I/O safety level - read.
+        int safetyLevelW;       // File I/O safety level - write.
+        int netSafetyLevelC;    // Network safety level - client.
+        int netSafetyLevelS;    // Network safety level - server.
         char characterSet[40];  // Local character set name.
         const char* replayFile; // Replay file.
+        int seedRand;          // Enable automatic initial seeding of RNG in interpreter?
     };
 
     // Our options.  Once set, they remain constant during run-time
@@ -58,7 +62,7 @@ class FrobTadsApplication {
     /* Runs the T3VM.
      */
     int
-    fRunTads3( char* filename );
+    fRunTads3( char* filename, int argc, const char* const* argv, class TadsNetConfig* netconfig );
 
   protected:
     // We store the remaining input-timeout here in case a
@@ -81,7 +85,12 @@ class FrobTadsApplication {
      * is given by the 'vm' argument: 0 for TADS2, non-0 for TADS3.
      */
     int
-    runTads( const char* filename, int vm );
+    runTads( const char* filename, int vm ) { runTads(filename, vm, 0, 0, 0); }
+
+    int
+    runTads( const char* filename, int vm, int argc, const char* const* argv,
+             class TadsNetConfig* netconfig );
+        
 
     /* Change the current working directory, if possible.  Returns
      * true on success, false on failure.
