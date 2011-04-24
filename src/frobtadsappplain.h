@@ -8,67 +8,67 @@
 
 class FrobTadsApplicationPlain: public FrobTadsApplication {
   public:
-	FrobTadsApplicationPlain( const FrobOptions& opts )
-	: FrobTadsApplication(opts)
-	{
-		// Just tell the osgen layer to use plain mode.
-		os_plain();
-	}
+    FrobTadsApplicationPlain( const FrobOptions& opts )
+    : FrobTadsApplication(opts)
+    {
+        // Just tell the osgen layer to use plain mode.
+        os_plain();
+    }
 
 
-	/* ============================================================
-	 * Interface implementation.
-	 * ============================================================
-	 */
+    /* ============================================================
+     * Interface implementation.
+     * ============================================================
+     */
   protected:
-	virtual void
-	init()
-	{ }
+    virtual void
+    init()
+    { }
 
-	virtual void
-	resizeEvent()
-	{ }
+    virtual void
+    resizeEvent()
+    { }
 
   public:
-	virtual void
-	moveCursor( int, int )
-	{ }
+    virtual void
+    moveCursor( int, int )
+    { }
 
-	virtual void
-	print( int, int, int, const char* str )
-	{ printf("%s", str); }
+    virtual void
+    print( int, int, int, const char* str )
+    { printf("%s", str); }
 
-	virtual void
-	flush()
-	{ fflush(stdout); }
+    virtual void
+    flush()
+    { fflush(stdout); }
 
-	virtual void
-	clear( int, int, int, int, int )
-	{ }
+    virtual void
+    clear( int, int, int, int, int )
+    { }
 
-	virtual void
-	scrollRegionUp( int, int, int, int, int )
-	{ }
+    virtual void
+    scrollRegionUp( int, int, int, int, int )
+    { }
 
-	virtual void
-	scrollRegionDown( int, int, int, int, int )
-	{ }
+    virtual void
+    scrollRegionDown( int, int, int, int, int )
+    { }
 
-	virtual int
-	getRawChar( bool, int )
-	{ return getchar(); }
+    virtual int
+    getRawChar( bool, int )
+    { return getchar(); }
 
-	virtual void
-	sleep( int )
-	{ }
+    virtual void
+    sleep( int )
+    { }
 
-	virtual int
-	height() const
-	{ return 25; }
+    virtual int
+    height() const
+    { return 25; }
 
-	virtual int
-	width() const
-	{ return 80; }
+    virtual int
+    width() const
+    { return 80; }
 };
 
 #endif // FROBTADSAPPPLAIN_H

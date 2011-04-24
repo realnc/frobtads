@@ -236,7 +236,7 @@ typedef FILE osfildef;
  *
  * Needed by the TADS 3 compiler. */
 struct os_file_time_t {
-	time_t t;
+    time_t t;
 };
 
 /* These values are used for the "mode" parameter of osfseek() to

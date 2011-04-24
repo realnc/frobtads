@@ -14,13 +14,13 @@
 inline int
 makeColorPair(int fg, int bg)
 {
-	int res = fg + (bg << 3);
-	// Colorpair 0 is wired to white on black and cannot be changed.
-	// Therefore, we cannot use 0 for black on black; we'll exchange
-	// it with pair 7, which is white on black.
-	if (res == 0) return 7;
-	if (res == 7) return 0;
-	return res;
+    int res = fg + (bg << 3);
+    // Colorpair 0 is wired to white on black and cannot be changed.
+    // Therefore, we cannot use 0 for black on black; we'll exchange
+    // it with pair 7, which is white on black.
+    if (res == 0) return 7;
+    if (res == 7) return 0;
+    return res;
 }
 
 #define FROB_BLACK   0

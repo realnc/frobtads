@@ -73,94 +73,94 @@ int os_getc(void)
 static int
 timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
 {
-	// If `done' is false, it means that we have been previously
-	// called and returned 0, so this time we should return the
-	// extended key-code we stored last time in `extKey'.
-	static bool done = true;
-	static int extKey;
+    // If `done' is false, it means that we have been previously
+    // called and returned 0, so this time we should return the
+    // extended key-code we stored last time in `extKey'.
+    static bool done = true;
+    static int extKey;
 
-	if (not done) {
-		// We have a pending return from our last call.  Prepare to do a
-		// normal read on our next call and return the pending result.
-		done = true;
-		return extKey;
-	}
+    if (not done) {
+        // We have a pending return from our last call.  Prepare to do a
+        // normal read on our next call and return the pending result.
+        done = true;
+        return extKey;
+    }
 
-	// Read a character.
-	int c = globalApp->getRawChar(showCursor, timeout);
-	extKey = 0;
+    // Read a character.
+    int c = globalApp->getRawChar(showCursor, timeout);
+    extKey = 0;
 
-	if (c == ERR) {
-		if (timeout > -1) {
-			// The operation timed out.
-			if (timedOut != 0) *timedOut = true;
-			return 0;
-		}
-		// Paranoia (ERR is only returned to indicate that the operation
-		// timed out).  Something else happened.  Prepare to return an EOF
-		// on our next call.
-		extKey = CMD_EOF;
-	}
+    if (c == ERR) {
+        if (timeout > -1) {
+            // The operation timed out.
+            if (timedOut != 0) *timedOut = true;
+            return 0;
+        }
+        // Paranoia (ERR is only returned to indicate that the operation
+        // timed out).  Something else happened.  Prepare to return an EOF
+        // on our next call.
+        extKey = CMD_EOF;
+    }
 
-	// If a timeout was specified and the caller wants to know, report that
-	// no timeout occured.
-	if (timeout > -1 and timedOut != 0) *timedOut = false;
-		
-	switch (c) {
-	  // Paranoia.
-	  // ERR should always be 0, and therefore already handled.  Anyway, we
-	  // explicitly check for 0 here just in case ERR != 0.
-	  case 0:         extKey = CMD_EOF; break;
-	  // A Tab is not an extended character, but Tads requires that it is
-	  // handled as one.
-	  case '\t':      extKey = CMD_TAB; break;
-	  case '\n':
-	  case '\r':
-	  case KEY_ENTER: return 13;
-	  case KEY_DOWN:  extKey = CMD_DOWN; break;
-	  case KEY_UP:    extKey = CMD_UP; break;
-	  case KEY_LEFT:  extKey = CMD_LEFT; break;
-	  case KEY_RIGHT: extKey = CMD_RIGHT; break;
-	  case KEY_HOME:  extKey = CMD_HOME; break;
-	  // We don't return '\b' because of paranoia; some systems might not
-	  // use ASCII code 8 for '\b'.
-	  case '\b':
-	  case KEY_BACKSPACE: return 8;
-	  case KEY_F(1):  extKey = CMD_F1; break;
-	  case KEY_F(2):  extKey = CMD_F2; break;
-	  case KEY_F(3):  extKey = CMD_F3; break;
-	  case KEY_F(4):  extKey = CMD_F4; break;
-	  case KEY_F(5):  extKey = CMD_F5; break;
-	  case KEY_F(6):  extKey = CMD_F6; break;
-	  case KEY_F(7):  extKey = CMD_F7; break;
-	  case KEY_F(8):  extKey = CMD_F8; break;
-	  case KEY_F(9):  extKey = CMD_F9; break;
-	  case KEY_F(10): extKey = CMD_F10; break;
-	  case KEY_DL:    extKey = CMD_KILL; break;
-	  case KEY_DC:    extKey = CMD_DEL; break;
-	  case KEY_EOL:   extKey = CMD_DEOL; break;
-	  case KEY_NPAGE: extKey = CMD_PGDN; break;
-	  case KEY_PPAGE: extKey = CMD_PGUP; break;
-	  case KEY_END:   extKey = CMD_END; break;
-	  default:
-		// TODO: This assumes that the system only returns unsigned
-		// characters for "normal" inputs.
-		if (c < 0 or c > 255) {
-			// Who knows?  Report a space so that there's at least some
-			// feedback.
-			return ' ';
-		}
-	}
+    // If a timeout was specified and the caller wants to know, report that
+    // no timeout occured.
+    if (timeout > -1 and timedOut != 0) *timedOut = false;
+        
+    switch (c) {
+      // Paranoia.
+      // ERR should always be 0, and therefore already handled.  Anyway, we
+      // explicitly check for 0 here just in case ERR != 0.
+      case 0:         extKey = CMD_EOF; break;
+      // A Tab is not an extended character, but Tads requires that it is
+      // handled as one.
+      case '\t':      extKey = CMD_TAB; break;
+      case '\n':
+      case '\r':
+      case KEY_ENTER: return 13;
+      case KEY_DOWN:  extKey = CMD_DOWN; break;
+      case KEY_UP:    extKey = CMD_UP; break;
+      case KEY_LEFT:  extKey = CMD_LEFT; break;
+      case KEY_RIGHT: extKey = CMD_RIGHT; break;
+      case KEY_HOME:  extKey = CMD_HOME; break;
+      // We don't return '\b' because of paranoia; some systems might not
+      // use ASCII code 8 for '\b'.
+      case '\b':
+      case KEY_BACKSPACE: return 8;
+      case KEY_F(1):  extKey = CMD_F1; break;
+      case KEY_F(2):  extKey = CMD_F2; break;
+      case KEY_F(3):  extKey = CMD_F3; break;
+      case KEY_F(4):  extKey = CMD_F4; break;
+      case KEY_F(5):  extKey = CMD_F5; break;
+      case KEY_F(6):  extKey = CMD_F6; break;
+      case KEY_F(7):  extKey = CMD_F7; break;
+      case KEY_F(8):  extKey = CMD_F8; break;
+      case KEY_F(9):  extKey = CMD_F9; break;
+      case KEY_F(10): extKey = CMD_F10; break;
+      case KEY_DL:    extKey = CMD_KILL; break;
+      case KEY_DC:    extKey = CMD_DEL; break;
+      case KEY_EOL:   extKey = CMD_DEOL; break;
+      case KEY_NPAGE: extKey = CMD_PGDN; break;
+      case KEY_PPAGE: extKey = CMD_PGUP; break;
+      case KEY_END:   extKey = CMD_END; break;
+      default:
+        // TODO: This assumes that the system only returns unsigned
+        // characters for "normal" inputs.
+        if (c < 0 or c > 255) {
+            // Who knows?  Report a space so that there's at least some
+            // feedback.
+            return ' ';
+        }
+    }
 
-	if (extKey == 0) {
-		// It's a normal ASCII code (this includes Escape, which has code
-		// 27).
-		return c;
-	}
+    if (extKey == 0) {
+        // It's a normal ASCII code (this includes Escape, which has code
+        // 27).
+        return c;
+    }
 
-	// Prepare to return the extended key-code on our next call.
-	done = false;
-	return 0;
+    // Prepare to return the extended key-code on our next call.
+    done = false;
+    return 0;
 }
 
 
@@ -168,7 +168,7 @@ timedGetcRaw( bool showCursor, int timeout = -1, bool* timedOut = 0)
  */
 void os_flush( void )
 {
-	globalApp->flush();
+    globalApp->flush();
 }
 
 
@@ -178,8 +178,8 @@ void os_flush( void )
 int
 os_getc_raw( void )
 {
-	// Just read a character without a timeout and return it.
-	return timedGetcRaw(true);
+    // Just read a character without a timeout and return it.
+    return timedGetcRaw(true);
 }
 
 
@@ -191,9 +191,9 @@ os_getc_raw( void )
 void
 os_waitc( void )
 {
-	// Just read a character with no timeout and ignore its value.
-	// Don't show a cursor.
-	globalApp->getRawChar(false, -1);
+    // Just read a character with no timeout and ignore its value.
+    // Don't show a cursor.
+    globalApp->getRawChar(false, -1);
 }
 #endif
 
@@ -203,26 +203,26 @@ os_waitc( void )
 int
 os_get_event( unsigned long timeout, int use_timeout, os_event_info_t* info )
 {
-	int res;
-	bool timedOut = false;
+    int res;
+    bool timedOut = false;
 
-	res = timedGetcRaw(true, use_timeout ? timeout : -1, &timedOut);
+    res = timedGetcRaw(true, use_timeout ? timeout : -1, &timedOut);
 
-	// If the timeout expired, tell TADS about it.
-	if (use_timeout and timedOut) return OS_EVT_TIMEOUT;
+    // If the timeout expired, tell TADS about it.
+    if (use_timeout and timedOut) return OS_EVT_TIMEOUT;
 
-	if (res == 0) {
-		// It was an extended character; call again to get the
-		// extended code.
-		info->key[0] = 0;
-		info->key[1] = timedGetcRaw(true);
-	} else {
-		// A normal character.  Return it as is.
-		info->key[0] = res;
-		info->key[1] = 0;
-	}
-	// Tell the caller it was an key-event.
-	return OS_EVT_KEY;
+    if (res == 0) {
+        // It was an extended character; call again to get the
+        // extended code.
+        info->key[0] = 0;
+        info->key[1] = timedGetcRaw(true);
+    } else {
+        // A normal character.  Return it as is.
+        info->key[0] = res;
+        info->key[1] = 0;
+    }
+    // Tell the caller it was an key-event.
+    return OS_EVT_KEY;
 }
 
 
@@ -231,9 +231,9 @@ os_get_event( unsigned long timeout, int use_timeout, os_event_info_t* info )
 void
 os_sleep_ms( long delay_in_milliseconds )
 {
-	// Tell TADS to redraw the screen if needed.
-	osssb_redraw_if_needed();
-	globalApp->sleep(delay_in_milliseconds);
+    // Tell TADS to redraw the screen if needed.
+    osssb_redraw_if_needed();
+    globalApp->sleep(delay_in_milliseconds);
 }
 
 
@@ -256,13 +256,13 @@ os_term( int )
 void
 os_expause( void )
 {
-	if (globalApp->options.exitPause) {
-		// Exit-pause is enabled.  Tell the user, flush any
-		// pending output and wait for a key.
-		os_printz("[Hit any key to exit.]");
-		os_flush();
-		os_waitc();
-	}
+    if (globalApp->options.exitPause) {
+        // Exit-pause is enabled.  Tell the user, flush any
+        // pending output and wait for a key.
+        os_printz("[Hit any key to exit.]");
+        os_flush();
+        os_waitc();
+    }
 }
 
 
@@ -273,7 +273,7 @@ os_expause( void )
 int
 os_break( void )
 {
-	return 0;
+    return 0;
 }
 
 

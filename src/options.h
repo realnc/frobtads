@@ -6,31 +6,31 @@
  * modified to be more portable.  Everything in this file is subject to
  * the following legal blurb:
  *
- *	Copyright (C) Brad Appleton.
+ *  Copyright (C) Brad Appleton.
  *
- *	AUTHOR
- *	======
- *	Brad Appleton, Software Tools Developer
- *	mailto:bradapp@enteract.com
- *	http://www.enteract.com/~bradapp
+ *  AUTHOR
+ *  ======
+ *  Brad Appleton, Software Tools Developer
+ *  mailto:bradapp@enteract.com
+ *  http://www.enteract.com/~bradapp
  *
- *	COPY/REUSE POLICY
- *	=================
- *	Permission is hereby granted to freely copy and redistribute
- *	this software, provided that the author is clearly credited in
- *	all copies and derivations. Neither the names of the authors nor
- *	that of their employers may be used to endorse or promote
- *	products derived from this software without specific written
- *	permission.
+ *  COPY/REUSE POLICY
+ *  =================
+ *  Permission is hereby granted to freely copy and redistribute
+ *  this software, provided that the author is clearly credited in
+ *  all copies and derivations. Neither the names of the authors nor
+ *  that of their employers may be used to endorse or promote
+ *  products derived from this software without specific written
+ *  permission.
  *
- *	DISCLAIMER
- *	==========
- *	This software is provided "As Is" and without any express or
- *	implied warranties.  Neither the authors nor any of their
- *	employers (including any of their subsidiaries and subdivisions)
- *	are responsible for maintaining or supporting this software or
- *	for any consequences resulting from the use of this software, no
- *	matter how awful, even if they arise from flaws in the software.
+ *  DISCLAIMER
+ *  ==========
+ *  This software is provided "As Is" and without any express or
+ *  implied warranties.  Neither the authors nor any of their
+ *  employers (including any of their subsidiaries and subdivisions)
+ *  are responsible for maintaining or supporting this software or
+ *  for any consequences resulting from the use of this software, no
+ *  matter how awful, even if they arise from flaws in the software.
  */
 #ifndef OPTIONS_H
 #define OPTIONS_H

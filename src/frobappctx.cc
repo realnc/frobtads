@@ -8,5 +8,5 @@
 int
 getIoSafetyLevel( void* )
 {
-	return globalApp->options.safetyLevel;
+    return globalApp->options.safetyLevel;
 }
