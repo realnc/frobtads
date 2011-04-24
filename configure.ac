@@ -182,6 +182,13 @@ AC_LANG_POP(C++)
 #
 AC_C_BIGENDIAN([cpuisbigendian=true], [cpuisbigendian=false], [cpuisbigendian=true])
 AM_CONDITIONAL([CPU_IS_BIGENDIAN], [test x$cpuisbigendian = xtrue])
+if test x$cpuisbigendian = xtrue; then
+  AC_DEFINE([CPU_IS_BIGENDIAN], [1],
+            [Define to 1 if CPU is big endian.])
+else
+  AC_DEFINE([CPU_IS_BIGENDIAN], [0],
+            [Define to 0 if CPU is little endian.])
+fi
 
 # Check the sizes of 'int' and 'short'.
 #
