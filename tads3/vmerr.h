@@ -231,20 +231,30 @@ const char *err_get_msg(const err_msg_t *msg_array, size_t msg_count,
                         int msgnum, int verbose);
 
 /*
- *   Format a message with the parameters contained in an exception
- *   object.  Suports the following format codes:
+ *   Format a message with the parameters contained in an exception object.
+ *   Returns the size in bytes of the formatted message.  If the output
+ *   buffer is null or too small, we'll fill it up as much as possible and
+ *   return the actual length required for the full message text.
+ *   
+ *   Suports the following format codes:
  *   
  *   %s - String.  Formats an ERR_TYPE_CHAR, ERR_TYPE_TEXTCHAR, or
  *   ERR_TYPE_TEXTCHAR_LEN value.
  *   
  *   %d, %u, %x - signed/unsigned decimal integer, hexadecimal integer.
- *   Formats an ERR_TYPE_INT value or an ERR_TYPE_ULONG value.
- *   Automatically uses the correct size for the argument.
+ *   Formats an ERR_TYPE_INT value or an ERR_TYPE_ULONG value.  Automatically
+ *   uses the correct size for the argument.
  *   
  *   %% - Formats as a single percent sign.  
  */
-void err_format_msg(char *outbuf, size_t outbuflen,
-                    const char *msg, const struct CVmException *exc);
+size_t err_format_msg(char *outbuf, size_t outbuflen,
+                      const char *msg, const struct CVmException *exc);
+
+/* 
+ *   Format a message, allocating a buffer to store the result.  The caller
+ *   must free the buffer with t3free(). 
+ */
+char *err_format_msg(const char *msg, const struct CVmException *exc);
 
 /* 
  *   exception ID - this identifies an error 
@@ -256,6 +266,12 @@ typedef uint err_id_t;
  */
 enum err_param_type
 {
+    /* ---------------- Display Parameters ---------------- */
+    /*
+     *   The following parameter types are for display purposes.  These are
+     *   substituted into the message string in err_format_msg().  
+     */
+
     /* parameter is a native 'int' value */
     ERR_TYPE_INT,
 
@@ -275,7 +291,30 @@ enum err_param_type
     ERR_TYPE_TEXTCHAR_LEN,
 
     /* parameter is a 'char *' value with a separate length */
-    ERR_TYPE_CHAR_LEN
+    ERR_TYPE_CHAR_LEN,
+
+    /* ---------------- Non-Display Parameters ---------------- */
+    /*
+     *   The following parameter types are stored in the exception but are
+     *   NOT used in formatting the error message. 
+     */
+
+    /* 
+     *   a char* value giving the ID/Version string for the metaclass
+     *   involved in the error (for example, "metaclass missing" or
+     *   "metaclass version not available") 
+     */
+    ERR_TYPE_METACLASS,
+
+    /* a char* value the ID/Version string for the function set involved */
+    ERR_TYPE_FUNCSET,
+
+    /* 
+     *   void (no parameter): this is a flag indicating that the error is a
+     *   VM version error.  This type of error can usually be solved by
+     *   updating the interpreter to the latest version.  
+     */
+    ERR_TYPE_VERSION_FLAG
 };
 
 /*
@@ -377,6 +416,24 @@ struct CVmException
     
     /* the error code */
     err_id_t error_code_;
+
+    /* 
+     *   Is this a version-related error?  If this is true, the error is due
+     *   to an out-of-date interpreter, and can usually be solved by
+     *   upgrading to the latest version. 
+     */
+    int version_flag_;
+
+    /* 
+     *   Some version-related errors are due to component versions, namely
+     *   metaclasses or function sets.  For errors due to component versions,
+     *   we set the version flag AND set the appropriate identifier here to
+     *   indicate the required component version.  (This is the component
+     *   version that's set as a dependency in the byte-code program we're
+     *   trying to run.)  
+     */
+    const char *metaclass_;
+    const char *funcset_;
 
     /* number of parameters stored in the exception */
     int param_count_;

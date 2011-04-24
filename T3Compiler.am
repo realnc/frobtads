@@ -24,26 +24,14 @@ T3CHEADERS = \
 	tads3/tct3int.h \
 	tads3/tctarg.h \
 	tads3/tct3base.h \
-	tads3/tclibprs.h \
 	tads3/tcunas.h \
 	tads3/tcpndrv.h \
 	tads3/tcpnint.h \
 	tads3/tcpnbase.h \
-	tads3/tccmdutl.h \
-	tads3/tct3unas.h \
-	tads3/tcerr.h \
-	tads3/tcgen.h \
-	tads3/tcprs.h \
-	tads3/tcsrc.h \
-	tads3/tctok.h \
 	tads3/tcvsn.h \
 	tads3/tcerrnum.h \
 	tads3/core.h \
-	tads3/tct3.h \
-	tads3/tchostsi.h \
-	tads3/tcglob.h \
 	tads3/tchost.h \
-	tads3/tcmain.h \
 	tads3/tcmake.h \
 	tads3/tctargty.h \
 	tads3/rcmain.h \
@@ -56,25 +44,10 @@ T3CSOURCES = \
 	tads3/os_stdio.cpp \
 	tads3/rcmain.cpp \
 	tads3/std_dbg.cpp \
-	tads3/tccmdutl.cpp \
-	tads3/tcerr.cpp \
-	tads3/tcerrmsg.cpp \
-	tads3/tcgen.cpp \
-	tads3/tcglob.cpp \
-	tads3/tchostsi.cpp \
-	tads3/tclibprs.cpp \
-	tads3/tcmain.cpp \
 	tads3/tcmakecl.cpp \
 	tads3/tcmake.cpp \
-	tads3/tcprs.cpp \
 	tads3/tcprsimg.cpp \
-	tads3/tcprsstm.cpp \
-	tads3/tcsrc.cpp \
-	tads3/tct3.cpp \
 	tads3/tct3img.cpp \
-	tads3/tct3stm.cpp \
-	tads3/tct3unas.cpp \
-	tads3/tctok.cpp \
 	tads3/vmbifc.cpp \
 	tads3/vmimgrb.cpp \
 	tads3/vmpreini.cpp \
@@ -98,10 +71,7 @@ T3COMP_DISTFILES = \
 	tads3/test \
 	testscripts \
 	tads3/resnoexe.cpp \
-	tads3/tcprs_d.cpp \
-	tads3/tcprsnl.cpp \
-	tads3/tct3nl.cpp \
-	tads3/tct3_d.cpp
+	tads3/tcprs_d.cpp
 
 t3comp-dist:
 	@cd "$(srcdir)" && $(AMTAR) chof - $(T3COMP_DISTFILES) | GZIP=$(GZIP_ENV) gzip -c >"@abs_builddir@/$(PACKAGE)-t3compiler-$(VERSION).tar.gz"

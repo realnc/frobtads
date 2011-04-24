@@ -50,7 +50,7 @@ Modified
  */
 /* copyright-date-string */
 #define T3VM_BANNER_STRING \
-    "T3 VM " T3VM_VSN_STRING " - Copyright 1999, 2009 Michael J. Roberts"
+    "T3 VM " T3VM_VSN_STRING " - Copyright 1999, 2010 Michael J. Roberts"
 
 #endif /* VMVSN_H */
 
