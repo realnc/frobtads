@@ -1,16 +1,11 @@
-(See the file COMPILERS on info about the TADS compilers.)
-
 For impatient people who don't like to read through INSTALL files prior
 to installing software on their system:
 
 Enter the directory where you unpacked this package (for example,
-"cd ~/downloads/frobtads-0.10").  Type: "./configure" followed by
+"cd ~/downloads/frobtads-1.0").  Type: "./configure" followed by
 "make", then "make install".  Play TADS games:
 "frob ~/games/tads/arrival.gam".  Get a list of command-line options:
 "frob --help".
-
-Or simply use a GUI tool like Kconfigure to make the above a 1-click
-process.
 
 If you want some more information, read through the rest of this file.
 
@@ -100,8 +95,10 @@ Some 'configure' options (cAsE sENsiTiVe):
   --enable-t3debug Will build the debug version of the T3VM.  This
                     results in slower code, but is useful for people who
                     want to make changes to the source code.  This will
-                    also enable the TADS 3 test suite if you installed
-                    the TADS 3 compiler's source code.
+                    also enable the TADS 3 test suite.
+  --disable-t2-compiler
+  --disable-t3-compiler These options disable the building of the TADS 2
+                    and TADS 3 compiler respectively.
 
 If you don't intent to hack around in the interpreter's source code, you
 can also specify this option:
@@ -116,8 +113,8 @@ You may specify your own C and C++ compiler flags like so:
 
   ./configure CFLAGS="-O3 -pipe -march=pentium4" CXXFLAGS="-O3 -pipe -march=pentium4"
 
-If you used the "--enable-t3debug" configure option and the TADS 3
-compiler source code is available, you can run the test suite with:
+If you used the "--enable-t3debug" configure option, you can run the test
+suite with:
 
   make check
 
@@ -207,7 +204,7 @@ by name.  A few examples for the CPU value on PCs:
 
   i386, i486, pentium, pentium-mmx, pentiumpro, pentium2, pentium3,
   pentium4, prescott, nocona (that's the 64bit P4; what, you have one?)
-  athlon, athlon-4, athlon-xp, athlon64
+  core2, athlon, athlon-4, athlon-xp, athlon64
 
 For example: "-march=pentium4" of you have a Pentium4 or Celeron D.
 
@@ -235,8 +232,8 @@ with an error-message, send a bug report to the maintainer (include the
 error-message, the name and version of your compiler, and details about
 your system).
 
-If you installed the source code of the TADS 3 compiler and built the
-debug version of TADS 3, you can run the test suite by typing:
+If you've built the debug version of TADS 3, you can run the test suite
+by typing:
 
   make check
 
@@ -287,9 +284,9 @@ You will be prompted to enter root's password (or your own if you're on
 Ubuntu).
 
 This will install FrobTADS on your system and you're ready to play all
-those Tads games.  If you also downloaded the compiler package(s), they
-will be installed too, along with their data files and development
-libraries.
+those Tads games.  The TADS compilers will be installed too, along with
+their data files and development libraries, as long as you didn't disable
+them during the ./configure step.
 
 If the above procedure doesn't work for you, contact the maintainer.
 See the README file for an email address.  Or type:

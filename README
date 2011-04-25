@@ -14,8 +14,8 @@ The "doc" directory contains the documentation for this package:
       Documents changes in the source code between versions.
 
     COMPILERS
-      Explains how to build the TADS 2 and TADS 3 compilers and where
-      to obtain documentation for them.
+      Explains how to use the TADS 2 and TADS 3 compilers and where
+      to obtain documentation for the TADS programming languages.
 
     CONFIGURE_DOC
       Contains detailed documentation about the 'configure' script (this
