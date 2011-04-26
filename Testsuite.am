@@ -45,7 +45,7 @@ TESTS = \
     testscripts/all_make \
     testscripts/test_pre
 
-nodist_test_t3pre_SOURCES = tads3/test/test_pre.cpp \
+test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     src/osportable.cc \
     src/missing.cc \
     src/ost3comp.cc \
@@ -123,10 +123,10 @@ nodist_test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     tads3/vmbifc.cpp \
     tads3/os_stdio.cpp
 
-nodist_test_test_utf8_SOURCES = tads3/test/test_utf8.cpp \
+test_test_utf8_SOURCES = tads3/test/test_utf8.cpp \
     tads3/utf8.cpp
 
-nodist_test_test_chr_SOURCES = tads3/test/test_chr.cpp \
+test_test_chr_SOURCES = tads3/test/test_chr.cpp \
     src/osportable.cc \
     tads2/osnoui.c \
     tads3/std.cpp \
@@ -136,7 +136,7 @@ nodist_test_test_chr_SOURCES = tads3/test/test_chr.cpp \
     tads3/resnoexe.cpp \
     tads3/std_dbg.cpp
 
-nodist_test_test_gets_SOURCES = tads3/test/test_gets.cpp \
+test_test_gets_SOURCES = tads3/test/test_gets.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -148,13 +148,13 @@ nodist_test_test_gets_SOURCES = tads3/test/test_gets.cpp \
     tads3/tcsrc.cpp \
     tads3/std_dbg.cpp
 
-nodist_test_test_err_SOURCES = tads3/test/test_err.cpp \
+test_test_err_SOURCES = tads3/test/test_err.cpp \
     tads3/std.cpp \
     tads3/std_dbg.cpp \
     tads3/vmerr.cpp \
     tads3/vmerrmsg.cpp
 
-nodist_test_test_regex_SOURCES = tads3/test/test_regex.cpp \
+test_test_regex_SOURCES = tads3/test/test_regex.cpp \
     src/missing.cc \
     tads3/vmregex.cpp \
     tads3/vmerr.cpp \
@@ -163,7 +163,7 @@ nodist_test_test_regex_SOURCES = tads3/test/test_regex.cpp \
     tads3/derived/vmuni_cs.cpp \
     tads3/std_dbg.cpp
 
-nodist_test_test_obj_SOURCES = tads3/test/test_obj.cpp \
+test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     src/osportable.cc \
     src/missing.cc \
     src/ost3comp.cc \
@@ -237,10 +237,10 @@ nodist_test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads2/osnoui.c \
     tads2/osrestad.c
 
-nodist_test_test_sort_SOURCES = tads3/test/test_sort.cpp \
+test_test_sort_SOURCES = tads3/test/test_sort.cpp \
     tads3/vmsort.cpp
 
-nodist_test_test_write_SOURCES = tads3/test/test_write.cpp \
+test_test_write_SOURCES = tads3/test/test_write.cpp \
     tads3/std.cpp \
     tads3/std_dbg.cpp \
     tads3/vmwrtimg.cpp \
@@ -249,7 +249,7 @@ nodist_test_test_write_SOURCES = tads3/test/test_write.cpp \
     tads3/vmerrmsg.cpp \
     tads3/vmtypedh.cpp
 
-nodist_test_test_exec_SOURCES = tads3/test/test_exec.cpp \
+test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     src/osportable.cc \
     src/missing.cc \
     src/ost3comp.cc \
@@ -327,7 +327,7 @@ nodist_test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads3/os_stdio.cpp \
     tads3/std_dbg.cpp
 
-nodist_test_test_tok_SOURCES = tads3/test/test_tok.cpp \
+test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -358,7 +358,7 @@ nodist_test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     tads3/tcmain.cpp \
     tads3/std_dbg.cpp
 
-nodist_test_test_prs_SOURCES = tads3/test/test_prs.cpp \
+test_test_prs_SOURCES = tads3/test/test_prs.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -390,7 +390,7 @@ nodist_test_test_prs_SOURCES = tads3/test/test_prs.cpp \
     tads3/tct3unas.cpp \
     tads3/tcglob.cpp
 
-nodist_test_test_sym_SOURCES = tads3/test/test_sym.cpp \
+test_test_sym_SOURCES = tads3/test/test_sym.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -421,7 +421,7 @@ nodist_test_test_sym_SOURCES = tads3/test/test_sym.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp
 
-nodist_test_test_prs_top_SOURCES = tads3/test/test_prs_top.cpp \
+test_test_prs_top_SOURCES = tads3/test/test_prs_top.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -453,7 +453,7 @@ nodist_test_test_prs_top_SOURCES = tads3/test/test_prs_top.cpp \
     tads3/tct3unas.cpp \
     tads3/vmwrtimg.cpp
 
-nodist_test_test_comp_obj_SOURCES = tads3/test/test_comp_obj.cpp \
+test_test_comp_obj_SOURCES = tads3/test/test_comp_obj.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -485,7 +485,7 @@ nodist_test_test_comp_obj_SOURCES = tads3/test/test_comp_obj.cpp \
     tads3/tct3unas.cpp \
     tads3/vmwrtimg.cpp
 
-nodist_test_test_link_SOURCES = tads3/test/test_link.cpp \
+test_test_link_SOURCES = tads3/test/test_link.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
@@ -517,7 +517,7 @@ nodist_test_test_link_SOURCES = tads3/test/test_link.cpp \
     tads3/tct3unas.cpp \
     tads3/vmwrtimg.cpp
 
-nodist_test_test_pool_SOURCES = tads3/test/test_pool.cpp \
+test_test_pool_SOURCES = tads3/test/test_pool.cpp \
     tads3/std.cpp \
     tads3/vmpool.cpp \
     tads3/vmpoolim.cpp \

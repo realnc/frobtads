@@ -127,6 +127,12 @@ dist_t3charmap_DATA = tads3/charmap/cmaplib.t3r
 endif BUILD_T3_COMPILER
 endif !BUILD_INTERPRETER
 
+## We need to make sure the Tads 2 compiler data files are always included in
+## the "dist" target, regardless of whether the compiler is enabled or not.
+##
+T2COMPDATADIR = $(pkgdatadir)/tads2
+T2COMPDATAFILES = tads2/adv.t tads2/std.t tads2/gameinfo.t
+
 ## Tell Automake to include these files in the "make dist" (and friends)
 ## target.  Note that files like AUTHORS, README, etc. are automatically
 ## included in the distribution only if they're in the
@@ -134,6 +140,7 @@ endif !BUILD_INTERPRETER
 ## (such as this file) are also distributed automaticly.
 ##
 EXTRA_DIST = \
+    $(T2COMPDATAFILES) \
     bootstrap \
     doc/AUTHORS \
     doc/BUGS \
@@ -152,7 +159,15 @@ EXTRA_DIST = \
     tads2/tadsver.htm \
     tads3/LICENSE.TXT \
     tads3/portnote.htm \
-    tads3/README.TXT
+    tads3/README.TXT \
+    testscripts/README \
+    testscripts/all_make \
+    testscripts/test_diff \
+    testscripts/test_ex \
+    testscripts/test_make \
+    testscripts/test_pp \
+    testscripts/test_pre \
+    testscripts/test_restore
 
 ## Sources needed by both the interpreter as well as the compilers.
 ##
@@ -172,9 +187,9 @@ COMMONSOURCES = \
     tads2/osnoui.c \
     tads2/osrestad.c
 
-## TADS 2 runtime and compiler headers.
+## TADS 2 headers.
 ##
-T2RCHEADERS = \
+T2HEADERS = \
     tads2/appctx.h \
     tads2/argize.h \
     tads2/bif.h \
@@ -216,7 +231,9 @@ T2RCHEADERS = \
     tads2/tio.h \
     tads2/tok.h \
     tads2/trd.h \
-    tads2/voc.h
+    tads2/voc.h \
+    tads2/tcd.h \
+    tads2/tcg.h
 
 ## TADS 2 runtime and compiler sources.
 ##
@@ -246,6 +263,131 @@ T2RCSOURCES = \
     tads2/run.c \
     tads2/suprun.c \
     tads2/voc.c
+
+## TADS 3 headers.
+##
+T3HEADERS = \
+    tads3/charmap.h \
+    tads3/core.h \
+    tads3/md5.h \
+    tads3/osifcnet.h \
+    tads3/rcmain.h \
+    tads3/resload.h \
+    tads3/sha2.h \
+    tads3/t3_os.h \
+    tads3/t3std.h \
+    tads3/tccmdutl.h \
+    tads3/tcerr.h \
+    tads3/tcerrnum.h \
+    tads3/tcgen.h \
+    tads3/tcglob.h \
+    tads3/tchost.h \
+    tads3/tchostsi.h \
+    tads3/tclibprs.h \
+    tads3/tcmain.h \
+    tads3/tcmake.h \
+    tads3/tcpnbase.h \
+    tads3/tcpndrv.h \
+    tads3/tcpnint.h \
+    tads3/tcprs.h \
+    tads3/tcprstyp.h \
+    tads3/tcsrc.h \
+    tads3/tct3base.h \
+    tads3/tct3drv.h \
+    tads3/tct3.h \
+    tads3/tct3int.h \
+    tads3/tct3ty.h \
+    tads3/tct3unas.h \
+    tads3/tctarg.h \
+    tads3/tctargty.h \
+    tads3/tctok.h \
+    tads3/tcunas.h \
+    tads3/tcvsn.h \
+    tads3/test/t3test.h \
+    tads3/unix/osnetunix.h \
+    tads3/utf8.h \
+    tads3/vmanonfn.h \
+    tads3/vmbif.h \
+    tads3/vmbifnet.h \
+    tads3/vmbifreg.h \
+    tads3/vmbift3.h \
+    tads3/vmbiftad.h \
+    tads3/vmbiftio.h \
+    tads3/vmbignum.h \
+    tads3/vmbytarr.h \
+    tads3/vmcoll.h \
+    tads3/vmconsol.h \
+    tads3/vmcrc.h \
+    tads3/vmcset.h \
+    tads3/vmdatasrc.h \
+    tads3/vmdbg.h \
+    tads3/vmdict.h \
+    tads3/vmdynfunc.h \
+    tads3/vmerr.h \
+    tads3/vmerrnum.h \
+    tads3/vmfile.h \
+    tads3/vmfilobj.h \
+    tads3/vmfref.h \
+    tads3/vmfunc.h \
+    tads3/vmglob.h \
+    tads3/vmglobv.h \
+    tads3/vmgram.h \
+    tads3/vmhash.h \
+    tads3/vmhost.h \
+    tads3/vmhostsi.h \
+    tads3/vmhosttx.h \
+    tads3/vmhttpreq.h \
+    tads3/vmhttpsrv.h \
+    tads3/vmimage.h \
+    tads3/vmimgrb.h \
+    tads3/vmimport.h \
+    tads3/vminit.h \
+    tads3/vmintcls.h \
+    tads3/vmisaac.h \
+    tads3/vmiter.h \
+    tads3/vmlookup.h \
+    tads3/vmlst.h \
+    tads3/vmmaincn.h \
+    tads3/vmmain.h \
+    tads3/vmmccore.h \
+    tads3/vmmcnet.h \
+    tads3/vmmcreg.h \
+    tads3/vmmeta.h \
+    tads3/vmnetfil.h \
+    tads3/vmnet.h \
+    tads3/vmobj.h \
+    tads3/vmop.h \
+    tads3/vmpack.h \
+    tads3/vmparam.h \
+    tads3/vmpat.h \
+    tads3/vmpool.h \
+    tads3/vmpoolsl.h \
+    tads3/vmpredef.h \
+    tads3/vmpreini.h \
+    tads3/vmprof.h \
+    tads3/vmprofty.h \
+    tads3/vmrefcnt.h \
+    tads3/vmregex.h \
+    tads3/vmres.h \
+    tads3/vmrun.h \
+    tads3/vmrunsym.h \
+    tads3/vmsave.h \
+    tads3/vmsort.h \
+    tads3/vmsrcf.h \
+    tads3/vmstack.h \
+    tads3/vmstrbuf.h \
+    tads3/vmstrcmp.h \
+    tads3/vmstr.h \
+    tads3/vmstrref.h \
+    tads3/vmstrres.h \
+    tads3/vmtmpfil.h \
+    tads3/vmtobj.h \
+    tads3/vmtype.h \
+    tads3/vmundo.h \
+    tads3/vmuni.h \
+    tads3/vmvec.h \
+    tads3/vmvsn.h \
+    tads3/vmwrtimg.h
 
 ## TADS 3 runtime and compiler sources.
 ##

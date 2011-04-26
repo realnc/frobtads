@@ -35,25 +35,6 @@ T2RSOURCES = \
     tads2/ply.c \
     tads2/linfdum.c
 
-## TADS 3 runtime headers
-##
-T3RHEADERS = \
-    tads3/charmap.h tads3/resload.h tads3/t3std.h tads3/tcprstyp.h tads3/utf8.h tads3/vmanonfn.h \
-    tads3/vmbif.h tads3/vmbifreg.h tads3/vmbift3.h tads3/vmbiftad.h tads3/vmbiftio.h tads3/vmbignum.h \
-    tads3/vmbytarr.h tads3/vmcoll.h tads3/vmconsol.h tads3/vmcrc.h tads3/vmcset.h tads3/vmdbg.h \
-    tads3/vmdict.h tads3/vmerr.h tads3/vmerrnum.h tads3/vmfile.h tads3/vmfilobj.h tads3/vmfunc.h \
-    tads3/vmglob.h tads3/vmglobv.h tads3/vmgram.h tads3/vmhash.h tads3/vmhost.h tads3/vmhostsi.h \
-    tads3/vmhosttx.h tads3/vmimage.h tads3/vmimgrb.h tads3/vmimport.h tads3/vminit.h tads3/vmintcls.h \
-    tads3/vmiter.h tads3/vmlookup.h tads3/vmlst.h tads3/vmmaincn.h tads3/vmmain.h tads3/vmmccore.h \
-    tads3/vmmcreg.h tads3/vmmeta.h tads3/vmobj.h tads3/vmop.h tads3/vmparam.h tads3/vmpat.h \
-    tads3/vmpool.h tads3/vmpoolsl.h tads3/vmpredef.h tads3/vmprof.h tads3/vmprofty.h tads3/vmregex.h \
-    tads3/vmres.h tads3/vmrun.h tads3/vmrunsym.h tads3/vmsave.h tads3/vmsort.h tads3/vmsrcf.h \
-    tads3/vmstack.h tads3/vmstrcmp.h tads3/vmstr.h tads3/vmstrres.h tads3/vmtobj.h tads3/vmtype.h \
-    tads3/vmundo.h tads3/vmuni.h tads3/vmvec.h tads3/vmvsn.h tads3/vmwrtimg.h tads3/tchostsi.h \
-    tads3/tclibprs.h tads3/tccmdutl.h tads3/tcprs.h tads3/tcgen.h tads3/tcglob.h tads3/tcerr.h \
-    tads3/tctok.h tads3/tcmain.h tads3/tcsrc.h tads3/tct3.h tads3/tct3unas.h tads3/osifcnet.h \
-    tads3/vmdatasrc.h tads3/vmstrref.h tads3/vmtmpfil.h vmmcnet.h
-
 ## TADS 3 runtime sources.
 ##
 T3RSOURCES = \
@@ -66,5 +47,5 @@ T3RSOURCES = \
     tads3/tcprsnf.cpp \
     tads3/tct3_d.cpp
 
-frob_SOURCES = $(FROBSOURCES) $(COMMONSOURCES) $(T2RCHEADERS) $(T2RSOURCES) $(T2RCSOURCES) $(T3RHEADERS) $(T3RSOURCES) $(T3RCSOURCES)
+frob_SOURCES = $(FROBSOURCES) $(COMMONSOURCES) $(T2HEADERS) $(T2RSOURCES) $(T2RCSOURCES) $(T3HEADERS) $(T3RSOURCES) $(T3RCSOURCES)
 frob_CPPFLAGS = -DRUNTIME $(AM_CPPFLAGS)

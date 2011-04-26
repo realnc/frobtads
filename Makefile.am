@@ -13,6 +13,10 @@
 ##
 include $(srcdir)/Common.am
 
+## Include compiler data file definitions.
+##
+include $(srcdir)/T3CompData.am
+
 ## Because each individual makefile expands bin_PROGRAMS with '+=', it
 ## must have been previously set, even if it's empty.
 ##

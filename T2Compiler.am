@@ -4,15 +4,10 @@ bin_PROGRAMS += tadsc
 
 AM_CPPFLAGS += -I$(srcdir)/src -I$(srcdir)/tads2
 
-## TADS 2 compiler headers.
-##
-T2CHEADERS = \
-    tads2/tcd.h \
-    tads2/tcg.h
-
 ## TADS 2 compiler sources.
 ##
 T2CSOURCES = \
+    src/t2compmain.c \
     tads2/tcd.c \
     tads2/tcgdum.c \
     tads2/linf.c \
@@ -27,25 +22,10 @@ T2CSOURCES = \
     tads2/emt.c \
     tads2/dbg.c
 
-## Compiler sources don't go into the main distribution, so we use
-## 'nodist'.
-##
-nodist_tadsc_SOURCES = src/t2compmain.c $(COMMONSOURCES) $(T2RCHEADERS) $(T2CHEADERS) $(T2RCSOURCES) $(T2CSOURCES)
+
+tadsc_SOURCES = $(COMMONSOURCES) $(T2HEADERS) $(T2RCSOURCES) $(T2CSOURCES)
 
 ## Installs the TADS 2 development library.
 ##
-t2datadir = $(pkgdatadir)/tads2
-t2data_DATA = tads2/adv.t tads2/std.t tads2/gameinfo.t
-
-## Very simple targets for creating a package containing the compiler
-## sources.
-##
-T2COMP_DISTFILES = src/t2compmain.c $(T2CHEADERS) $(T2CSOURCES) $(t2data_DATA)
-
-t2comp-dist:
-	@cd "$(srcdir)" && $(AMTAR) chof - $(T2COMP_DISTFILES) | GZIP=$(GZIP_ENV) gzip -c >"@abs_builddir@/$(PACKAGE)-t2compiler-$(VERSION).tar.gz"
-
-t2comp-dist-gzip: t2comp-dist
-
-t2comp-dist-bzip2:
-	@cd "$(srcdir)" && $(AMTAR) chof - $(T2COMP_DISTFILES) | bzip2 -9 -c >"@abs_builddir@/$(PACKAGE)-t2compiler-$(VERSION).tar.bz2"
+t2datadir = $(T2COMPDATADIR)
+t2data_DATA = $(T2COMPDATAFILES)
