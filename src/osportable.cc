@@ -11,7 +11,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #ifdef HAVE_LANGINFO_CODESET
 #include <langinfo.h>
 #endif
@@ -397,6 +399,23 @@ os_rand( long* val )
     // high-order bits, because on some systems the low-order bits
     // aren't very random.
     *val = 1 + static_cast(long)(static_cast(long double)(65535) * rand() / (RAND_MAX + 1.0));
+}
+
+
+/* Generate random bytes for use in seeding a PRNG (pseudo-random number
+ * generator).  This is an extended version of os_rand() for PRNGs that use
+ * large seed vectors containing many bytes, rather than the simple 32-bit
+ * seed that os_rand() assumes.
+ */
+void os_gen_rand_bytes( unsigned char* buf, size_t len )
+{
+    // Read bytes from /dev/urandom to fill the buffer (use /dev/urandom
+    // rather than /dev/random, so that we don't block for long periods -
+    // /dev/random can be quite slow because it's designed not to return
+    // any bits until a fairly high threshold of entropy has been reached).
+    int f = open("/dev/urandom", O_RDONLY);
+    read(f, (void*)buf, len);
+    close(f);
 }
 
 

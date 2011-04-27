@@ -148,23 +148,6 @@ int osnet_connect_webui(VMG_ const char *addr, int port, const char *path,
 
 /* ------------------------------------------------------------------------ */
 /*
- *   Random numbers 
- */
-void os_gen_rand_bytes(unsigned char *buf, size_t len)
-{
-    /* 
-     *   read bytes from /dev/urandom to fill the buffer (use /dev/urandom
-     *   rather than /dev/random, so that we don't block for long periods -
-     *   /dev/random can be quite slow because it's designed not to return
-     *   any bits until a fairly high threshold of entropy has been reached) 
-     */
-    int f = open("/dev/urandom", O_RDONLY);
-    IGNORE(::read(f, (void *)buf, len));
-    close(f);
-}
-
-/* ------------------------------------------------------------------------ */
-/*
  *   Local host information 
  */
 
