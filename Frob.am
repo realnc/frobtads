@@ -38,14 +38,23 @@ T2RSOURCES = \
 ## TADS 3 runtime sources.
 ##
 T3RSOURCES = \
-    tads3/vmbifl.cpp \
-    tads3/vmmain.cpp \
-    tads3/vmsa.cpp \
-    tads3/tcprsnl.cpp \
-    tads3/tct3nl.cpp \
-    tads3/tcprs_rt.cpp \
+    tads3/osifcnet.cpp \
     tads3/tcprsnf.cpp \
-    tads3/tct3_d.cpp
+    tads3/tcprsnl.cpp \
+    tads3/tcprs_rt.cpp \
+    tads3/tct3_d.cpp \
+    tads3/tct3nl.cpp \
+    tads3/unix/osnetunix.cpp \
+    tads3/vmbifl.cpp \
+    tads3/vmbifnet.cpp \
+    tads3/vmbifregn.cpp \
+    tads3/vmhttpreq.cpp \
+    tads3/vmhttpsrv.cpp \
+    tads3/vmmain.cpp \
+    tads3/vmnetcfg.cpp \
+    tads3/vmnet.cpp \
+    tads3/vmnetfil.cpp \
+    tads3/vmsa.cpp
 
 frob_SOURCES = $(FROBSOURCES) $(COMMONSOURCES) $(T2HEADERS) $(T2RSOURCES) $(T2RCSOURCES) $(T3HEADERS) $(T3RSOURCES) $(T3RCSOURCES)
 frob_CPPFLAGS = -DRUNTIME $(AM_CPPFLAGS)

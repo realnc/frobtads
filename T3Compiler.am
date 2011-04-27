@@ -18,18 +18,20 @@ T3CSOURCES = \
     tads3/os_stdio.cpp \
     tads3/rcmain.cpp \
     tads3/std_dbg.cpp \
+    tads3/tcgenfil.cpp \
     tads3/tcmakecl.cpp \
     tads3/tcmake.cpp \
+    tads3/tcprsfil.cpp \
     tads3/tcprsimg.cpp \
+    tads3/tcprsprg.cpp \
     tads3/tct3img.cpp \
+    tads3/tct3prg.cpp \
     tads3/vmbifc.cpp \
+    tads3/vmbifreg.cpp \
+    tads3/vmhttpdum.cpp \
     tads3/vmimgrb.cpp \
     tads3/vmpreini.cpp \
-    tads3/vmwrtimg.cpp \
-    tads3/tcprsprg.cpp \
-    tads3/tcprsfil.cpp \
-    tads3/tcgenfil.cpp \
-    tads3/tct3prg.cpp
+    tads3/vmwrtimg.cpp
 
 t3make_SOURCES = $(COMMONSOURCES) $(T3HEADERS) $(T3RCSOURCES) $(T3CSOURCES)
 
