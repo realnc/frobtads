@@ -566,48 +566,42 @@ public:
         /* count it for leak tracking */
         IF_LEAK_CHECK(mutex_cnt.inc());
 
-        /* allocate memory for the mutex */
-        h = new pthread_mutex_t();
-
         /* initialize it */
-        pthread_mutex_init(h, 0);
+        pthread_mutex_init(&h, 0);
     }
 
     ~OS_Mutex()
     {
         /* destroy the system resources */
-        pthread_mutex_destroy(h);
-
-        /* delete the memory we allocated for the structure */
-        delete h;
+        pthread_mutex_destroy(&h);
 
         /* count it for leak tracking */
         IF_LEAK_CHECK(mutex_cnt.dec());
     }
 
-    /* 
-     *   Lock the mutex.  Blocks until the mutex is available.  
+    /*
+     *   Lock the mutex.  Blocks until the mutex is available.
      */
-    void lock() { pthread_mutex_lock(h); }
+    void lock() { pthread_mutex_lock(&h); }
 
-    /* 
+    /*
      *   Test the mutex: if the mutex is available, locks the mutex and
      *   returns true; if not, returns false.  Doesn't block in either case.
      *   On a 'true' return, the mutex is locked, so the caller must unlock
-     *   it when done.  
+     *   it when done.
      */
-    int test() { return pthread_mutex_trylock(h) == 0; }
+    int test() { return pthread_mutex_trylock(&h) == 0; }
 
-    /* 
+    /*
      *   Unlock the mutex.  This can only be used after a successful lock()
      *   or test().  This releases our lock and makes the mutex available to
-     *   other threads.  
+     *   other threads.
      */
-    void unlock() { pthread_mutex_unlock(h); }
+    void unlock() { pthread_mutex_unlock(&h); }
 
 private:
-    /* the underlying system mutex handle */
-    pthread_mutex_t *h;
+    /* the underlying system mutex data */
+    pthread_mutex_t h;
 };
 
 
