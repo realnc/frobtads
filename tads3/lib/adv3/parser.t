@@ -56,6 +56,14 @@ class ResolveResults: object
      *   match some object; it's just that when the larger noun phrase
      *   context is considered, there's nothing that matches.
      *   
+     *   noMatchPossessive(action, txt) - same as noMatch, but the
+     *   unmatched phrase is qualified with a possessive phrase.  For
+     *   ranking matches, the possessive version ranks ahead of treating
+     *   the possessive words as raw vocabulary when neither matches, since
+     *   it's more informative to report that we can't even match the
+     *   underlying qualified noun phrase, let alone the whole phrase with
+     *   qualification.
+     *   
      *   noMatchForAll() - there's nothing matching "all"
      *   
      *   noMatchForAllBut() - there's nothing matching "all except..."
@@ -123,10 +131,10 @@ class ResolveResults: object
      *   each set of equivalents in the original full list; 'fullMatchList'
      *   is the full list of matches, including each copy of equivalents;
      *   'scopeList' is the list of everything in scope that matched the
-     *   original phrase, including illogical items.  If it is desirable to
+     *   original phrase, including illogical items.  If it's desirable to
      *   interact with the user at this point, prompt the user to resolve
      *   the list, and return a new list with the results.  If no prompting
-     *   is desired, the original list can be returned.  If it is not
+     *   is desired, the original list can be returned.  If it isn't
      *   possible to determine the final set of objects, and a final set of
      *   objects is required (this is up to the subclass to determine), a
      *   parser exception should be thrown to stop further processing of
@@ -252,6 +260,13 @@ class ResolveResults: object
      *   resolution of a noun phrase that needs to be resolved as a single
      *   object.  We use these to explicitly lower the ranking for plural
      *   structural phrasings within these slots.
+     *   
+     *   beginTopicSlot() and endTopicSlot() are used to bracket resolution
+     *   of a noun phrase that's being used as a conversation topic.  These
+     *   are of the *form* of single nouns, but singular and plural words
+     *   are equivalent, so when we're in a topic we don't consider a
+     *   plural to be a minus the way we would for an ordinary object noun
+     *   phrase.
      *   
      *   incCommandCount() - increment the command counter.  This is used
      *   to keep track of how many subcommands are in a command tree.
@@ -402,6 +417,26 @@ class ResolveInfo: object
 
     /* the noun phrase we parsed to come up with this object */
     np_ = nil
+
+    /*
+     *   The pre-calculated multi-object announcement text for this object.
+     *   When we iterate over the object list in a command with multiple
+     *   direct or indirect objects (TAKE THE BOOK, BELL, AND CANDLE), we
+     *   calculate the little announcement messages ("book:") for the
+     *   objects BEFORE we execute the actual commands.  We then use the
+     *   pre-calculated announcements during our iteration.  This ensures
+     *   consistency in the basis for choosing the names, which is
+     *   important in cases where the names include state-dependent
+     *   information for the purposes of distinguishing one object from
+     *   another.  The relevant state can change over the course of
+     *   executing the command on the objects in the iteration, so if we
+     *   calculated the names on the fly we could end up with inconsistent
+     *   naming.  The user thinks of the objects in terms of their state at
+     *   the start of the command, so the pre-calculation approach is not
+     *   only more internally consistent, but is also more consistent with
+     *   the user's perspective.  
+     */
+    multiAnnounce = nil
 ;
 
 /*
@@ -1283,6 +1318,21 @@ class TopicProd: SingleNounProd
     /* get the original text and tokens from the underlying phrase */
     getOrigTokenList() { return np_.getOrigTokenList(); }
     getOrigText() { return np_.getOrigText(); }
+
+    resolveNouns(resolver, results)
+    {
+        /* note that we're entering a topic slot */
+        results.beginTopicSlot();
+
+        /* do the inherited work */
+        local ret = inherited(resolver, results);
+
+        /* we're leaving the topic slot */
+        results.endTopicSlot();
+
+        /* return the resolved list */
+        return ret;
+    }
 ;
 
 /*
@@ -2680,15 +2730,13 @@ class BasicPossessiveProd: DefiniteNounProd
      */
     resolvePossessive(resolver, results, num)
     {
-        local lst;
-                
         /* resolve the underlying noun phrase being qualified */
-        lst = np_.resolveNouns(resolver, results);
+        local lst = np_.resolveNouns(resolver, results);
 
         /* if we found no matches for the noun phrase, so note */
         if (lst.length() == 0)
         {
-            results.noMatch(resolver.getAction(), np_.getOrigText());
+            results.noMatchPossessive(resolver.getAction(), np_.getOrigText());
             return nil;
         }
 
@@ -2717,24 +2765,19 @@ class BasicPossessiveProd: DefiniteNounProd
      */
     selectWithPossessive(resolver, results, lst, lstOrigText, num)
     {
-        local possResolver;
-        local possLst;
-        local owner;
-        local newLst;
-
         /* 
          *   Create the possessive resolver.  Note that we resolve the
          *   possessive phrase in the context of the resolver's indicated
          *   qualifier resolver, which might not be the same as the
          *   resolver for the overall phrase.  
          */
-        possResolver = resolver.getPossessiveResolver();
+        local possResolver = resolver.getPossessiveResolver();
         
         /* enter a single-object slot for the possessive phrase */
         results.beginSingleObjSlot();
             
         /* resolve the underlying possessive */
-        possLst = poss_.resolveNouns(possResolver, results);
+        local possLst = poss_.resolveNouns(possResolver, results);
 
         /* perform the normal resolve list filtering */
         possLst = resolver.getAction().finishResolveList(
@@ -2770,6 +2813,7 @@ class BasicPossessiveProd: DefiniteNounProd
          *   qualifier applies to the noun phrase our possessive is also
          *   qualifying, not to the possessive phrase itself.  
          */
+        local owner;
         if (poss_.isPluralPossessive)
         {
             /* 
@@ -2810,9 +2854,8 @@ class BasicPossessiveProd: DefiniteNounProd
             owner = [possLst[1].obj_];
         }
 
-
         /* select the objects owned by any of the owners */
-        newLst = lst.subset({x: owner.indexWhich(
+        local newLst = lst.subset({x: owner.indexWhich(
             {y: x.obj_.isOwnedBy(y)}) != nil});
 
         /*
@@ -2989,13 +3032,13 @@ class DisambigPossessiveProd: BasicPossessiveProd, DisambigProd
                                    resolver.matchList, resolver.matchText, 1);
 
         /* 
-         *   if the list has more than one entry, treat the result as
-         *   still ambiguous - a simple possessive response to a
-         *   disambiguation query is implicitly definite, so must select a
-         *   single object 
+         *   if the list has more than one entry, treat the result as still
+         *   ambiguous - a simple possessive response to a disambiguation
+         *   query is implicitly definite, so we must select a single
+         *   object 
          */
         if (lst != nil && lst.length() > 1)
-            results.ambiguousNounPhrase(
+            lst = results.ambiguousNounPhrase(
                 self, ResolveAsker, resolver.matchText,
                 lst, resolver.fullMatchList, lst, 1, resolver);
 
@@ -3384,7 +3427,7 @@ class VagueContainerDefiniteNounPhraseProd: VagueContainerNounPhraseProd
             if (lst.length() > 1)
             {
                 /* ask the results object to handle the ambiguous phrase */
-                results.ambiguousNounPhrase(
+                lst = results.ambiguousNounPhrase(
                     npKeeper, ResolveAsker, mainPhraseText,
                     lst, fullList, scopeList, 1, resolver);
             }
@@ -4652,6 +4695,12 @@ class BasicResolveResults: ResolveResults
                                         action, txt.toLower().htmlify());
     }
 
+    noMatchPossessive(action, txt)
+    {
+        /* use the basic noMatch handling */
+        noMatch(action, txt);
+    }
+
     allNotAllowed()
     {
         /* show an error */
@@ -5484,6 +5533,9 @@ class BasicResolveResults: ResolveResults
     beginSingleObjSlot() { }
     endSingleObjSlot() { }
 
+    beginTopicSlot() { }
+    endTopicSlot() { }
+
     incCommandCount()
     {
         /* we don't care about how many subcommands there are */
@@ -5723,6 +5775,42 @@ rankByWeakness: CommandRankingByWeakness prop_ = &weaknessLevel;
 rankByUnwantedPlural: CommandRankingByProblem prop_ = &unwantedPluralCount;
 
 /*
+ *   Rank by unmatched possessive-qualified phrases.  If we have two
+ *   unknown phrases, one with a possessive qualifier and one without, and
+ *   other things being equal, prefer the one with the possessive
+ *   qualifier.
+ *   
+ *   We prefer the qualified version because it lets us report a smaller
+ *   phrase that we can't match.  For example, in X BOB'S WALLET, if we
+ *   can't match WALLET all by itself, it's more useful to report that "you
+ *   see no wallet" than to report that you see no "bob's wallet", because
+ *   the latter incorrectly implies that there might still be a wallet in
+ *   scope as long as it's not Bob's we're looking for.  
+ */
+rankByNonMatchPoss: CommandRankingCriterion
+    /* 
+     *   ignore on pass 1 - this only counts if other factors are equal, so
+     *   we want to consider all of the other factors on pass 1 before
+     *   taking this criterion into account 
+     */
+    comparePass1(a, b) { return 0; }
+
+    /* pass 2 - more possessives are better */
+    comparePass2(a, b)
+    {
+        /* 
+         *   if we don't have the same underlying non-match count,
+         *   possessive qualification is irrelevant 
+         */
+        if (a.nonMatchCount != b.nonMatchCount)
+            return 0;
+
+        /* more possessives are better */
+        return a.nonMatchPossCount - b.nonMatchPossCount;
+    }
+;        
+
+/*
  *   Command ranking by literal phrase length.  We prefer interpretations
  *   that treat less text as uninterpreted literal text.  By "less text,"
  *   we simply mean that one has a shorter string treated as literal text
@@ -5862,13 +5950,11 @@ class CommandRanking: ResolveResults
      */
     sortByRanking(lst, [resolveArguments])
     {
-        local rankings;
-
         /* 
          *   create a vector to hold the ranking information - we
          *   need one ranking item per match 
          */
-        rankings = new Vector(lst.length());
+        local rankings = new Vector(lst.length());
         
         /* get the ranking information for each command */
         foreach(local cur in lst)
@@ -6048,6 +6134,7 @@ class CommandRanking: ResolveResults
      */
     rankingCriteria = [rankByVocabNonMatch,
                        rankByNonMatch,
+                       rankByNonMatchPoss,
                        rankByInsufficient,
                        rankByListForSingle,
                        rankByEmptyBut,
@@ -6092,6 +6179,13 @@ class CommandRanking: ResolveResults
 
     /* number of noun phrases matching nothing in scope */
     nonMatchCount = 0
+
+    /* 
+     *   Number of possessive-qualified noun phrases matching nothing in
+     *   scope.  For example, "bob's desk" when there's no desk in scope
+     *   (Bob's or otherwise).
+     */
+    nonMatchPossCount = 0
 
     /* number of phrases requiring quantity higher than can be fulfilled */
     insufficientCount = 0
@@ -6169,6 +6263,13 @@ class CommandRanking: ResolveResults
     {
         /* note that we have a noun phrase that matches nothing */
         ++nonMatchCount;
+    }
+
+    noMatchPossessive(action, txt)
+    {
+        /* note that we have an unmatched possessive-qualified noun phrase */
+        ++nonMatchCount;
+        ++nonMatchPossCount;
     }
 
     allNotAllowed()
@@ -6404,13 +6505,20 @@ class CommandRanking: ResolveResults
     endSingleObjSlot() { --inSingleObjSlot; }
     inSingleObjSlot = 0
 
+    beginTopicSlot() { ++inTopicSlot; }
+    endTopicSlot() { --inTopicSlot; }
+    inTopicSlot = 0
+
     notePlural()
     {
         /* 
-         *   if we're resolving a single-object slot, we want to avoid
-         *   plurals 
+         *   If we're resolving a single-object slot, we want to avoid
+         *   plurals, since they could resolve to multiple objects as
+         *   though we'd typed a list of objects here.  This isn't a
+         *   problem for topics, though, since a topic slot isn't iterated
+         *   for execution.  
          */
-        if (inSingleObjSlot)
+        if (inSingleObjSlot && !inTopicSlot)
             ++unwantedPluralCount;
     }
 
@@ -6613,6 +6721,7 @@ class ExceptResults: object
      *   excluded to begin with 
      */
     noMatch(action, txt) { }
+    noMatchPoss(action, txt) { }
     noVocabMatch(action, txt) { }
 
     /* ignore failed matches for possessives in the exception list */

@@ -1646,7 +1646,8 @@ class Action: BasicProd
         if (numberInList > 1 || (info.flags_ & AlwaysAnnounce) != 0)
         {
             /* show the current object of a multi-object action */
-            gTranscript.announceMultiActionObject(info.obj_, whichObj);
+            gTranscript.announceMultiActionObject(
+                info.multiAnnounce, info.obj_, whichObj);
 
             /* tell the caller we made an announcement */
             return true;
@@ -1656,6 +1657,37 @@ class Action: BasicProd
         return nil;
     }
     
+    /*   
+     *   Pre-calculate the multi-object announcement text for each object.
+     *   This is important because these announcements might choose a form
+     *   for the name that distinguishes it from the other objects in the
+     *   iteration, and the basis for distinction might be state-dependent
+     *   (such as the object's current owner or location), and the relevant
+     *   state might change as we iterate over the objects.  From the
+     *   user's perspective, they're referring to the objects based on the
+     *   state at the start of the command, so the user will expect to see
+     *   names based on the that state.  
+     */
+    cacheMultiObjectAnnouncements(lst, whichObj)
+    {
+        /* run through the list and cache each object's announcement */
+        foreach (local cur in lst)
+        {
+            /* calculate and cache this object's multi-object announcement */
+            cur.multiAnnounce = libMessages.announceMultiActionObject(
+                cur.obj_, whichObj, self);
+        }
+    }
+
+    /* get the list of resolved objects in the given role */
+    getResolvedObjList(which)
+    {
+        /* 
+         *   the base action doesn't have any objects in any roles, so just
+         *   return nil; subclasses need to override this 
+         */
+        return nil;
+    }
 
     /*
      *   Announce a defaulted object list, if appropriate.  We'll announce
@@ -1968,7 +2000,7 @@ class Action: BasicProd
                 && overrides(obj, remapSrc, verProp))
             {
                 resultSoFar = withVerifyResults(
-                    resultSoFar, obj, new function() { obj.(verProp)(); });
+                    resultSoFar, obj, function() { obj.(verProp)(); });
             }
 
             /* return the results */
@@ -1982,7 +2014,7 @@ class Action: BasicProd
          *   run the verifiers in the presence of a results list, and
          *   return the result list 
          */
-        return withVerifyResults(resultSoFar, obj, new function()
+        return withVerifyResults(resultSoFar, obj, function()
         {
             local lst;
             
@@ -2179,7 +2211,7 @@ class Action: BasicProd
          *   methods, so we don't want to send them generic notifiers as
          *   well. 
          */
-        tab.forEachAssoc(new function(obj, val)
+        tab.forEachAssoc(function(obj, val)
         {
             if (actor.isIn(obj))
                 tab.removeElement(obj);
@@ -2317,7 +2349,7 @@ class Action: BasicProd
         lst.forEach({x: x.index_ = i++});
 
         /* sort the precondition list by execution order */
-        lst = lst.sort(SortAsc, new function(a, b) {
+        lst = lst.sort(SortAsc, function(a, b) {
             local delta;
             
             /* if the execution orders differ, sort by execution order */
@@ -2450,7 +2482,7 @@ class Action: BasicProd
          *   return the sorted list.  When results are equivalently
          *   logical, keep the results in their existing order.  
          */
-        return results.toList().sort(SortDesc, new function(x, y)
+        return results.toList().sort(SortDesc, function(x, y)
         {
             /* compare the logicalness */
             local c = x.compareTo(y);
@@ -3255,6 +3287,13 @@ class TAction: Action, Resolver
         return info;
     }
 
+    /* get the list of resolved objects in the given role */
+    getResolvedObjList(which)
+    {
+        return (which == DirectObject ? getResolvedDobjList()
+                : inherited(which));
+    }
+    
     /* get the list of resolved direct objects */
     getResolvedDobjList()
     {
@@ -3350,6 +3389,9 @@ class TAction: Action, Resolver
         /* we haven't yet canceled the iteration */
         iterationCanceled = nil;
 
+        /* pre-calculate the multi-object announcement text for each dobj */
+        cacheMultiObjectAnnouncements(dobjList_, DirectObject);
+
         /* run through the sequence once for each direct object */
         for (local i = 1, local len = dobjList_.length() ;
              i <= len && !iterationCanceled ; ++i)
@@ -3368,6 +3410,35 @@ class TAction: Action, Resolver
             if (parentAction == nil)
                 gTranscript.newIter();
         }
+    }
+
+    /* announce a default object used with this action */
+    announceDefaultObject(obj, whichObj, resolvedAllObjects)
+    {
+        local prep;
+        local nm;
+
+        /* 
+         *   Get the name to display.  Since we're selecting an object
+         *   automatically from everything in scope, we need to
+         *   differentiate the object from the other objects in scope. 
+         */
+        nm = obj.getAnnouncementDistinguisher(gActor.scopeList())
+            .theName(obj);
+
+        /*
+         *   get any direct object preposition - this is the part inside
+         *   the "(what)" specifier parens, excluding the last word
+         */
+        rexSearch('<lparen>(.*<space>+)?<alpha>+<rparen>', verbPhrase);
+        prep = (rexGroup(1) == nil ? '' : rexGroup(1)[3]);
+
+        /* do any verb-specific adjustment of the preposition */
+        if (prep != nil)
+            prep = adjustDefaultObjectPrep(prep, obj);
+
+        /* show the preposition (if any) and the object */
+        return (prep == '' ? nm : prep + nm);
     }
 
     /* get the precondition descriptor list for the action */
@@ -3724,6 +3795,7 @@ class TentativeResolveResults: ResolveResults
      *   resolution pass 
      */
     noMatch(action, txt) { }
+    noMatchPoss(action, txt) { }
     noVocabMatch(action, txt) { }
     noMatchForAll() { }
     noteEmptyBut() { }
@@ -4159,7 +4231,7 @@ class TIAction: TAction
             if (results.allowActionRemapping)
             {
                 withParserGlobals(issuingActor, targetActor, self,
-                                  new function()
+                                  function()
                 {
                     local remapInfo;
                     
@@ -4285,6 +4357,13 @@ class TIAction: TAction
     getRemapPropForRole(role)
     {
         return (role == IndirectObject ? remapIobjProp : inherited(role));
+    }
+
+    /* get the list of resolved objects in the given role */
+    getResolvedObjList(which)
+    {
+        return (which == IndirectObject ? getResolvedIobjList()
+                : inherited(which));
     }
 
     /* get the list of resolved indirect objects */
@@ -4515,6 +4594,9 @@ class TIAction: TAction
 
             /* we haven't announced the direct object yet */
             preAnnouncedDobj = nil;
+
+            /* pre-calculate the multi-object announcements */
+            cacheMultiObjectAnnouncements(dobjList_, DirectObject);
         }
         else
         {
@@ -4524,6 +4606,9 @@ class TIAction: TAction
 
             /* we haven't announced the indirect object yet */
             preAnnouncedIobj = nil;
+
+            /* pre-calculate the multi-object announcements */
+            cacheMultiObjectAnnouncements(iobjList_, IndirectObject);
         }
 
         /* we haven't yet canceled the iteration */
@@ -4619,6 +4704,66 @@ class TIAction: TAction
             if (parentAction == nil)
                 gTranscript.newIter();
         }
+    }
+
+    /* announce a default object used with this action */
+    announceDefaultObject(obj, whichObj, resolvedAllObjects)
+    {
+        local verb;
+        local prep;
+        local nm;
+
+        /* presume we won't have a verb or preposition */
+        verb = '';
+        prep = '';
+
+        /*
+         *   Check the full phrasing - if we're showing the direct object,
+         *   but an indirect object was supplied, use the verb's
+         *   participle form ("asking bob") in the default string, since
+         *   we must clarify that we're not tagging the default string on
+         *   to the command line.  Don't include the participle form if we
+         *   don't know all the objects yet, since in this case we are in
+         *   fact tagging the default string onto the command so far, as
+         *   there's nothing else in the command to get in the way.
+         */
+        if (whichObj == DirectObject && resolvedAllObjects)
+        {
+            /*
+             *   extract the verb's participle form (including any
+             *   complementizer phrase)
+             */
+            rexSearch('/(<^lparen>+) <lparen>', verbPhrase);
+            verb = rexGroup(1)[3] + ' ';
+        }
+
+        /* get the preposition to use, if any */
+        switch(whichObj)
+        {
+        case DirectObject:
+            /* use the preposition in the first "(what)" phrase */
+            rexSearch('<lparen>(.*?)<space>*<alpha>+<rparen>', verbPhrase);
+            prep = rexGroup(1)[3];
+            break;
+
+        case IndirectObject:
+            /* use the preposition in the second "(what)" phrase */
+            rexSearch('<rparen>.*<lparen>(.*?)<space>*<alpha>+<rparen>',
+                      verbPhrase);
+            prep = rexGroup(1)[3];
+            break;
+        }
+
+        /* 
+         *   get the name to display - since we selected this object
+         *   automatically from among the objects in scope, we need to
+         *   differentiate it from the other objects in scope 
+         */
+        nm = obj.getAnnouncementDistinguisher(gActor.scopeList())
+            .theName(obj);
+
+        /* build and return the complete phrase */
+        return spSuffix(verb) + spSuffix(prep) + nm;
     }
 
     /*
@@ -5984,11 +6129,11 @@ class ResolvedTopic: object
          *   so that the action knows how we've classified the objects
          *   matching our phrase.  We keep a list of objects that are in
          *   scope; a list of objects that aren't in scope but which the
-         *   actor thinks are likely topics; and a list of all of the
-         *   other matches.
+         *   actor thinks are likely topics; and a list of all of the other
+         *   matches.
          *   
-         *   We keep only the simulation objects from the lists - we don't
-         *   keep the full ResolveInfo data.  
+         *   We keep only the simulation objects in these retained lists -
+         *   we don't keep the full ResolveInfo data here.  
          */
         inScopeList = inScope.mapAll({x: x.obj_});
         likelyList = likely.mapAll({x: x.obj_});
@@ -5996,6 +6141,20 @@ class ResolvedTopic: object
 
         /* keep the production match tree */
         topicProd = prod;
+
+        /*
+         *   But it might still be interesting to have the ResolveInfo
+         *   data, particularly for information on the vocabulary match
+         *   strength.  Keep that information in a separate lookup table
+         *   indexed by simulation object.  
+         */
+        local rt = new LookupTable();
+        others.forEach({x: rt[x.obj_] = x});
+        likely.forEach({x: rt[x.obj_] = x});
+        inScope.forEach({x: rt[x.obj_] = x});
+
+        /* save the ResolvedInfo lookup table */
+        resInfoTab = rt;
     }
 
     /* 
@@ -6126,6 +6285,13 @@ class ResolvedTopic: object
     }
 
     /*
+     *   Get the parser ResolveInfo object for a given matched object.
+     *   This recovers the ResolveInfo describing the parsing result for
+     *   any object in the resolved object lists (inScopeList, etc). 
+     */
+    getResolveInfo(obj) { return resInfoTab[obj]; }
+
+    /*
      *   Our lists of resolved objects matching the topic phrase,
      *   separated by classification.  
      */
@@ -6139,6 +6305,16 @@ class ResolvedTopic: object
      *   the command or the original text of the phrase.  
      */
     topicProd = nil
+
+    /*
+     *   ResolveInfo table for the resolved objects.  This is a lookup
+     *   table indexed by simulation object.  Each entry in the resolved
+     *   object lists (inScopeList, etc) has have a key in this table, with
+     *   the ResolveInfo object as the value for the key.  This can be used
+     *   to recover the ResolveInfo object describing the parser results
+     *   for this object.  
+     */
+    resInfoTab = nil
 ;
 
 /*
@@ -6356,6 +6532,7 @@ class TopicResolver: Resolver
     /* it's fine not to match a topic phrase */
     noVocabMatch(action, txt) { }
     noMatch(action, txt) { }
+    noMatchPoss(action, txt) { }
 
     /* we don't allow ALL or provide defaults */
     getAll(np) { return []; }
@@ -6482,41 +6659,17 @@ class SystemAction: IAction
     execSystemAction() { }
 
     /*
-     *   Ask for an input file.  Freezes the real-time event clock for the
-     *   duration of reading the event, and sets our property
-     *   origElapsedTime to the elapsed time when we started processing
-     *   the interaction.  
+     *   Ask for an input file.  We call the input manager, which freezes
+     *   the real-time clock, displays the appropriate local file selector
+     *   dialog, and restarts the clock.  
      */
     getInputFile(prompt, dialogType, fileType, flags)
     {
-        local result;
-        
-        /* 
-         *   note the game elapsed time before we start - we want to
-         *   freeze the real-time clock while we're waiting for the user
-         *   to respond, since this system verb exists outside of the
-         *   usual time flow of the game 
-         */
-        origElapsedTime = realTimeManager.getElapsedTime();
-        
-        /* ask for a file */
-        result = inputFile(prompt, dialogType, fileType, flags);
-
-        /* 
-         *   restore the game real-time counter to what it was before we
-         *   started the interactive response 
-         */
-        realTimeManager.setElapsedTime(origElapsedTime);
-
-        /* return the result from inputFile */
-        return result;
+        return inputManager.getInputFile(prompt, dialogType, fileType, flags);
     }
 
     /* system actions consume no game time */
     actionTime = 0
-
-    /* real-time event clock at start of getInputFile() */
-    origElapsedTime = nil
 ;
 
 /* ------------------------------------------------------------------------ */

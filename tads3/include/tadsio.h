@@ -146,7 +146,41 @@ intrinsic 'tads-io/030007'
      *   selected a file, whose name is given as a string in the second
      *   element of the result list; InFileFailure indicates a system error
      *   of some kind showing the dialog; and InFileCancel indicates that the
-     *   user explicitly canceled the dialog.  
+     *   user explicitly canceled the dialog.
+     *   
+     *   On success (return list[1] == InFileSuccess), the list contains the
+     *   following additional elements:
+     *   
+     *.     [2] = the selected filename
+     *.     [3] = nil (reserved for future use)
+     *.     [4] = script warning message, or nil if no warning
+     *   
+     *   The warning message is a string to be displayed to the user to warn
+     *   about a possible error condition in the script input.  The script
+     *   reader checks the file specified in the script to see if it's valid;
+     *   if the dialog type is Open, the script reader verifies that the file
+     *   exists, and for a Save dialog the reader warns if the file *does*
+     *   already exist or is not writable.  In the conventional UI, the
+     *   script reader displays these warnings directly to the user through
+     *   the console UI, but this isn't possible in the Web UI since the user
+     *   might be running on a remote browser.  Instead, the script reader
+     *   still checks for the possible errors, but rather than displaying any
+     *   warnings, it returns them here.  The caller is responsible for
+     *   displaying the warning and asking the user for confirmation.
+     *   
+     *   For localization purposes, the warning message starts with a
+     *   two-letter code indicating the specific error, followed by a space,
+     *   followed by the English text of the warning.  The codes are:
+     *   
+     *.   OV - the script might overwrite an existing file (Save dialog)
+     *.   WR - the file can't be created/written (Save dialog)
+     *.   RD - the file doesn't exist/can't be read (Open dialog)
+     *   
+     *   Note that the warning message will always be nil if the script
+     *   reader displayed the warning message itself.  This means that your
+     *   program can unconditionally display this message if it's non-nil -
+     *   there's no danger that the script reader will have redundantly
+     *   displayed the message.  
      */
     inputFile(prompt, dialogType, fileType, flags);
 
@@ -450,6 +484,7 @@ intrinsic 'tads-io/030007'
 #define InEvtLine        6
 #define InEvtSysCommand  0x100
 #define InEvtEndQuietScript  10000
+#define InEvtEndScript       10003
 
 /*
  *   Command codes for InEvtSysCommand 
