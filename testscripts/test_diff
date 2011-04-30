@@ -18,7 +18,7 @@ else
     exit 1
 fi
 
-diff "$T3_OUT/$1.log" "$T3_LOG/$1.log" > "$T3_OUT/$1.diff"
+diff -u "$T3_OUT/$1.log" "$T3_LOG/$1.log" > "$T3_OUT/$1.diff"
 
 if test $? = "0"; then
     echo "Success" > "$T3_OUT/$1.succ"
