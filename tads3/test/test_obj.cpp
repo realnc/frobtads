@@ -24,6 +24,7 @@ Modified
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "t3std.h"
 #include "vmglob.h"
 #include "vmtype.h"
 #include "vmobj.h"
@@ -193,3 +194,7 @@ vm_prop_id_t CVmImageLoader::alloc_new_prop(VMG0_)
     return VM_INVALID_PROP;
 }
 
+vm_prop_id_t CVmImageLoader::get_last_prop(VMG0_)
+{
+    return (vm_prop_id_t)0;
+}
