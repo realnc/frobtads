@@ -65,11 +65,11 @@ DYN_COMP_OBJS = \
     tads3/tclibprs.cpp \
     tads3/tccmdutl.cpp
 
-REG_BUILTIN_CHAR = vmbifreg.cpp
-REG_BUILTIN_CHARNET = vmbifregn.cpp
-REG_BUILTIN_HTML = vmbifregx.cpp
-REG_BUILTIN_HTMLNET = vmbifregxn.cpp
-REG_METACLASS = vmmcreg.cpp
+REG_BUILTIN_CHAR = tads3/vmbifreg.cpp
+REG_BUILTIN_CHARNET = tads3/vmbifregn.cpp
+REG_BUILTIN_HTML = tads3/vmbifregx.cpp
+REG_BUILTIN_HTMLNET = tads3/vmbifregxn.cpp
+REG_METACLASS = tads3/vmmcreg.cpp
 
 TARGET_OBJS_BASE = \
     tads3/tct3.cpp \
@@ -345,8 +345,8 @@ test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads3/vmhosttx.cpp \
     tads3/vmhostsi.cpp \
     tads3/vmhash.cpp \
-    tads3/$(REG_METACLASS) \
-    tads3/$(REG_BUILTIN_CHARNET) \
+    $(REG_METACLASS) \
+    $(REG_BUILTIN_CHARNET) \
     tads3/derived/vmuni_cs.cpp \
     tads3/tcprs.cpp \
     tads3/tcprsnl.cpp \
@@ -369,9 +369,7 @@ test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads3/tct3prg.cpp \
     tads2/osifc.c \
     tads2/osnoui.c \
-    tads2/osrestad.c \
-    tads3/vmmcreg.cpp \
-    tads3/vmbifregn.cpp
+    tads2/osrestad.c
 
 test_test_sort_SOURCES = tads3/test/test_sort.cpp \
     tads3/vmsort.cpp
@@ -475,8 +473,8 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads3/vmhosttx.cpp \
     tads3/vmhostsi.cpp \
     tads3/vmhash.cpp \
-    tads3/$(REG_METACLASS) \
-    tads3/$(REG_BUILTIN_CHARNET) \
+    $(REG_METACLASS) \
+    $(REG_BUILTIN_CHARNET) \
     tads3/derived/vmuni_cs.cpp \
     $(DYN_COMP_OBJS) \
     tads2/osifc.c \
@@ -486,9 +484,7 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads3/tct3stm.cpp \
     tads3/tct3unas.cpp \
     tads3/tct3_d.cpp \
-    tads3/tct3nl.cpp \
-    tads3/vmmcreg.cpp \
-    tads3/vmbifregn.cpp
+    tads3/tct3nl.cpp
 
 test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     src/osportable.cc \
