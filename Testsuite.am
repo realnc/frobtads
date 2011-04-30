@@ -40,10 +40,10 @@ check_PROGRAMS = \
 ##
 TESTS = \
     test/test_obj \
-    testscripts/test_pp \
-    testscripts/test_ex \
-    testscripts/all_make \
-    testscripts/test_pre
+    testscripts/test_pp.sh \
+    testscripts/test_ex.sh \
+    testscripts/all_make.sh \
+    testscripts/test_pre.sh
 
 # Extra compiler sources for dynamic code compilation in interpreter.
 #

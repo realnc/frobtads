@@ -6,7 +6,7 @@ cd "$T3_OUT"
 
 for i in anon anonobj anonvarg badnest bignum bignum2 foreach funcparm htmlify inh_next isin lclprop listprop lookup nested newprop objloop propaddr unicode varmac vector vector2
 do
-    if $SCRIPTS/test_make "$i" "$i"; then
+    if $SCRIPTS/test_make.sh "$i" "$i"; then
         :
     else
         ret=1
@@ -15,7 +15,7 @@ done
 
 for i in catch save html addlist listpar arith
 do
-    if $SCRIPTS/test_make -nodef "$i" "$i"; then
+    if $SCRIPTS/test_make.sh -nodef "$i" "$i"; then
         :
     else
         ret=1
@@ -24,14 +24,14 @@ done
 
 for i in extfunc objrep funcrep conflict
 do
-    if $SCRIPTS/test_make -nodef "$i" ${i}1 ${i}2; then
+    if $SCRIPTS/test_make.sh -nodef "$i" ${i}1 ${i}2; then
         :
     else
         ret=1
     fi
 done
 
-if $SCRIPTS/test_make -pre vocext vocext1 vocext2 reflect; then
+if $SCRIPTS/test_make.sh -pre vocext vocext1 vocext2 reflect; then
     :
 else
     ret=1
@@ -39,26 +39,26 @@ fi
 
 for i in extern objmod
 do
-    if $SCRIPTS/test_make -nodef "$i" ${i}1 ${i}2 ${i}3; then
+    if $SCRIPTS/test_make.sh -nodef "$i" ${i}1 ${i}2 ${i}3; then
         :
     else
         ret=1
     fi
 done
 
-if $SCRIPTS/test_make -nodef gram2 $T3_LIBDIR/tok gram2; then
+if $SCRIPTS/test_make.sh -nodef gram2 $T3_LIBDIR/tok gram2; then
     :
 else
     ret=1
 fi
 
-if $SCRIPTS/test_make -debug stack stack $T3_LIBDIR/reflect; then
+if $SCRIPTS/test_make.sh -debug stack stack $T3_LIBDIR/reflect; then
     :
 else
     ret=1
 fi
 
-if $SCRIPTS/test_make -pre targprop targprop $T3_LIBDIR/reflect; then
+if $SCRIPTS/test_make.sh -pre targprop targprop $T3_LIBDIR/reflect; then
     :
 else
     ret=1
@@ -67,7 +67,7 @@ fi
 # These tests require running preinit (testmake normally suppresses it)
 for i in vec_pre symtab enumprop modtobj undef undef2
 do
-    if $SCRIPTS/test_make "$i" -pre "$i"; then
+    if $SCRIPTS/test_make.sh "$i" -pre "$i"; then
         :
     else
         ret=1
@@ -75,13 +75,13 @@ do
 done
 
 # ITER does a save/restore test
-if $SCRIPTS/test_make iter iter; then
+if $SCRIPTS/test_make.sh iter iter; then
     :
 else
     ret=1
 fi
 
-if $SCRIPTS/test_restore iter2 iter; then
+if $SCRIPTS/test_restore.sh iter2 iter; then
     :
 else
     ret=1

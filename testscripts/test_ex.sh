@@ -12,7 +12,7 @@ do
     $TESTPROGS/test_exec -cs cp437 "$T3_OUT/$i.t3" >> "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
     cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
     rm "$T3_OUT/$i.err"
-    if $SCRIPTS/test_diff "$i"; then
+    if $SCRIPTS/test_diff.sh "$i"; then
         :
     else
         ret=1

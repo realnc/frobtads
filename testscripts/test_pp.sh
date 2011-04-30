@@ -12,7 +12,7 @@ do
     $TESTPROGS/test_tok -I "$T3_DAT" -P "$T3_DAT/$i.c" > "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
     cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
     rm "$T3_OUT/$i.err"
-    if $SCRIPTS/test_diff "$i"; then
+    if $SCRIPTS/test_diff.sh "$i"; then
         :
     else
         ret=1
