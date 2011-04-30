@@ -9,7 +9,7 @@ cd "$T3_OUT"
 for i in ansi circ circ2 embed define ifdef concat varmacpp
 do
     echo "Preprocessor test: $i"
-    $TESTPROGS/test_tok -I "$T3_DAT" -P "$T3_DAT/$i.c" > "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
+    $TESTPROGS/test_tok -I"$T3_DAT" -I"$T3_INCDIR" -P "$T3_DAT/$i.c" > "$T3_OUT/$i.log" 2> "$T3_OUT/$i.err"
     cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
     rm "$T3_OUT/$i.err"
     if $SCRIPTS/test_diff.sh "$i"; then
