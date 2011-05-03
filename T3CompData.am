@@ -81,42 +81,45 @@ T3_TCOMMAND_DOC_FILES = \
     tads3/lib/extensions/TCommand/doc/telltoaction.htm
 
 T3_ADV3_FILES = \
-    tads3/lib/adv3/resolver.t \
-    tads3/lib/adv3/travel.t \
-    tads3/lib/adv3/lister.t \
+    tads3/lib/adv3/actions.t \
+    tads3/lib/adv3/action.t \
+    tads3/lib/adv3/actor.t \
+    tads3/lib/adv3/adv3.h \
+    tads3/lib/adv3/adv3.tl \
+    tads3/lib/adv3/banner.t \
+    tads3/lib/adv3/browser.t \
+    tads3/lib/adv3/changes.htm \
+    tads3/lib/adv3/console.t \
+    tads3/lib/adv3/disambig.t \
+    tads3/lib/adv3/events.t \
+    tads3/lib/adv3/exec.t \
+    tads3/lib/adv3/exits.t \
     tads3/lib/adv3/extras.t \
-    tads3/lib/adv3/report.t \
+    tads3/lib/adv3/footnote.t \
+    tads3/lib/adv3/hintsys.t \
+    tads3/lib/adv3/input.t \
+    tads3/lib/adv3/lister.t \
+    tads3/lib/adv3/menucon.t \
     tads3/lib/adv3/menusys.t \
+    tads3/lib/adv3/misc.t \
+    tads3/lib/adv3/modid.t \
+    tads3/lib/adv3/numbers.t \
+    tads3/lib/adv3/objects.t \
+    tads3/lib/adv3/output.t \
+    tads3/lib/adv3/parser.t \
     tads3/lib/adv3/pov.t \
+    tads3/lib/adv3/precond.t \
+    tads3/lib/adv3/report.t \
+    tads3/lib/adv3/resolver.t \
     tads3/lib/adv3/score.t \
     tads3/lib/adv3/sense.t \
-    tads3/lib/adv3/precond.t \
-    tads3/lib/adv3/parser.t \
-    tads3/lib/adv3/adv3.h \
+    tads3/lib/adv3/settings.t \
+    tads3/lib/adv3/status.t \
     tads3/lib/adv3/thing.t \
     tads3/lib/adv3/tips.t \
-    tads3/lib/adv3/exits.t \
-    tads3/lib/adv3/modid.t \
-    tads3/lib/adv3/exec.t \
-    tads3/lib/adv3/verify.t \
-    tads3/lib/adv3/misc.t \
-    tads3/lib/adv3/events.t \
-    tads3/lib/adv3/actor.t \
-    tads3/lib/adv3/adv3.tl \
-    tads3/lib/adv3/output.t \
-    tads3/lib/adv3/action.t \
-    tads3/lib/adv3/disambig.t \
-    tads3/lib/adv3/objects.t \
-    tads3/lib/adv3/hintsys.t \
-    tads3/lib/adv3/status.t \
     tads3/lib/adv3/to_do.txt \
-    tads3/lib/adv3/actions.t \
-    tads3/lib/adv3/banner.t \
-    tads3/lib/adv3/footnote.t \
-    tads3/lib/adv3/input.t \
-    tads3/lib/adv3/numbers.t \
-    tads3/lib/adv3/settings.t \
-    tads3/lib/adv3/changes.htm
+    tads3/lib/adv3/travel.t \
+    tads3/lib/adv3/verify.t
 
 T3_ADV3_EN_US_FILES = \
     tads3/lib/adv3/en_us/msg_neu.t \
