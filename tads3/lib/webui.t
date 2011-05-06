@@ -942,7 +942,7 @@ class WebResource: object
  *   resources might be for internal use within the game, so we don't want
  *   to just assume that everything should be downloadable.
  *   
- *   You can also expose resources on a directory by directory basis,
+ *   You can also expose resources on a directory-by-directory basis,
  *   simply by specifying a longer path prefix:
  *   
  *.     WebResourceFile
@@ -1602,17 +1602,20 @@ processNetRequests(doneFunc, timeout?)
  *   the browser itself, or inside an IFRAME element within an enclosing
  *   page.
  *   
- *   We keep a state tracker object in the game program for each "window"
- *   in the browser so that we can easily reconstruct the UI state in a
- *   newly opened browser window or when the user performs a page refresh.
- *   This object's job is to send information to the client on demand that
- *   allows the client to display the page in its current state.
+ *   Each WebWindow class corresponds to a particular HTML page that we
+ *   serve the client.  The HTML page is the expression of the window in
+ *   the browser, and the WebWindow object is the expression of the same
+ *   information in the game program.  The two are different facets of the
+ *   same conceptual UI object.  The reason we need the two separate
+ *   expressions is that the server controls everything, but the client has
+ *   to do the actual display work, and the two parts of the program speak
+ *   different languages - the server is TADS, and the client is HTML.
  *   
- *   Each WebWindow class basically corresponds to a particular HTML page
- *   that we serve to the client.  The HTML page is the expression of the
- *   window in the browser, and the WebWindow object is the expression of
- *   the same information in the game program.  The two are different
- *   facets of a single UI page.
+ *   The WebWindow object on the server lets us easily reconstruct the UI
+ *   state in a newly opened browser window, or when the user performs a
+ *   page refresh.  This object's job is to send information to the client
+ *   on demand that allows the client to display the page in its current
+ *   state.
  *   
  *   Note that a given WebWindow/HTML page combination can be used more
  *   than once within the same UI.  The pages defined in the library are

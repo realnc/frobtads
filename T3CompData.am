@@ -13,6 +13,7 @@ T3_EXT_TCOMMAND_DIR = $(T3_LIB_DIR)/extensions/TCommand
 T3_EXT_TCOMMAND_DOC_DIR = $(T3_LIB_DIR)/extensions/TCommand/doc
 T3_ADV3_DIR = $(T3_LIB_DIR)/adv3
 T3_ADV3_EN_US_DIR = $(T3_LIB_DIR)/adv3/en_us
+T3_WEBUIRES_DIR = $(T3_LIB_DIR)/webuires
 T3_DOC_DIR = $(pkgdatadir)/tads3/doc
 
 T3_INC_FILES = \
@@ -67,11 +68,11 @@ T3_EXT_FILES = \
     tads3/lib/extensions/smartAccompany.t \
     tads3/lib/extensions/subtime.t
 
-T3_TCOMMAND_FILES = \
+T3_EXT_TCOMMAND_FILES = \
     tads3/lib/extensions/TCommand/GiveToAskFor.t \
     tads3/lib/extensions/TCommand/TCommand.t
 
-T3_TCOMMAND_DOC_FILES = \
+T3_EXT_TCOMMAND_DOC_FILES = \
     tads3/lib/extensions/TCommand/doc/cicon9.gif \
     tads3/lib/extensions/TCommand/doc/contpage.htm \
     tads3/lib/extensions/TCommand/doc/givetoaskfor.htm \
@@ -86,6 +87,7 @@ T3_ADV3_FILES = \
     tads3/lib/adv3/actor.t \
     tads3/lib/adv3/adv3.h \
     tads3/lib/adv3/adv3.tl \
+    tads3/lib/adv3/adv3web.tl \
     tads3/lib/adv3/banner.t \
     tads3/lib/adv3/browser.t \
     tads3/lib/adv3/changes.htm \
@@ -101,6 +103,7 @@ T3_ADV3_FILES = \
     tads3/lib/adv3/lister.t \
     tads3/lib/adv3/menucon.t \
     tads3/lib/adv3/menusys.t \
+    tads3/lib/adv3/menuweb.t \
     tads3/lib/adv3/misc.t \
     tads3/lib/adv3/modid.t \
     tads3/lib/adv3/numbers.t \
@@ -127,6 +130,45 @@ T3_ADV3_EN_US_FILES = \
     tads3/lib/adv3/en_us/en_us.t \
     tads3/lib/adv3/en_us/en_us.tl \
     tads3/lib/adv3/en_us/instruct.t
+
+T3_WEBUIRES_FILES = \
+    tads3/lib/webuires/ckbox8pt-off.gif \
+    tads3/lib/webuires/ckbox8pt-on.gif \
+    tads3/lib/webuires/cmdwin.css \
+    tads3/lib/webuires/cmdwin.htm \
+    tads3/lib/webuires/cmdwin.js \
+    tads3/lib/webuires/comboarrow.gif \
+    tads3/lib/webuires/debuglog.css \
+    tads3/lib/webuires/debuglog.htm \
+    tads3/lib/webuires/debuglog.js \
+    tads3/lib/webuires/defaultPrefs.js \
+    tads3/lib/webuires/dlg-closeboxA.gif \
+    tads3/lib/webuires/dlg-closebox.gif \
+    tads3/lib/webuires/dlg-closeboxH.gif \
+    tads3/lib/webuires/dlg-corners.gif \
+    tads3/lib/webuires/dlgIconError.gif \
+    tads3/lib/webuires/dlgIconInfo.gif \
+    tads3/lib/webuires/dlgIconQuestion.gif \
+    tads3/lib/webuires/dlgIconWarning.gif \
+    tads3/lib/webuires/dlg-title-corners.gif \
+    tads3/lib/webuires/downloadPopupBkg.gif \
+    tads3/lib/webuires/errorPopupBkg.gif \
+    tads3/lib/webuires/layoutwin.css \
+    tads3/lib/webuires/layoutwin.htm \
+    tads3/lib/webuires/layoutwin.js \
+    tads3/lib/webuires/main.css \
+    tads3/lib/webuires/main.htm \
+    tads3/lib/webuires/main.js \
+    tads3/lib/webuires/menuarrow.png \
+    tads3/lib/webuires/modal-cover.png \
+    tads3/lib/webuires/netspinner.gif \
+    tads3/lib/webuires/statwin.css \
+    tads3/lib/webuires/statwin.htm \
+    tads3/lib/webuires/statwin.js \
+    tads3/lib/webuires/tads.css \
+    tads3/lib/webuires/TADS.swf \
+    tads3/lib/webuires/util.js \
+    tads3/lib/webuires/warningPopupBkg.gif
 
 T3_DOC_FILES = \
     tads3/doc/getacro.gif \

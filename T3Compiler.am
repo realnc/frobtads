@@ -44,6 +44,7 @@ t3exttcommanddir = $(T3_EXT_TCOMMAND_DIR)
 t3exttcommanddocdir = $(T3_EXT_TCOMMAND_DOC_DIR)
 t3adv3dir = $(T3_ADV3_DIR)
 t3adv3enusdir = $(T3_ADV3_EN_US_DIR)
+t3webuiresdir = $(T3_WEBUIRES_DIR)
 t3docdir = $(T3_DOC_DIR)
 
 t3lib_DATA = $(T3_LIB_FILES)
@@ -53,6 +54,7 @@ t3exttcommand_DATA = $(T3_EXT_TCOMMAND_FILES)
 t3exttcommanddoc_DATA = $(T3_EXT_TCOMMAND_DOC_FILES)
 t3adv3_DATA = $(T3_ADV3_FILES)
 t3adv3enus_DATA = $(T3_ADV3_EN_US_FILES)
+t3webuires_DATA = $(T3_WEBUIRES_FILES)
 t3doc_DATA = $(T3_DOC_FILES)
 
 ## Target to build the TADS 3 sample game.  We'll always rebuild it, no
