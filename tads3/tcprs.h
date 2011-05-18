@@ -3916,6 +3916,9 @@ protected:
 class CTcPrsOpIfnil: public CTcPrsOp
 {
 public:
+    CTcPrsOpIfnil()
+    { }
+
     class CTcPrsNode *parse() const;
 };
 
@@ -3925,6 +3928,9 @@ public:
 class CTcPrsOpIf: public CTcPrsOp
 {
 public:
+    CTcPrsOpIf()
+    { }
+
     class CTcPrsNode *parse() const;
 };
 
