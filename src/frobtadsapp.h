@@ -62,7 +62,8 @@ class FrobTadsApplication {
     /* Runs the T3VM.
      */
     int
-    fRunTads3( char* filename, int argc, const char* const* argv, class TadsNetConfig* netconfig );
+    fRunTads3( char* filename, int argc, const char* const* argv, const char *savedState,
+               class TadsNetConfig *netconfig );
 
   protected:
     // We store the remaining input-timeout here in case a
@@ -85,11 +86,11 @@ class FrobTadsApplication {
      * is given by the 'vm' argument: 0 for TADS2, non-0 for TADS3.
      */
     int
-    runTads( const char* filename, int vm ) { runTads(filename, vm, 0, 0, 0); }
+    runTads( const char* filename, int vm ) { runTads(filename, vm, 0, 0, 0, 0); }
 
     int
     runTads( const char* filename, int vm, int argc, const char* const* argv,
-             class TadsNetConfig* netconfig );
+             const char* savedState, class TadsNetConfig* netconfig );
         
 
     /* Change the current working directory, if possible.  Returns

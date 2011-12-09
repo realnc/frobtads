@@ -56,6 +56,7 @@ public:
     static void flush_output(VMG_ uint argc);
     static void input_timeout(VMG_ uint argc);
     static void input_cancel(VMG_ uint argc);
+    static void log_input_event(VMG_ uint argc);
 
     /*
      *   banner window functions 
@@ -195,7 +196,9 @@ vm_bif_desc CVmBifTIO::bif_table[] =
 
     { &CVmBifTIO::log_console_create, 3, 0, FALSE },                  /* 30 */
     { &CVmBifTIO::log_console_close, 1, 0, FALSE },                   /* 31 */
-    { &CVmBifTIO::log_console_say, 1, 0, TRUE }                       /* 32 */
+    { &CVmBifTIO::log_console_say, 1, 0, TRUE },                      /* 32 */
+
+    { &CVmBifTIO::log_input_event, 1, 0, FALSE }                      /* 33 */
 };
 
 #endif /* VMBIF_DEFINE_VECTOR */

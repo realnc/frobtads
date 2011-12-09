@@ -102,56 +102,6 @@ Modified
 #include "t3std.h"
 #include "vmerrnum.h"
 
-/* ------------------------------------------------------------------------ */
-/*
- *   err_throw() Return Handling
- *   
- *   Some compilers (such as MSVC 2007) are capable of doing global
- *   optimizations that can detect functions that never return.  err_throw()
- *   is one such function: it uses longjmp() to jump out, so it never returns
- *   to its caller.
- *   
- *   Most compilers can't detect this automatically, and C++ doesn't have a
- *   standard way to declare a function that never returns.  So on most
- *   compilers, the compiler will assume that err_throw() returns, and thus
- *   will generate a warning if err_throw() isn't followed by some proper
- *   control flow statement.  For example, in a function with a return value,
- *   a code branch containing an err_throw() would still need a 'return
- *   <val>' statement - without such a statement, the compiler would generate
- *   an error about a branch without a value return.
- *   
- *   This creates a porting dilemma.  On compilers that can detect that
- *   err_throw() never returns, the presence of any statement in a code
- *   branch after an err_throw() will cause an "unreachable code" error.  For
- *   all other compilers, the *absence* of such code will often cause a
- *   different error ("missing return", etc).
- *   
- *   The only way I can see to deal with this is to use a compile-time
- *   #define to select which type of compiler we're using, and use this to
- *   insert or delete the proper dummy control flow statement after an
- *   err_throw().  So:
- *   
- *   --- INSTRUCTIONS TO BASE CODE DEVELOPERS ---
- *   
- *   - after each err_throw() call, if the code branch needs some kind of
- *   explicit termination (such as a "return val;" statement), code it with
- *   the AFTER_ERR_THROW() macro.  Since err_throw() never *actually*
- *   returns, these will be dummy statements that will never be reached, but
- *   the compiler might require their presence anyway because it doesn't know
- *   better.
- *   
- *   --- INSTRUCTIONS TO PORTERS ---
- *   
- *   - if your compiler CAN detect that err_throw() never returns, define
- *   COMPILER_DETECTS_THROW_NORETURN in your compiler command-line options;
- *   
- *   - otherwise, leave the symbol undefined.  
- */
-#ifdef COMPILER_DETECTS_THROW_NORETURN
-#define AFTER_ERR_THROW(dummy)
-#else
-#define AFTER_ERR_THROW(dummy)   dummy
-#endif
 
 
 /* ------------------------------------------------------------------------ */

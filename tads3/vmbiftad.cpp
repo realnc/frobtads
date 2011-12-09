@@ -1232,7 +1232,7 @@ void RandStrParser::exec(VMG_ vm_val_t *result)
  */
 void CVmBifTADS::rand(VMG_ uint argc)
 {
-    ulong range;
+    int32 range;
     int use_range;
     int choose_an_arg = FALSE;
     int choose_an_ele = FALSE;
@@ -2688,18 +2688,18 @@ void CVmBifTADS::re_replace(VMG_ uint argc)
         }
 
         /*
-         *   Check for old flags.  Before 3.0.19, there was only one flag bit
+         *   Check for old flags.  Before 3.1, there was only one flag bit
          *   defined: ALL=1.  This means there were only two valid values for
          *   'flags': 0 for ONCE mode, 1 for ALL mode.
          *   
-         *   Starting in 3.0.19, we added a bunch of new flags.  At the same
-         *   time, we made the default ALL mode, because this is the more
-         *   common case.  Unfortunately, this creates a compatibility issue.
-         *   A new program that specifies one of the new flags might leave
-         *   out the ONCE or ALL bits, since ALL is the default.  However, we
-         *   can't just take the absence of the ONCE bit as meaning ALL,
-         *   because that would hose old programs that explicitly specify
-         *   ONCE as 0 (no bits set).
+         *   In 3.1, we added a bunch of new flags.  At the same time, we
+         *   made the default ALL mode, because this is the more common case.
+         *   Unfortunately, this creates a compatibility issue.  A new
+         *   program that specifies one of the new flags might leave out the
+         *   ONCE or ALL bits, since ALL is the default.  However, we can't
+         *   just take the absence of the ONCE bit as meaning ALL, because
+         *   that would hose old programs that explicitly specify ONCE as 0
+         *   (no bits set).
          *   
          *   Here's how we deal with this: we prohibit new programs from
          *   passing 0 for the flags, requiring them to specify at least one
@@ -4500,7 +4500,6 @@ static void tsprintf(VMG_ vm_val_t *retval, const char *fmtp, size_t fmtl,
                 (argi <= argc ? G_stk->get(arg0 + argi - 1) : &nil_val);
 
             /* apply the substitution based on the type */
-            int radix = 10;
             switch (type_spec)
             {
             case '%':

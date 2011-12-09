@@ -2443,6 +2443,49 @@ try_again:
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   translate an OS_EVT_XXX code to an event script file tag 
+ */
+static const char *evt_to_tag(int evt)
+{
+    switch (evt)
+    {
+    case OS_EVT_KEY:
+        return "key";
+
+    case OS_EVT_TIMEOUT:
+        return "timeout";
+
+    case OS_EVT_HREF:
+        return "href";
+
+    case OS_EVT_NOTIMEOUT:
+        return "notimeout";
+
+    case OS_EVT_EOF:
+        return "eof";
+
+    case OS_EVT_LINE:
+        return "line";
+
+    case OS_EVT_COMMAND:
+        return "command";
+
+    case VMCON_EVT_END_QUIET_SCRIPT:
+        return "endqs";
+
+    case VMCON_EVT_DIALOG:
+        return "dialog";
+
+    case VMCON_EVT_FILE:
+        return "file";
+
+    default:
+        return "";
+    }
+}
+
+/* ------------------------------------------------------------------------ */
+/*
  *   Log an event to the output script.  The parameter is in the UI character
  *   set.  
  */
@@ -2450,28 +2493,44 @@ int CVmConsole::log_event(VMG_ int evt,
                           const char *param, size_t paramlen,
                           int param_is_utf8)
 {
+    /* translate the event code to a tag, and log the event */
+    log_event(vmg_ evt_to_tag(evt), param, paramlen, param_is_utf8);
+
+    /* return the event type code */
+    return evt;
+}
+
+void CVmConsole::log_event(VMG_ const char *tag,
+                           const char *param, size_t paramlen,
+                           int param_is_utf8)
+{
     /* if there's a script file, log the event */
     if (command_fp_ != 0)
     {
+        /* if the tag has < > delimiters, remove them */
+        size_t taglen = strlen(tag);
+        if (tag[0] == '<')
+            ++tag, --taglen;
+        if (taglen != 0 && tag[taglen-1] == '>')
+            --taglen;
+
         /* write the event in the proper format for the script type */
         if (command_eventscript_)
         {
-            const char *tag = 0;
-            
-            /* write the event according to its type */
-            switch (evt)
+            /* 
+             *   It's an event script, so we write all event types.  Check
+             *   for certain special parameter translations.  
+             */
+            if (taglen == 3 && memicmp(tag, "key", 3) == 0)
             {
-            case OS_EVT_KEY:
-                /* use the "<key>" tag */
-                tag = "<key>";
-                
                 /* 
-                 *   use the normal key representation, except we want to
-                 *   write \n as [enter] and \t as [tab] 
+                 *   key event - for characters that would look like
+                 *   whitespace characters if we wrote them as-is, translate
+                 *   to [xxx] key names 
                  */
-                if (param != 0)
+                if (param != 0 && paramlen == 1)
                 {
-                    switch (*param)
+                    switch (param[0])
                     {
                     case '\n':
                         param = "[enter]";
@@ -2489,66 +2548,36 @@ int CVmConsole::log_event(VMG_ int evt,
                         break;
                     }
                 }
-                break;
-                
-            case OS_EVT_TIMEOUT:
-                tag = "<timeout>";
-                break;
-                
-            case OS_EVT_HREF:
-                tag = "<href>";
-                break;
-                
-            case OS_EVT_NOTIMEOUT:
-                tag = "<notimeout>";
-                param = 0;
-                break;
-                
-            case OS_EVT_EOF:
-                tag = "<eof>";
-                param = 0;
-                break;
-                
-            case OS_EVT_LINE:
-                tag = "<line>";
-                break;
-                
-            case OS_EVT_COMMAND:
-                tag = "<command>";
-                break;
-
-            case VMCON_EVT_END_QUIET_SCRIPT:
-                tag = "<endqs>";
-                break;
-
-            case VMCON_EVT_DIALOG:
-                tag = "<dialog>";
-                break;
-
-            case VMCON_EVT_FILE:
-                tag = "<file>";
-                break;
             }
-            
-            /* if we found a tag, write it */
-            if (tag != 0)
+
+            /* 
+             *   if the event doesn't have parameters, ignore any parameter
+             *   provided by the caller 
+             */
+            if ((taglen == 9 && memicmp(tag, "notimeout", 9) == 0)
+                || (taglen == 3 && memicmp(tag, "eof", 3) == 0))
+                param = 0;
+
+            /* if we have a non-empty tag, write the event */
+            if (taglen != 0)
             {
                 /* write the tag, in the local character set */
+                G_cmap_to_ui->write_file(command_fp_, "<", 1);
                 G_cmap_to_ui->write_file(command_fp_, tag, strlen(tag));
+                G_cmap_to_ui->write_file(command_fp_, ">", 1);
                 
                 /* add the parameter, if present */
                 if (param != 0)
                 {
                     if (param_is_utf8)
-                        G_cmap_to_ui->write_file(
-                            command_fp_, param, paramlen);
+                        G_cmap_to_ui->write_file(command_fp_, param, paramlen);
                     else
                         command_fp_->write(param, paramlen);
                 }
-
+                
                 /* add the newline */
                 G_cmap_to_ui->write_file(command_fp_, "\n", 1);
-
+                
                 /* flush the output */
                 command_fp_->flush();
             }
@@ -2560,7 +2589,7 @@ int CVmConsole::log_event(VMG_ int evt,
              *   input-line event, record it; otherwise leave it out, as this
              *   script file format can't represent any other event types.  
              */
-            if (evt == OS_EVT_LINE && param != 0)
+            if (taglen == 4 && memicmp(tag, "line", 4) == 0 && param != 0)
             {
                 /* write the ">" prefix */
                 G_cmap_to_ui->write_file(command_fp_, ">", 1);
@@ -2579,9 +2608,6 @@ int CVmConsole::log_event(VMG_ int evt,
             }
         }
     }
-
-    /* return the event code */
-    return evt;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -2669,8 +2695,6 @@ int CVmConsole::read_line_timeout(VMG_ char *buf, size_t buflen,
         }
         else
         {
-            int is_quiet;
-            
             /* 
              *   End of script file - return to reading from the enclosing
              *   level (i.e., the enclosing script, or the keyboard if this
@@ -2683,7 +2707,7 @@ int CVmConsole::read_line_timeout(VMG_ char *buf, size_t buflen,
             S_old_more_mode = close_script_file(vmg0_);
             
             /* note the new 'quiet' mode */
-            is_quiet = (script_sp_ != 0 && script_sp_->quiet);
+            int is_quiet = (script_sp_ != 0 && script_sp_->quiet);
             
             /* 
              *   if we're still reading from a script (which means we closed
@@ -3067,7 +3091,7 @@ int CVmConsole::read_script_event_type(int *evt, unsigned long *attrs)
         /* keep going until we find an input line */
         for (;;)
         {
-            /* read the first charater of the line */
+            /* read the first character of the line */
             int c = osfgetc(fp);
             if (c == '>')
             {

@@ -84,7 +84,7 @@ vm_bif_entry_t G_bif_reg_table[] =
     MAKE_ENTRY("tads-io/030007", CVmBifTIO),
 
     /* TADS input/output functions */
-    MAKE_ENTRY("tads-net/030007", CVmBifNet),
+    MAKE_ENTRY("tads-net/030001", CVmBifNet),
 
     // !!! ADD ANY HOST-SPECIFIC FUNCTION SETS HERE
 

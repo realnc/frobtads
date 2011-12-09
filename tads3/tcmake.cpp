@@ -1317,8 +1317,8 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
             }
 
             /* 
-             *   if we have any resources to add, and we're not compiling for
-             *   debugging, add the resources 
+             *   if we have any resources, add them to the image (or just add
+             *   links to them, if compiling for debugging) 
              */
             if (res_list != 0 && res_list->get_count() != 0)
             {

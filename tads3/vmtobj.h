@@ -843,6 +843,11 @@ class CVmObjTadsInhQueue
 public:
     CVmObjTadsInhQueue()
     {
+        init();
+    }
+
+    void init()
+    {
         /* there's nothing in the free list or the queue yet */
         head_ = 0;
         free_ = 0;

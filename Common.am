@@ -345,6 +345,7 @@ T3HEADERS = \
     tads3/vmintcls.h \
     tads3/vmisaac.h \
     tads3/vmiter.h \
+    tads3/vmlog.h \
     tads3/vmlookup.h \
     tads3/vmlst.h \
     tads3/vmmaincn.h \
@@ -453,6 +454,7 @@ T3RCSOURCES = \
     tads3/vmintcls.cpp \
     tads3/vmisaac.cpp \
     tads3/vmiter.cpp \
+    tads3/vmlog.cpp \
     tads3/vmlookup.cpp \
     tads3/vmlst.cpp \
     tads3/vmmcreg.cpp \

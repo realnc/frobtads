@@ -146,6 +146,7 @@ CTcTokenizer::CTcTokenizer(CResLoader *res_loader,
         { "property", TOKT_PROPERTY },
         { "operator", TOKT_OPERATOR },
         { "method", TOKT_METHOD },
+        { "invokee", TOKT_INVOKEE },
 
 //      { "void", TOKT_VOID },
 //      { "int", TOKT_INT },
@@ -586,6 +587,7 @@ const char *CTcTokenizer::get_op_text(tc_toktyp_t op)
         { TOKT_PROPERTY, "property" },
         { TOKT_OPERATOR, "operator" },
         { TOKT_METHOD, "method" },
+        { TOKT_INVOKEE, "invokee" },
 
 //      { TOKT_VOID, "void" },
 //      { TOKT_INTKW, "int" },

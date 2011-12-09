@@ -30,6 +30,79 @@ Modified
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   err_throw() Return Handling
+ *   
+ *   Some compilers (such as MSVC 2007) are capable of doing global
+ *   optimizations that can detect functions that never return.  err_throw()
+ *   is one such function: it uses longjmp() to jump out, so it never returns
+ *   to its caller.
+ *   
+ *   Most compilers can't detect this automatically, and C++ doesn't have a
+ *   standard way to declare a function that never returns.  So on most
+ *   compilers, the compiler will assume that err_throw() returns, and thus
+ *   will generate a warning if err_throw() isn't followed by some proper
+ *   control flow statement.  For example, in a function with a return value,
+ *   a code branch containing an err_throw() would still need a 'return
+ *   <val>' statement - without such a statement, the compiler would generate
+ *   an error about a branch without a value return.
+ *   
+ *   This creates a porting dilemma.  On compilers that can detect that
+ *   err_throw() never returns, the presence of any statement in a code
+ *   branch after an err_throw() will cause an "unreachable code" error.  For
+ *   all other compilers, the *absence* of such code will often cause a
+ *   different error ("missing return", etc).
+ *   
+ *   The only way I can see to deal with this is to use a compile-time
+ *   #define to select which type of compiler we're using, and use this to
+ *   insert or delete the proper dummy control flow statement after an
+ *   err_throw().  So:
+ *   
+ *   --- INSTRUCTIONS TO BASE CODE DEVELOPERS ---
+ *   
+ *   - after each err_throw() call, if the code branch needs some kind of
+ *   explicit termination (such as a "return val;" statement), code it with
+ *   the AFTER_ERR_THROW() macro.  Since err_throw() never *actually*
+ *   returns, these will be dummy statements that will never be reached, but
+ *   the compiler might require their presence anyway because it doesn't know
+ *   better.
+ *   
+ *   --- INSTRUCTIONS TO PORTERS ---
+ *   
+ *   - if your compiler CAN detect that err_throw() never returns, define
+ *   COMPILER_DETECTS_THROW_NORETURN in your compiler command-line options;
+ *   
+ *   - otherwise, leave the symbol undefined.  
+ */
+#ifdef COMPILER_DETECTS_THROW_NORETURN
+#define AFTER_ERR_THROW(code)
+#else
+#define AFTER_ERR_THROW(code)   code
+#endif
+
+/*
+ *   os_term() return handling.  This is similar to the longjmp() issue
+ *   above.  Some compilers perform global optimizations that detect that
+ *   exit(), and functions that unconditionally call exit(), such as
+ *   os_term(), do not return.  Since these compilers know that anything
+ *   following a call to exit() is unreachable, some will complain about if
+ *   anything follows an exit().  Compilers that *don't* do such
+ *   optimizations will complain if there *isn't* a 'return' after an exit()
+ *   if the containing function requires a return value, since as far as
+ *   they're concerned the function is falling off the end without returning
+ *   a value.  So there's no solution at the C++ level; it's a compiler
+ *   variation that we have to address per compiler.  If you get 'unreachable
+ *   code' errors in the generic code after calls to os_term(), define this
+ *   macro.  Most platforms can leave it undefined.  
+ */
+#ifdef COMPILER_DETECTS_OS_TERM_NORETURN
+#define AFTER_OS_TERM(code)
+#else
+#define AFTER_OS_TERM(code)   code
+#endif
+
+
+/* ------------------------------------------------------------------------ */
+/*
  *   T3 OS interface extensions.  These are portable interfaces to
  *   OS-dependent functionality, along the same lines as the functions
  *   defined in tads2/osifc.h but specific to TADS 3.  
@@ -124,7 +197,9 @@ typedef unsigned long  ulong;
 #define SCHARMINVAL   (-(0x7f)-1)
 
 /* sizeof() extension macros */
+#ifndef countof
 #define countof(array) (sizeof(array)/sizeof((array)[0]))
+#endif
 #define sizeof_field(struct_name, field) sizeof(((struct_name *)0)->field)
 
 
@@ -523,6 +598,10 @@ char *t3vsprintf_alloc(const char *fmt, va_list args);
  *   deletes, and use after deletion).  
  */
 
+#define T3MALLOC_TYPE_MALLOC  1
+#define T3MALLOC_TYPE_NEW     2
+#define T3MALLOC_TYPE_NEWARR  3
+
 #ifdef T3_DEBUG
 
 /* 
@@ -532,9 +611,16 @@ char *t3vsprintf_alloc(const char *fmt, va_list args);
  *   manager, too.  
  */
 
-void *t3malloc(size_t siz);
+void *t3malloc(size_t siz, int alloc_type);
 void *t3realloc(void *oldptr, size_t siz);
-void  t3free(void *ptr);
+void  t3free(void *ptr, int alloc_type);
+
+inline void *t3malloc(size_t siz)
+    { return t3malloc(siz, T3MALLOC_TYPE_MALLOC); }
+inline void *t3mallocnew(size_t siz)
+    { return t3malloc(siz, T3MALLOC_TYPE_NEW); }
+inline void t3free(void *ptr)
+    { t3free(ptr, T3MALLOC_TYPE_MALLOC); }
 
 void *operator new(size_t siz);
 void *operator new[](size_t siz);
@@ -560,6 +646,7 @@ void t3_list_memory_blocks(void (*cb)(const char *msg));
  *   use customized memory management where necessary or desirable.  
  */
 #define t3malloc(siz)          (::osmalloc(siz))
+#define t3mallocnew(siz)       (::osmalloc(siz))
 #define t3realloc(ptr, siz)    (::osrealloc(ptr, siz))
 #define t3free(ptr)            (::osfree(ptr))
 

@@ -498,7 +498,7 @@ size_t t3vsprintf(char *buf, size_t buflen, const char *fmt, va_list args0)
                     case ']':
                     case ' ':
                         /* use % encoding for special characters */
-                        sprintf(buf, "%%%02x", *txt);
+                        sprintf(buf, "%%%02x", (unsigned)(uchar)*txt);
                         need += 3;
                         for (i = 0 ; i < 3 ; ++i)
                         {
@@ -718,6 +718,18 @@ void t3strlwr(char *p)
 #include <stdio.h>
 #include <stdlib.h>
 
+#define T3_DEBUG_MEMGUARD
+#ifdef T3_DEBUG_MEMGUARD
+#define MEM_GUARD_PREFIX  char guard[sizeof(mem_prefix_t *)];
+#define MEM_GUARD_POST_BYTES   sizeof(mem_prefix_t *)
+#else /* T3_DEBUG_MEMGUARD */
+#define MEM_GUARD_PREFIX
+#define MEM_GUARD_BYTES   0
+#define mem_check_guard(blk)
+#define mem_set_guard(blk)
+#endif /* T3_DEBUG_MEMGUARD */
+
+
 /*
  *   memory block prefix - each block we allocate has this prefix attached
  *   just before the pointer that we return to the program 
@@ -728,8 +740,43 @@ struct mem_prefix_t
     size_t siz;
     mem_prefix_t *nxt;
     mem_prefix_t *prv;
+    int alloc_type;
     OS_MEM_PREFIX
+    MEM_GUARD_PREFIX
 };
+
+#ifdef T3_DEBUG_MEMGUARD
+static void mem_make_guard(char *b, const mem_prefix_t *blk)
+{
+    memcpy(b, &blk, sizeof(blk));
+    const static unsigned char x[] =
+        { 0xcf, 0xfd, 0xef, 0xfb, 0xbf, 0xfc, 0xdf, 0xfe  };
+    for (size_t i = 0 ; i < sizeof(blk) ; ++i)
+        b[i] ^= x[i % countof(x)];
+}
+static void mem_set_guard(mem_prefix_t *blk)
+{
+    char b[sizeof(mem_prefix_t *)];
+    mem_make_guard(b, blk);
+    memcpy(blk->guard, b, sizeof(b));
+    memcpy((char *)(blk + 1) + blk->siz, b, sizeof(b));
+}
+static void mem_check_guard(const mem_prefix_t *blk)
+{
+    char b[sizeof(mem_prefix_t *)];
+    mem_make_guard(b, blk);
+    if (memcmp(blk->guard, b, sizeof(b)) != 0)
+        fprintf(stderr, "pre guard bytes corrupted: addr=%lx, id=%ld, siz=%lu "
+                OS_MEM_PREFIX_FMT "\n",
+                (long)(blk + 1), blk->id, (unsigned long)blk->siz
+                OS_MEM_PREFIX_FMT_VARS(blk));
+    if (memcmp((char *)(blk + 1) + blk->siz, b, sizeof(b)) != 0)
+        fprintf(stderr, "post guard bytes corrupted: addr=%lx, id=%ld, siz=%lu "
+                OS_MEM_PREFIX_FMT "\n",
+                (long)(blk + 1), blk->id, (unsigned long)blk->siz
+                OS_MEM_PREFIX_FMT_VARS(blk));
+}
+#endif /* T3_DEBUG_MEMGUARD */
 
 /* head and tail of memory allocation linked list */
 static mem_prefix_t *mem_head = 0;
@@ -772,25 +819,30 @@ static void t3_check_heap()
  *   Allocate a block, storing it in a doubly-linked list of blocks and
  *   giving the block a unique ID.  
  */
-void *t3malloc(size_t siz)
+void *t3malloc(size_t siz, int alloc_type)
 {
     static long id;
     static int check = 0;
     mem_prefix_t *mem;
 
     /* allocate the memory, including its prefix */
-    mem = (mem_prefix_t *)malloc(siz + sizeof(mem_prefix_t));
+    mem = (mem_prefix_t *)malloc(siz + sizeof(mem_prefix_t)
+                                 + MEM_GUARD_POST_BYTES);
 
     /* if that failed, return failure */
     if (mem == 0)
         return 0;
+
+    /* set the guard bytes */
+    mem->alloc_type = alloc_type;
+    mem->siz = siz;
+    mem_set_guard(mem);
 
     /* lock the memory mutex while accessing the memory block list */
     mem_mutex.lock();
 
     /* set up the prefix */
     mem->id = id++;
-    mem->siz = siz;
     mem->prv = mem_tail;
     os_mem_prefix_set(mem);
     mem->nxt = 0;
@@ -822,7 +874,7 @@ void *t3realloc(void *oldptr, size_t newsiz)
     size_t oldsiz;
 
     /* allocate a new block */
-    newptr = t3malloc(newsiz);
+    newptr = t3malloc(newsiz, T3MALLOC_TYPE_MALLOC);
 
     /* copy the old block into the new block */
     oldsiz = (((mem_prefix_t *)oldptr) - 1)->siz;
@@ -837,7 +889,7 @@ void *t3realloc(void *oldptr, size_t newsiz)
 
 
 /* free a block, removing it from the allocation block list */
-void t3free(void *ptr)
+void t3free(void *ptr, int alloc_type)
 {
     /* statics for debugging */
     static int check = 0;
@@ -857,12 +909,26 @@ void t3free(void *ptr)
     mem_prefix_t *mem = ((mem_prefix_t *)ptr) - 1;
     size_t siz;
 
+    /* 
+     *   check that the call type matches the allocating call type (malloc,
+     *   new, or new[]) 
+     */
+    if (mem->alloc_type != alloc_type)
+        fprintf(stderr, "\n--- memory block freed with wrong call type: "
+                "block=%lx, size=%d, id=%lu, alloc type=%d, free type=%d ---\n",
+                (unsigned long)ptr, mem->siz, mem->id,
+                mem->alloc_type, alloc_type);
+
     /* check for a pre-freed block */
     if (memcmp(mem, ckblk, sizeof(ckblk)) == 0)
     {
-        fprintf(stderr, "\n--- memory block freed twice ---\n");
+        fprintf(stderr, "\n--- memory block freed twice: %lx ---\n",
+                (unsigned long)ptr);
         return;
     }
+
+    /* check the guard bytes for overwrites */
+    mem_check_guard(mem);
 
     /* lock the memory mutex while accessing the memory block list */
     mem_mutex.lock();
@@ -877,7 +943,9 @@ void t3free(void *ptr)
                 break;
         }
         if (p == 0)
-            fprintf(stderr, "\n--- memory block not found in t3free ---\n");
+            fprintf(stderr,
+                    "\n--- memory block not found in t3free: %lx ---\n",
+                    (unsigned long)ptr);
     }
 
     /* unlink the block from the list */
@@ -985,9 +1053,11 @@ void os_mem_prefix_set(mem_prefix_t *mem)
      */
     DWORD bp_;
     __asm mov bp_, ebp;
-    bp_ = *(DWORD *)bp_;
+    bp_ = IsBadReadPtr((DWORD *)bp_, sizeof(bp_)) ? 0 : *(DWORD *)bp_;
 
-    for (size_t i = 0 ; i < countof(mem->stk) && bp_ < *(DWORD *)bp_ ;
+    for (size_t i = 0 ;
+         i < countof(mem->stk) && !IsBadReadPtr((DWORD *)bp_, sizeof(bp_))
+             && bp_ < *(DWORD *)bp_ ;
          ++i, bp_ = *(DWORD *)bp_)
         mem->stk[i].return_addr = ((DWORD *)bp_)[1];
 }

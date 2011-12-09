@@ -255,7 +255,6 @@ struct vm_val_t
     void set_stack(void *ptr) { typ = VM_STACK; val.ptr = ptr; }
     void set_codeptr(const void *ptr) { typ = VM_CODEPTR; val.ptr = ptr; }
     void set_obj(vm_obj_id_t obj) { typ = VM_OBJ; val.obj = obj; }
-    void set_nil_obj() { typ = VM_NIL; val.obj = VM_INVALID_OBJ; }
     void set_propid(vm_prop_id_t prop) { typ = VM_PROP; val.prop = prop; }
     void set_int(int32 intval) { typ = VM_INT; val.intval = intval; }
     void set_enum(uint32 enumval) { typ = VM_ENUM; val.enumval = enumval; }
@@ -280,7 +279,7 @@ struct vm_val_t
      *   object ID will see an explicitly invalid object value rather than
      *   something random.  
      */
-    void set_nilobj() { typ = VM_NIL; val.obj = VM_INVALID_OBJ; }
+    void set_nil_obj() { typ = VM_NIL; val.obj = VM_INVALID_OBJ; }
 
     /* 
      *   set an object or nil value: if the object ID is VM_INVALID_OBJ,
@@ -299,6 +298,9 @@ struct vm_val_t
 
     /* get an object, or a null pointer if it's not an object */
     vm_obj_id_t get_as_obj() const { return typ == VM_OBJ ? val.obj : 0; }
+
+    /* is this an object of the given class? */
+    int is_instance_of(VMG_ vm_obj_id_t cls) const;
 
     /* set to an integer giving the datatype of the given value */
     void set_datatype(VMG_ const vm_val_t *val);

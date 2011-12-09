@@ -1282,13 +1282,103 @@ vm_obj_id_t CVmMetaclass::get_class_obj(VMG0_) const
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   The nil object.  This is a special pseudo-object we create for object
+ *   #0, to provide graceful error handling if byte code tries to dereference
+ *   nil in any way.  
+ */
+class CVmObjNil: public CVmObject
+{
+public:
+    virtual class CVmMetaclass *get_metaclass_reg() const
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return 0;)
+    }
+
+    virtual void set_prop(VMG_ class CVmUndo *, vm_obj_id_t, vm_prop_id_t,
+                          const vm_val_t *)
+        { err_throw(VMERR_NIL_DEREF); }
+    virtual int get_prop(VMG_ vm_prop_id_t, vm_val_t *,
+                         vm_obj_id_t, vm_obj_id_t *, uint *)
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return FALSE;)
+    }
+    virtual int is_instance_of(VMG_ vm_obj_id_t)
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return FALSE;)
+    }
+    virtual int get_superclass_count(VMG_ vm_obj_id_t) const
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return 0;)
+    }
+    virtual vm_obj_id_t get_superclass(VMG_ vm_obj_id_t, int) const
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return VM_INVALID_OBJ;)
+    }
+    virtual void enum_props(VMG_ vm_obj_id_t,
+                            void (*cb)(VMG_ void *, vm_obj_id_t,
+                                       vm_prop_id_t, const vm_val_t *),
+                            void *)
+        { err_throw(VMERR_NIL_DEREF); }
+    virtual int get_prop_interface(VMG_ vm_obj_id_t, vm_prop_id_t,
+                                   int &, int &, int &)
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return FALSE;)
+    }
+    virtual int inh_prop(VMG_ vm_prop_id_t prop, vm_val_t *retval,
+                         vm_obj_id_t self, vm_obj_id_t orig_target_obj,
+                         vm_obj_id_t defining_obj, vm_obj_id_t *source_obj,
+                         uint *argc)
+    {
+        err_throw(VMERR_NIL_DEREF);
+        AFTER_ERR_THROW(return FALSE;)
+    }
+    virtual void build_prop_list(VMG_ vm_obj_id_t, vm_val_t *)
+        { err_throw(VMERR_NIL_DEREF); }
+
+    virtual void notify_delete(VMG_ int) { }
+    virtual void mark_refs(VMG_ uint) { }
+    virtual void remove_stale_weak_refs(VMG0_) { }
+    virtual void notify_new_savept() { }
+    virtual void apply_undo(VMG_ struct CVmUndoRecord *) { }
+    virtual void mark_undo_ref(VMG_ struct CVmUndoRecord *) { }
+    virtual void remove_stale_undo_weak_ref(VMG_ struct CVmUndoRecord *) { }
+    virtual void load_from_image(VMG_ vm_obj_id_t, const char *, size_t) { }
+    virtual void save_to_file(VMG_ class CVmFile *) { }
+    virtual void restore_from_file(VMG_ vm_obj_id_t, class CVmFile *,
+                                   class CVmObjFixup *) { }
+    
+};
+
+
+/* ------------------------------------------------------------------------ */
+/*
  *   object table implementation 
  */
 
 /*
+ *   construction - create an empty table 
+ */
+CVmObjTable::CVmObjTable()
+{
+    pages_ = 0;
+    page_slots_ = 0;
+    pages_used_ = 0;
+    image_ptr_head_ = 0;
+    globals_ = 0;
+    global_var_head_ = 0;
+    post_load_init_table_ = 0;
+}
+
+/*
  *   allocate object table 
  */
-void CVmObjTable::init()
+void CVmObjTable::init(VMG0_)
 {
     /* allocate the initial set of page slots */
     page_slots_ = 10;
@@ -1376,6 +1466,16 @@ void CVmObjTable::init()
 
     /* create the post_load_init() request table */
     post_load_init_table_ = new CVmHashTable(128, new CVmHashFuncCS(), TRUE);
+
+    /* allocate the first object page */
+    alloc_new_page();
+
+    /* 
+     *   Initialize object #0 with the nil pseudo-object.  This isn't an
+     *   actual object, but it provides graceful error handling if the byte
+     *   code attempts to invoke any methods on nil. 
+     */
+    new (vmg_ VM_INVALID_OBJ) CVmObjNil;
 }
 
 /*
@@ -1430,6 +1530,15 @@ void CVmObjTable::delete_obj_table(VMG0_)
     page_slots_ = 0;
     pages_used_ = 0;
 
+    /* empty out the object lists */
+    first_free_ = VM_INVALID_OBJ;
+    gc_queue_head_ = VM_INVALID_OBJ;
+    finalize_queue_head_ = VM_INVALID_OBJ;
+
+    /* clear the gc statistics */
+    allocs_since_gc_ = 0;
+    bytes_since_gc_ = 0;
+
     /* delete each object image data pointer page */
     for (ip_page = image_ptr_head_ ; ip_page != 0 ; ip_page = ip_next)
     {
@@ -1439,6 +1548,9 @@ void CVmObjTable::delete_obj_table(VMG0_)
         /* delete this page */
         t3free(ip_page);
     }
+
+    /* there's nothing left in the image data list */
+    image_ptr_head_ = image_ptr_tail_ = 0;
 
     /* delete the linked list of globals */
     if (globals_ != 0)
@@ -1727,7 +1839,7 @@ void CVmObjTable::alloc_new_page()
 
         /* ...and it's certainly not a collectable object */
         entry->in_root_set_ = TRUE;
-        
+
         /* skip it for the impending free list construction */
         ++i;
         ++entry;

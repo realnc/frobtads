@@ -165,6 +165,9 @@ CTcSymbol *CTcSymbolBase::read_from_sym_file(CVmFile *fp)
     case TC_SYM_ENUM:
         return CTcSymEnum::read_from_sym_file(fp);
 
+    case TC_SYM_METACLASS:
+        return CTcSymMetaclass::read_from_sym_file(fp);
+
     default:
         /* other types should not be in a symbol file */
         G_tcmain->log_error(0, 0, TC_SEV_ERROR, TCERR_SYMEXP_INV_TYPE);
@@ -477,10 +480,9 @@ CTcSymbol *CTcSymObjBase::read_from_sym_file(CVmFile *fp)
      */
     if (meta == TC_META_DICT || meta == TC_META_GRAMPROD)
     {
-        CTcSymbol *old_sym;
-
         /* look for a previous instance of the symbol */
-        old_sym = G_prs->get_global_symtab()->find(txt, strlen(txt));
+        CTcSymbol *old_sym =
+            G_prs->get_global_symtab()->find(txt, strlen(txt));
         if (old_sym != 0
             && old_sym->get_type() == TC_SYM_OBJ
             && ((CTcSymObj *)old_sym)->get_metaclass() == meta)
@@ -1109,6 +1111,10 @@ int CTcSymMetaclassBase::write_to_obj_file(class CVmFile *fp)
     CTcSymMetaProp *cur;
     char buf[16];
 
+    /* if this is an unreferenced external symbol, don't write it */
+    if (ext_ && !ref_)
+        return FALSE;
+
     /* inherit default */
     CTcSymbol::write_to_obj_file(fp);
 
@@ -1145,3 +1151,57 @@ int CTcSymMetaclassBase::write_to_obj_file(class CVmFile *fp)
     return TRUE;
 }
 
+/*
+ *   Write to a symbol file 
+ */
+int CTcSymMetaclassBase::write_to_sym_file(class CVmFile *fp)
+{
+    /* inherit the base class handling to write the symbol */
+    CTcSymbol::write_to_sym_file(fp);
+
+    /* add the metaclass ID string */
+    const char *id = G_cg->get_meta_name(meta_idx_);
+    size_t idlen = strlen(id);
+    fp->write_byte((char)idlen);
+    fp->write_bytes(id, idlen);
+
+    /* success */
+    return TRUE; 
+}
+
+/*
+ *   Read from a symbol file 
+ */
+CTcSymbol *CTcSymMetaclassBase::read_from_sym_file(class CVmFile *fp)
+{
+    /* read the symbol name */
+    const char *txt;
+    if ((txt = base_read_from_sym_file(fp)) == 0)
+        return 0;
+
+    /* read the metaclass ID string */
+    char id[256];
+    size_t idlen = (uchar)fp->read_byte();
+    fp->read_bytes(id, idlen);
+
+    /* if the symbol is already defined, return the existing copy */
+    CTcSymbol *old_sym = G_prs->get_global_symtab()->find(txt, strlen(txt));
+    if (old_sym != 0 && old_sym->get_type() == TC_SYM_METACLASS)
+        return old_sym;
+
+    /* create a new external metaclass symbol */
+    CTcSymMetaclass *sym = new CTcSymMetaclass(
+        txt, strlen(txt), FALSE, 0, G_cg->new_obj_id());
+
+    /* mark it as external */
+    sym->set_ext(TRUE);
+
+    /* add it to the metaclass table */
+    int idx = G_cg->find_or_add_meta(id, idlen, sym);
+
+    /* set the index in the symbol */
+    sym->set_meta_idx(idx);
+
+    /* return the new symbol */
+    return sym;
+}

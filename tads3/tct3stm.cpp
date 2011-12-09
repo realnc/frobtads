@@ -71,8 +71,12 @@ void CTPNStmIf::gen_code(int, int)
          */
         if (!val)
         {
-            /* it's false - the 'then' part cannot be executed */
-            log_warning(TCERR_IF_ALWAYS_FALSE);
+            /* 
+             *   It's false - the 'then' part cannot be executed.  If this
+             *   isn't a compile-time constant expression, warn about it.
+             */
+            if (!cond_expr_->get_const_val()->is_ctc())
+                log_warning(TCERR_IF_ALWAYS_FALSE);
 
             /* generate the 'else' part if there is one */
             if (else_part_ != 0)

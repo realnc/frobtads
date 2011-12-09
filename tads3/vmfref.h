@@ -89,6 +89,7 @@ struct vm_frameref_ext
     vm_obj_id_t defobj;
     vm_obj_id_t targobj;
     vm_prop_id_t targprop;
+    vm_val_t invokee;
 
     /* 
      *   Snapshot copy of the locals and parameters.  Just before the
@@ -260,6 +261,10 @@ protected:
     virtual int getp_get_vars(VMG_ vm_obj_id_t self, vm_val_t *retval,
                               uint *argc);
 
+    /* property evaluator - get 'invokee' in the frame */
+    virtual int getp_get_invokee(VMG_ vm_obj_id_t self, vm_val_t *retval,
+                                 uint *argc);
+
     /* function table */
     static int (CVmObjFrameDesc::*func_table_[])
         (VMG_ vm_obj_id_t self, vm_val_t *retval, uint *argc);
@@ -314,6 +319,9 @@ public:
 
     /* get 'targetprop' from the frame */
     void get_targprop(VMG_ vm_val_t *result);
+
+    /* get 'invokee' from the frame */
+    void get_invokee(VMG_ vm_val_t *result);
 
     /* create a method context object for the LOADCTX instruction */
     void create_loadctx_obj(VMG_ vm_val_t *result);

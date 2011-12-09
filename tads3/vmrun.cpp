@@ -129,12 +129,18 @@ void CVmRun::terminate()
 #ifdef VM_PROFILER
 
     /* delete the profiler stack */
-    t3free(prof_stack_);
-    prof_stack_ = 0;
+    if (prof_stack_ != 0)
+    {
+        t3free(prof_stack_);
+        prof_stack_ = 0;
+    }
 
     /* delete the profiler master hash table */
-    delete prof_master_table_;
-    prof_master_table_ = 0;
+    if (prof_master_table_ != 0)
+    {
+        delete prof_master_table_;
+        prof_master_table_ = 0;
+    }
 
 #endif /* VM_PROFILER */
 }
@@ -701,7 +707,7 @@ public:
             else if (CVmObjString::is_string_obj(vmg_ val.val.obj))
             {
                 /* print the string */
-                G_stk->push(&val);
+                G_interpreter->push_obj(vmg_ val.val.obj);
                 return G_interpreter->disp_string_val(
                     vmg_ caller_ofs, self.val.obj);
             }
@@ -2507,7 +2513,7 @@ resume_execution:
                  *   otherwise, discard the value and proceed 
                  */
                 if (valp->typ == VM_NIL
-                    || valp->typ == VM_INT && valp->num_is_zero())
+                    || (valp->typ == VM_INT && valp->num_is_zero()))
                 {
                     /* it's nil or zero - save it and jump */
                     p += osrp2s(p);
@@ -4085,7 +4091,7 @@ const uchar *CVmRun::call_func_ptr(VMG_ const vm_val_t *funcptr, uint argc,
     if (funcptr->typ == VM_OBJ)
         (fp++)->set_obj(funcptr->val.obj);
     else
-        (fp++)->set_nil();
+        (fp++)->set_nil_obj();
     *(fp++) = *funcptr;
 
     /* call the function */
@@ -4210,7 +4216,7 @@ const uchar *CVmRun::do_call_func_nr(VMG_ uint caller_ofs,
     (fp++)->set_propid(VM_INVALID_PROP);
     (fp++)->set_nil();
     (fp++)->set_nil();
-    (fp++)->set_nilobj();
+    (fp++)->set_nil_obj();
 
     /* push the invokee */
     (fp++)->set_fnptr(target_ofs);
@@ -4903,6 +4909,27 @@ const uchar *CVmRun::get_prop(VMG_ uint caller_ofs,
 }
 
 /*
+ *   Simplified property evaluator 
+ */
+void CVmRun::get_prop(VMG_ vm_val_t *result,
+                      const vm_val_t *obj, vm_prop_id_t prop, uint argc,
+                      const vm_rcdesc *rc)
+{
+    /* use nil as the default in case we don't find a value */
+    result->set_nil();
+
+    /* if the property is invalid, we definitely can't evaluate it */
+    if (prop == VM_INVALID_PROP)
+        return;
+
+    /* evaluate the property into R0 */
+    get_prop(vmg_ 0, obj, prop, obj, argc, rc);
+
+    /* copy the result to the caller's parameter */
+    *result = r0_;
+}
+
+/*
  *   Look up a property without evaluating it. 
  */
 inline int CVmRun::get_prop_no_eval(VMG_ const vm_val_t **target_obj,
@@ -5099,7 +5126,7 @@ const uchar *CVmRun::eval_prop_val(VMG_ int found, uint caller_ofs,
             else if (CVmObjString::is_string_obj(vmg_ val->val.obj))
             {
                 /* print the string */
-                push(val);
+                push_obj(vmg_ val->val.obj);
                 return disp_string_val(vmg_ caller_ofs, self);
             }
             err_throw(VMERR_BAD_TYPE_CALL);
@@ -5251,9 +5278,8 @@ const uchar *CVmRun::disp_string_val(VMG_ uint caller_ofs, vm_obj_id_t self)
             && (val.typ == VM_CODEOFS || val.typ == VM_OBJX
                 || val.typ == VM_BIFPTRX))
         {
-            vm_val_t self_val;
-
             /* set up a 'self' value - this is the target object */
+            vm_val_t self_val;
             self_val.set_obj(self);
 
             /* there's a default display method - invoke it */

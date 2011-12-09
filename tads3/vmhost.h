@@ -34,7 +34,7 @@ Modified
  *   all lower values, plus additional restrictions of its own.
  *   
  *   In the past, there was a single safety level that controlled both read
- *   and write.  In 3.0.19 we separated the read and write levels.  Because
+ *   and write.  In 3.1 we separated the read and write levels.  Because
  *   of the history, each level specifies separate read and write permissions
  *   that were formerly combined in that level.  The descriptions still apply
  *   even though we track the levels separately - some levels must be

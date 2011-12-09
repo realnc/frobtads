@@ -192,15 +192,6 @@ int TadsMessageQueue::wait(VMG_ unsigned long timeout, TadsMessage **msgp)
 
 
 /* ------------------------------------------------------------------------ */
-/*
- *   Some frequently used strings 
- */
-
-/* basic XML prefix */
-static const char *XML_HEADER = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-
-
-/* ------------------------------------------------------------------------ */
 /* 
  *   Custom string object.  This is a convenience class for complex string
  *   construction, which the network servers do a lot of.  
@@ -1037,21 +1028,22 @@ TadsHttpListenerThread::~TadsHttpListenerThread()
  */
 static const char *S_http_400 = "400 Bad Request";
 
-static const char *S_http_413 = "413 Request Entity Too Large";
-static const char *S_http_413_body =
-    "<html>"
-    "<title>413 Request Entity Too Large</title>"
-    "<body>"
-    "<h1>Request Entity Too Large</h1>"
-    "</body>"
-    "</html>";
-
 static const char *S_http_500 = "500 Internal Server Error";
 static const char *S_http_500_body =
     "<html>"
     "<title>500 Internal Server Error</title>"
     "<body>"
     "<h1>Internal Server Error</h1>"
+    "</body>"
+    "</html>";
+
+static const char *S_http_503 = "503 Service Unavailable (Shutting Down)";
+static const char *S_http_503_quitting_body = 
+    "<html>"
+    "<title>503 Service Unavailable</title>"
+    "<body>"
+    "<h1>Service Unavailable</h1>"
+    "The server is shutting down and cannot process any more requests."
     "</body>"
     "</html>";
 
@@ -1126,11 +1118,11 @@ int TadsHttpServerThread::send_simple(
         /* build the cache-control and content-length header */
         t3sprintf(buf, sizeof(buf),
                   "Content-Type: %s\r\n"
-                  "Content-Length: %d\r\n"
+                  "Content-Length: %lu\r\n"
                   "Cache-control: no-cache\r\n"
                   "Connection: Keep-Alive\r\n"
                   "\r\n",
-                  mime_type, msg_len);
+                  mime_type, (ulong)msg_len);
 
         /* send the headers, followed by the message body */
         if (!send(buf, strlen(buf))
@@ -1531,6 +1523,11 @@ int TadsHttpServerThread::process_request()
          *   success - the server will already have sent the reply, so we're
          *   done 
          */
+    }
+    else if (queue->is_quitting())
+    {
+        /* failed due to server shutdown */
+        send_simple(S_http_503, "text/html", S_http_503_quitting_body);
     }
     else
     {

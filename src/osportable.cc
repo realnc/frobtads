@@ -784,22 +784,26 @@ os_get_special_path( char* buf, size_t buflen, const char* argv0, int id )
             res = T3_RES_DIR;
         }
         break;
+
       case OS_GSP_T3_INC:
         res = getenv("T3_INCDIR");
         if (res == 0 or res[0] == '\0') {
             res = T3_INC_DIR;
         }
         break;
+
       case OS_GSP_T3_LIB:
         res = getenv("T3_LIBDIR");
         if (res == 0 or res[0] == '\0') {
             res = T3_LIB_DIR;
         }
         break;
+
       case OS_GSP_T3_USER_LIBS:
         // There's no compile-time default for user libs.
         res = getenv("T3_USERLIBDIR");
         break;
+
       case OS_GSP_T3_SYSCONFIG:
         res = getenv("T3_CONFIG");
         if (res == 0 and argv0 != 0) {
@@ -807,6 +811,14 @@ os_get_special_path( char* buf, size_t buflen, const char* argv0, int id )
             return;
         }
         break;
+
+      case OS_GSP_LOGFILE:
+        res = getenv("T3_LOGDIR");
+        if (res == 0 or res[0] == '\0') {
+            res = T3_LOG_DIR;
+        }
+        break;
+
       default:
         // TODO: We could print a warning here to inform the
         // user that we're outdated.

@@ -154,6 +154,9 @@ int main( int argc, char** argv )
         "g:stat-bcolor <0..7>",
         "h|help",
         "i:interface <curses|plain>",
+#ifdef TADSNET
+        "I:webimage <url>",
+#endif
         "k:character-set <charset>",
         "l:stat-tcolor <0..7>",
         "n|no-colors",
@@ -532,6 +535,23 @@ int main( int argc, char** argv )
         // set the storage server SID
         netconfig->set("storage.sessionid", optArg);
         break;
+
+      // --webimage
+      case 'I':
+        if (optionError)
+            break;
+
+        if (optArg == 0) {
+            optionError = true;
+            break;
+        }
+
+        // If necessary, create the network configuration object.
+        create_netconfig(netconfig, argv);
+
+        // Set the image URL.
+        netconfig->set("image.url", optArg);
+        break;
 #endif /* TADSNET */
 
       // This occurs when the argument is something other than an
@@ -618,11 +638,11 @@ int main( int argc, char** argv )
         switch (interface) {
           case cursesInterface:
             t3vmRet = FrobTadsApplicationCurses(frobOpts)
-                      .runTads(actualFilename, 1, progArgc, progArgv, netconfig);
+                      .runTads(actualFilename, 1, progArgc, progArgv, savedPosFilename, netconfig);
             break;
           case plainInterface:
             t3vmRet = FrobTadsApplicationPlain(frobOpts)
-                      .runTads(actualFilename, 1, progArgc, progArgv, netconfig);
+                      .runTads(actualFilename, 1, progArgc, progArgv, savedPosFilename, netconfig);
             break;
         }
         // Show any unfreed memory blocks.  This does nothing if

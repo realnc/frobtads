@@ -45,7 +45,7 @@ Modified
  *   format, we'll increment this number so that the linker will recognize an
  *   incompatible file format and require a full rebuild.  
  */
-static const char obj_file_sig[] = "TADS3.Object.0010\n\r\032";
+static const char obj_file_sig[] = "TADS3.Object.0011\n\r\032";
 
 
 /* ------------------------------------------------------------------------ */

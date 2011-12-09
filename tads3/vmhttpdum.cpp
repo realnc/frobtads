@@ -160,8 +160,9 @@ void CVmObjHTTPRequest::restore_from_file(VMG_ vm_obj_id_t self,
 /*
  *   HTTP client request object 
  */
-int OS_HttpClient::request(const char *, unsigned short,
+int OS_HttpClient::request(int, const char *, unsigned short,
                            const char *, const char *,
+                           const char *, size_t,
                            class OS_HttpPayload *, class CVmStream *,
                            char **, char **, const char *)
 {

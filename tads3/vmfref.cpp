@@ -58,7 +58,8 @@ int (CVmObjFrameDesc::
     &CVmObjFrameDesc::getp_get_self,
     &CVmObjFrameDesc::getp_get_defobj,
     &CVmObjFrameDesc::getp_get_targobj,
-    &CVmObjFrameDesc::getp_get_targprop
+    &CVmObjFrameDesc::getp_get_targprop,
+    &CVmObjFrameDesc::getp_get_invokee,
 };
 
 /*
@@ -69,7 +70,7 @@ CVmObjFrameDesc::CVmObjFrameDesc(VMG_ vm_obj_id_t fref,
 {
     /* allocate our extension */
     ext_ = 0;
-    vm_framedesc_ext *ext = alloc_ext(vmg_ fref, frame_idx, ret_ofs);
+    alloc_ext(vmg_ fref, frame_idx, ret_ofs);
 }
 
 /*
@@ -176,7 +177,7 @@ void CVmObjFrameDesc::load_image_data(VMG_ vm_obj_id_t self,
     uint ret_ofs = osrp2(ptr + VMB_OBJECT_ID + 2);
 
     /* allocate the extension */
-    vm_framedesc_ext *ext = alloc_ext(vmg_ fref, frame_idx, ret_ofs);
+    alloc_ext(vmg_ fref, frame_idx, ret_ofs);
 }
 
 /*
@@ -206,7 +207,7 @@ void CVmObjFrameDesc::restore_from_file(VMG_ vm_obj_id_t self,
     uint ret_ofs = fp->read_uint2();
 
     /* allocate the extension */
-    vm_framedesc_ext *ext = alloc_ext(vmg_ fref, frame_idx, ret_ofs);
+    alloc_ext(vmg_ fref, frame_idx, ret_ofs);
 }
 
 /*
@@ -492,6 +493,24 @@ int CVmObjFrameDesc::getp_get_targprop(VMG_ vm_obj_id_t self, vm_val_t *retval,
 }
 
 /*
+ *   property evaluator - get 'invokee' from the frame 
+ */
+int CVmObjFrameDesc::getp_get_invokee(VMG_ vm_obj_id_t self, vm_val_t *retval,
+                                      uint *argc)
+{
+    /* check arguments */
+    static CVmNativeCodeDesc desc(0);
+    if (get_prop_check_argc(retval, argc, &desc))
+        return TRUE;
+
+    /* get 'invokee' from the frame */
+    get_frame_ref(vmg0_)->get_invokee(vmg_ retval);
+
+    /* handled */
+    return TRUE;
+}
+
+/*
  *   property evaluator - get a lookup table of the local variables, with
  *   their current values, keyed by name 
  */
@@ -709,6 +728,10 @@ void CVmObjFrameRef::mark_refs(VMG_ uint state)
     if (ext->targobj != VM_INVALID_OBJ)
         G_obj_table->mark_all_refs(ext->targobj, state);
 
+    /* mark the invokee */
+    if (ext->invokee.typ == VM_OBJ)
+        G_obj_table->mark_all_refs(ext->invokee.val.obj, state);
+
     /* mark each snapshot variable */
     int i;
     const vm_val_t *v;
@@ -787,6 +810,9 @@ void CVmObjFrameRef::load_image_data(VMG_ vm_obj_id_t self,
     ext->targprop = vmb_get_propid(ptr);
     ptr += VMB_PROP_ID;
 
+    vmb_get_dh(ptr, &ext->invokee);
+    ptr += VMB_DATAHOLDER;
+
     /* read the variable snapshot values */
     int i;
     vm_val_t *v;
@@ -829,6 +855,8 @@ void CVmObjFrameRef::save_to_file(VMG_ class CVmFile *fp)
     fp->write_uint4(ext->defobj);
     fp->write_uint4(ext->targobj);
     fp->write_uint2(ext->targprop);
+    vmb_put_dh(buf, &ext->invokee);
+    fp->write_bytes(buf, VMB_DATAHOLDER);
 
     /* save the variable snapshot values */
     int i;
@@ -885,6 +913,10 @@ void CVmObjFrameRef::restore_from_file(VMG_ vm_obj_id_t self,
         ext->targobj = fixups->get_new_id(vmg_ ext->targobj);
     
     ext->targprop = (vm_prop_id_t)fp->read_uint2();
+
+    fp->read_bytes(buf, VMB_DATAHOLDER);
+    fixups->fix_dh(vmg_ buf);
+    vmb_get_dh(buf, &ext->invokee);
 
     /* load the snapshot values */
     int i;
@@ -1235,6 +1267,18 @@ void CVmObjFrameRef::get_targprop(VMG_ vm_val_t *result)
         result->set_propid(prop);
     else
         result->set_nil();
+}
+
+/*
+ *   Get 'invokee' from the frame 
+ */
+void CVmObjFrameRef::get_invokee(VMG_ vm_val_t *result)
+{
+    /* get 'invokee' from the frame, if active, or our snapshot */
+    *result =
+        get_ext()->fp != 0
+        ? *G_interpreter->get_invokee_from_frame(vmg_ get_ext()->fp)
+        : get_ext()->invokee;
 }
 
 /*

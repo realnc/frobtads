@@ -374,6 +374,9 @@ int CVmObjHTTPServer::getp_shutdown(VMG_ vm_obj_id_t self,
     vm_httpsrv_ext *ext = get_ext();
     if (ext != 0 && ext->l != 0)
     {
+        /* add a reference on the listener while we're using it */
+        ext->l->add_ref();
+        
         /* shut down the server */
         ext->l->shutdown();
 
@@ -389,6 +392,9 @@ int CVmObjHTTPServer::getp_shutdown(VMG_ vm_obj_id_t self,
          *   are done as well. 
          */
         retval->set_logical(ext->l->get_thread()->test());
+
+        /* done with the listener */
+        ext->l->release_ref();
     }
     else
     {
@@ -429,7 +435,6 @@ int CVmObjHTTPServer::get_listener_addr(
 int CVmObjHTTPServer::getp_get_port(VMG_ vm_obj_id_t self,
                                     vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -456,7 +461,6 @@ int CVmObjHTTPServer::getp_get_port(VMG_ vm_obj_id_t self,
 int CVmObjHTTPServer::getp_get_addr(VMG_ vm_obj_id_t self,
                                     vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -485,7 +489,6 @@ int CVmObjHTTPServer::getp_get_addr(VMG_ vm_obj_id_t self,
 int CVmObjHTTPServer::getp_get_ip(VMG_ vm_obj_id_t self,
                                   vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;

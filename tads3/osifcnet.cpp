@@ -17,6 +17,7 @@ Modified
 
 #include "t3std.h"
 #include "osifcnet.h"
+#include "vmtype.h"
 #include "vmfile.h"
 
 /* ------------------------------------------------------------------------ */
@@ -30,6 +31,8 @@ OS_HttpPayloadItem::~OS_HttpPayloadItem()
     lib_free_str(name);
     lib_free_str(val);
     lib_free_str(mime_type);
+    if (stream != 0)
+        delete stream;
 }
 
 /* create a payload item consisting of a simple name/value pair */
@@ -38,6 +41,15 @@ OS_HttpPayloadItem::OS_HttpPayloadItem(const char *name, const char *val)
     init();
     this->name = lib_copy_str(name);
     this->val = lib_copy_str(val != 0 ? val : "");
+}
+
+/* create a payload item consisting of a simple name/value pair */
+OS_HttpPayloadItem::OS_HttpPayloadItem(const char *name, size_t name_len,
+                                       const char *val, size_t val_len)
+{
+    init();
+    this->name = lib_copy_str(name, name_len);
+    this->val = lib_copy_str(val, val_len);
 }
 
 /* create a payload item for a PUT/POST file upload */
@@ -49,6 +61,21 @@ OS_HttpPayloadItem::OS_HttpPayloadItem(
     this->name = lib_copy_str(name);
     this->val = lib_copy_str(filename != 0 ? filename : "");
     this->mime_type = lib_copy_str(mime_type != 0 ? mime_type : "");
+    this->stream = contents;
+}
+
+/* create a payload item for a PUT/POST file upload */
+OS_HttpPayloadItem::OS_HttpPayloadItem(
+    const char *name, size_t name_len,
+    const char *filename, size_t filename_len,
+    const char *mime_type, size_t mime_type_len,
+    CVmStream *contents)
+{
+    init();
+    this->name = lib_copy_str(name, name_len);
+    this->val = lib_copy_str(filename != 0 ? filename : "", filename_len);
+    this->mime_type = lib_copy_str(
+        mime_type != 0 ? mime_type : "", mime_type_len);
     this->stream = contents;
 }
 
@@ -93,11 +120,29 @@ void OS_HttpPayload::add(const char *name, const char *val)
     add(new OS_HttpPayloadItem(name, val));
 }
 
+/* add a form field in TADS-string (VMB_LEN prefixed) format */
+void OS_HttpPayload::add_tstr(const char *name, const char *val)
+{
+    add(new OS_HttpPayloadItem(name + VMB_LEN, vmb_get_len(name),
+                               val + VMB_LEN, vmb_get_len(val)));
+}
+
 /* add a form file upload */
 void OS_HttpPayload::add(const char *name, const char *filename,
                          const char *mime_type, CVmStream *stream)
 {
     add(new OS_HttpPayloadItem(name, filename, mime_type, stream));
+}
+
+/* add a form file upload */
+void OS_HttpPayload::add(const char *name, size_t name_len,
+                         const char *filename, size_t filename_len,
+                         const char *mime_type, size_t mime_type_len,
+                         CVmStream *stream)
+{
+    add(new OS_HttpPayloadItem(
+        name, name_len, filename, filename_len,
+        mime_type, mime_type_len, stream));
 }
 
 /* add an item */
@@ -256,7 +301,7 @@ char *OS_HttpPayload::urlencode(size_t &len) const
             *p++ = '&';
         
         /* add "name=urlencodestr(value)" */
-        p += urlencodestr(0, item->name);
+        p += urlencodestr(p, item->name);
         *p++ = '=';
         p += urlencodestr(p, item->val);
     }

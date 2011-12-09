@@ -45,6 +45,9 @@ public:
 
     /* get the launch host address */
     static void get_launch_host_addr(VMG_ uint argc);
+
+    /* send a network request */
+    static void send_net_request(VMG_ uint argc);
 };
 
 
@@ -69,7 +72,8 @@ vm_bif_desc CVmBifNet::bif_table[] =
     { &CVmBifNet::get_hostname, 0, 0, FALSE },
     { &CVmBifNet::get_host_ip, 0, 0, FALSE },
     { &CVmBifNet::get_storage_url, 0, 0, FALSE },
-    { &CVmBifNet::get_launch_host_addr, 0, 0, FALSE }
+    { &CVmBifNet::get_launch_host_addr, 0, 0, FALSE },
+    { &CVmBifNet::send_net_request, 2, 0, TRUE }
 };
 
 #endif /* VMBIF_DEFINE_VECTOR */

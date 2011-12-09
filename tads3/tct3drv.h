@@ -87,11 +87,24 @@ public:
     void gen_code(int discard, int for_condition);
 };
 
+
 /* ------------------------------------------------------------------------ */
 /*
  *   "definingobj" 
  */
 class CTPNDefiningobj: public CTPNDefiningobjBase
+{
+public:
+    /* generate code */
+    void gen_code(int discard, int for_condition);
+};
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   "invokee" 
+ */
+class CTPNInvokee: public CTPNInvokeeBase
 {
 public:
     /* generate code */

@@ -15,8 +15,12 @@ Modified
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <linux/if.h>
+#include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/times.h>
+#include <unistd.h>
+#include <time.h>
+#include <stdio.h>
 
 #include <curl/curl.h>
 
@@ -58,6 +62,42 @@ OS_Counter mutex_cnt(0), event_cnt(0), thread_cnt(0), spin_lock_cnt(0);
 # define IF_LEAK_CHECK(x)
 #endif
 
+/* ------------------------------------------------------------------------ */
+/*
+ *   debug logging (for debugging purposes only)
+ */
+void oss_debug_log(const char *fmt, ...)
+{
+#if 0
+    va_list args;
+    va_start(args, fmt);
+    char *str = t3vsprintf_alloc(fmt, args);
+    va_end(args);
+
+    time_t timer = time(0);
+    struct tm *tblk = localtime(&timer);
+    char *tmsg = asctime(tblk);
+    size_t tmsgl = strlen(tmsg);
+    if (tmsg > 0 && tmsg[tmsgl-1] == '\n')
+        tmsg[--tmsgl] = '\0';
+
+    FILE *fp = fopen("/var/log/frob/tadslog2.txt", "a");
+    fprintf(fp, "[%s] %s\n", tmsg, str);
+    fclose(fp);
+
+    t3free(str);
+#endif
+}
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   Watchdog thread
+ */
+
+/* the watchdog quit event, as a global static */
+OS_Event *OSS_Watchdog::quit_evt = 0;
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -67,16 +107,29 @@ OS_Counter mutex_cnt(0), event_cnt(0), thread_cnt(0), spin_lock_cnt(0);
 /*
  *   Initialize the networking and threading package 
  */
-void os_net_init()
+void os_net_init(TadsNetConfig *config)
 {
     /* initialize the CURL (http client) library */
     curl_global_init(0);
 
     /* set up the default thread attributes */
     pthread_attr_init(&G_thread_attr);
+    pthread_attr_setdetachstate(&G_thread_attr, PTHREAD_CREATE_JOINABLE);
 
     /* create the master thread list */
     G_thread_list = new TadsThreadList();
+
+    /* if desired, start the watchdog thread */
+    if (config != 0 && config->match("watchdog", "yes"))
+    {
+        /* launch the watchdog thread */
+        OSS_Watchdog *wt = new OSS_Watchdog();
+        if (!wt->launch())
+            oss_debug_log("failed to launch watchdog thread");
+
+        /* we're done with the thread object */
+        wt->release_ref();
+    }
 }
 
 /*
@@ -84,6 +137,10 @@ void os_net_init()
  */
 void os_net_cleanup()
 {
+    /* if there's a watchdog thread, tell it to terminate */
+    if (OSS_Watchdog::quit_evt != 0)
+        OSS_Watchdog::quit_evt->signal();
+
     /* 
      *   sleep for a short time to let any threads that are already almost
      *   done finish up their work 
@@ -381,11 +438,20 @@ public:
     /* main thread entrypoint */
     void thread_main()
     {
+        /* create the quit notifier pipe */
+        if (pipe(qpipe) == -1)
+        {
+            s->close();
+            s->ready_evt->signal();
+            return;
+        }
+
         /* 
          *   add a cleanup handler: on exit, we need to signal the 'ready'
          *   event so that any other threads waiting for the socket will
          *   unblock 
          */
+        oss_debug_log("starting socket monitor thread %lx", (long)tid);
         pthread_cleanup_push(thread_cleanup, this);
 
         /* loop as long as the socket is open */
@@ -403,7 +469,7 @@ public:
 
 #if 1
             /* 
-             *   Wait for the socket to become ready.  Also poll the close
+             *   Wait for the socket to become ready.  Also poll the quit
              *   notification pipe, so that we'll wake up as soon as our
              *   socket has been closed locally.  
              */
@@ -411,13 +477,23 @@ public:
             fd[0].fd = s->s;
             fd[0].events = (s->wouldblock_sending ? POLLOUT : POLLIN | POLLPRI)
                            | POLLHUP | POLLRDHUP;
+            fd[1].fd = qpipe[0];
+            fd[1].events = POLLIN;
 
             /* wait; if that fails, terminate the thread */
-            if (poll(fd, 1, -1) < 0)
-                break;
+            if (poll(fd, 2, -1) < 0)
+            {
+                if (errno != EINTR)
+                    break;
+            }
 
             /* check to see if the socket is ready, or if it's been closed */
-            if (fd[0].revents != 0)
+            if (fd[1].revents != 0)
+            {
+                /* quit event - exit the loop */
+                break;
+            }
+            else if (fd[0].revents != 0)
             {
                 /* ready - reset the 'blocked' event, and signal 'ready' */
                 s->blocked_evt->reset();
@@ -470,6 +546,15 @@ public:
         pthread_cleanup_pop(TRUE);
     }
 
+    /* notify the thread to shut down */
+    void shutdown()
+    {
+        /* write the notification to the quit pipe */
+        int res = write(qpipe[1], "Q", 1);
+        s->blocked_evt->signal();
+    }
+
+private:
     static void thread_cleanup(void *ctx)
     {
         /* get the thread object (it's the context) */
@@ -480,15 +565,21 @@ public:
         t->s->ready_evt->signal();
     }
 
-private:
     /* our socket */
     OS_CoreSocket *s;
+
+    /* quit notification pipe, for sending a 'quit' signal to the thread */
+    int qpipe[2];
 };
 
 /* ------------------------------------------------------------------------ */
 /*
- *   Socket
+ *   Core Socket.  This is the base class for ordinary data channel sockets
+ *   and listener sockets. 
  */
+
+/* last incoming network event time */
+time_t OS_CoreSocket::last_incoming_time = 0;
 
 /*
  *   Destruction 
@@ -525,7 +616,10 @@ void OS_CoreSocket::close()
 
     /* kill the monitor thread, if applicable; wait for it to exit */
     if (mon_thread != 0)
-        mon_thread->cancel_thread(TRUE);
+    {
+        mon_thread->shutdown();
+        mon_thread->wait();
+    }
 }
 
 /*
@@ -676,8 +770,10 @@ static size_t http_get_hdr(void *ptr, size_t siz, size_t nmemb, void *stream)
 /*
  *   Send an HTTP request as a client
  */
-int OS_HttpClient::request(const char *host, unsigned short portno,
+int OS_HttpClient::request(int opts,
+                           const char *host, unsigned short portno,
                            const char *verb, const char *resource,
+                           const char *send_headers, size_t send_headers_len,
                            OS_HttpPayload *payload,
                            CVmStream *reply, char **headers,
                            char **location, const char *ua)
@@ -690,6 +786,7 @@ int OS_HttpClient::request(const char *host, unsigned short portno,
     curl_httppost *formhead = 0;          /* multipart form field list head */
     curl_httppost *formtail = 0;          /* multipart form field list tail */
     CVmMemorySource *hstream = 0;    /* memory stream for capturing headers */
+    curl_slist *hdr_slist = 0;    /* caller's headers, in curl slist format */
     
     /* initially clear the location, if applicable */
     if (location != 0)
@@ -698,6 +795,9 @@ int OS_HttpClient::request(const char *host, unsigned short portno,
     /* presume no headers */
     if (headers != 0)
         *headers = 0;
+
+    /* figure the scheme */
+    const char *scheme = ((opts & OptHTTPS) != 0 ? "https" : "http");
 
     /* set up a handle for the communications */
     h = curl_easy_init();
@@ -710,7 +810,7 @@ int OS_HttpClient::request(const char *host, unsigned short portno,
     }
 
     /* build the full URL */
-    url = t3sprintf_alloc("http://%s:%d%s", host, portno, resource);
+    url = t3sprintf_alloc("%s://%s:%d%s", scheme, host, portno, resource);
 
     /* set up the connection to the resource */
     curl_easy_setopt(h, CURLOPT_URL, url);
@@ -743,7 +843,25 @@ int OS_HttpClient::request(const char *host, unsigned short portno,
     else if (stricmp(verb, "POST") == 0 && payload != 0)
     {
         /* check for a multipart/formdata upload */
-        if (payload->is_multipart())
+        if (payload->count_items() == 1
+            && payload->get(0)->name[0] == '\0')
+        {
+            /* 
+             *   We have exactly one file-type item, and the item has an
+             *   empty name.  In this case, the caller has pre-encoded the
+             *   content body, so we don't want to apply any further POST
+             *   encoding; simply use the content exactly as given. 
+             */
+
+            /* get the file to send - this is the payload item's stream */
+            CVmStream *stream = payload->get(0)->stream;
+
+            /* set up the source data */
+            curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
+            curl_easy_setopt(h, CURLOPT_READDATA, stream);
+            curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_len());
+        }
+        else if (payload->is_multipart())
         {
             /* we have file attachments - build a curl_httppost list */
             int cnt = payload->count_items();
@@ -824,6 +942,45 @@ int OS_HttpClient::request(const char *host, unsigned short portno,
      */
     curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, (long)(location == 0));
 
+    /* add the caller's custom headers, if provided */
+    if (send_headers != 0)
+    {
+        /* add each header to the list */
+        const char *p = send_headers;
+        size_t rem = send_headers_len;
+        while (rem != 0)
+        {
+            /* skip leading spaces */
+            for ( ; rem != 0 && *p != '\r' && *p != '\n' && is_space(*p) ;
+                 ++p, --rem) ;
+
+            /* scan to the CR-LF */
+            const char *h = p;
+            for ( ; rem != 0 && !(rem >= 2 && memcmp(p, "\r\n", 2) == 0) ;
+                 ++p, --rem) ;
+
+            /* if the line isn't empty, add the header */
+            if (p != h)
+            {
+                /* get a null-terminated copy of the header */
+                char *hn = lib_copy_str(h, p - h);
+
+                /* add the header */
+                hdr_slist = curl_slist_append(hdr_slist, hn);
+
+                /* done with the copy of the string */
+                lib_free_str(hn);
+            }
+
+            /* skip the CR-LF */
+            if (rem >= 2)
+                p += 2, rem -= 2;
+        }
+
+        /* set the header list in curl */
+        curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr_slist);
+    }
+
     /* do the transfer */
     if (!curl_easy_perform(h))
     {
@@ -883,6 +1040,10 @@ done:
     if (hstream != 0)
         delete hstream;
 
+    /* free the header slist */
+    if (hdr_slist != 0)
+        curl_slist_free_all(hdr_slist);
+
     /* return the result code */
     return ret;
 }
@@ -897,6 +1058,9 @@ OS_Thread::OS_Thread()
     /* count it in the leak tracker */
     IF_LEAK_CHECK(thread_cnt.inc());
 
+        /* we don't have a thread ID yet */
+        tid_valid = FALSE;
+
     /* create the event to signal at thread completion */
     done_evt = new OS_Event(TRUE);
 
@@ -906,8 +1070,18 @@ OS_Thread::OS_Thread()
 
 OS_Thread::~OS_Thread()
 {
+        /* 
+         *   Detach the thread.  We don't use 'join' to detect when the
+         *   thread terminates; instead, we use our thread event.  This lets
+         *   the operating system delete the thread resources (in particular,
+         *   its stack memory) immediately when the thread exits, rather than
+         *   waiting for a 'join' that might never come.  
+         */
+        if (tid_valid)
+                pthread_detach(tid);
+
     /* release our 'done' event */
-    done_evt->release_ref();
+        done_evt->release_ref();
 
     /* clean up the master thread list for our deletion */
     if (G_thread_list != 0)

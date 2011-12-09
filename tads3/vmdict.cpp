@@ -1395,7 +1395,7 @@ struct corr_word
 {
     void *operator new(size_t siz, size_t strl)
     {
-        return t3malloc(siz + (strl-1)*sizeof(wchar_t));
+        return t3mallocnew(siz + (strl-1)*sizeof(wchar_t));
     }
     void operator delete(void *ptr) { t3free(ptr); }
 
@@ -1439,7 +1439,7 @@ struct corr_state
      */
     void *operator new(size_t siz, size_t strl)
     {
-        return t3malloc(siz + strl*sizeof(wchar_t));
+        return t3mallocnew(siz + strl*sizeof(wchar_t));
     }
     void operator delete(void *ptr) { t3free(ptr); }
 

@@ -133,7 +133,7 @@ const char TOK_MACRO_IFNEMPTY_FLAG = 0x08;
 
 /*
  *   Macro format version number.  The compiler sets up a predefined macro
- *   (__TADS_MACRO_FORMAT_VERSION) with this information.  Since 3.0.19, the
+ *   (__TADS_MACRO_FORMAT_VERSION) with this information.  Since 3.1, the
  *   macro table is visible to user code via t3GetGlobalSymbols() (using the
  *   T3PreprocMacros selector), and this information includes the parsed
  *   format with the embedded flag codes.  The macro information can be used
@@ -335,7 +335,8 @@ enum tc_toktyp_t
     TOKT_REPLACED,
     TOKT_PROPERTY,
     TOKT_OPERATOR,
-    TOKT_METHOD
+    TOKT_METHOD,
+    TOKT_INVOKEE
 
     /* type names - formerly reserved but later withdrawn */
 //  TOKT_VOID,
@@ -699,10 +700,6 @@ struct tok_embed_ctx
         in_expr = FALSE;
         parens = 0;
         this->endtok = TOKT_INVALID;
-    }
-
-    wchar_t quotech() const
-    {
     }
 
     /* are we in an embedded expression? */

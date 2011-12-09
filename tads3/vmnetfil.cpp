@@ -217,8 +217,8 @@ CVmNetFile *CVmNetFile::open(VMG_ const char *fname, int sfid,
             /* download the file from the server into the temp file */
             char *headers = 0;
             int hstat = OS_HttpClient::request(
-                G_net_config->get("storage.domain"), 80,
-                "GET", url, 0, &reply, &headers, 0, 0);
+                0, G_net_config->get("storage.domain"), 80,
+                "GET", url, 0, 0, 0, &reply, &headers, 0, 0);
             
             /* done with the URL */
             t3free(url);
@@ -347,8 +347,8 @@ void CVmNetFile::close(VMG0_)
         char reply[128] = "...";
         CVmMemoryStream rstr(reply, sizeof(reply));
         int hstat = OS_HttpClient::request(
-            G_net_config->get("storage.domain"), 80,
-            "GET", url, 0, &rstr, &headers, 0, 0);
+            0, G_net_config->get("storage.domain"), 80,
+            "GET", url, 0, 0, 0, &rstr, &headers, 0, 0);
 
         /* done with the URL */
         t3free(url);
@@ -374,7 +374,7 @@ void CVmNetFile::close(VMG0_)
         
         /* set up a stream reader on the temp file */
         CVmFile *file = new CVmFile(fp, 0);
-        CVmFileStream st(file);
+        CVmFileStream *st = new CVmFileStream(file);
 
         /* get the ticket for writing this file */
         ServerTicket ticket(vmg_ srvfname, sfid);
@@ -384,7 +384,7 @@ void CVmNetFile::close(VMG0_)
         post->add("file", srvfname);
         post->add("sid", G_net_config->get("storage.sessionid"));
         post->add("ticket", ticket.get());
-        post->add("contents", "noname", mime_type, &st);
+        post->add("contents", "noname", mime_type, st);
 
         /* generate the URL */
         char *url = t3sprintf_alloc(
@@ -395,8 +395,8 @@ void CVmNetFile::close(VMG0_)
         CVmMemoryStream rstr(reply, sizeof(reply));
         char *headers = 0;
         int hstat = OS_HttpClient::request(
-            G_net_config->get("storage.domain"), 80,
-            "POST", url, post, &rstr, &headers, 0, 0);
+            0, G_net_config->get("storage.domain"), 80,
+            "POST", url, 0, 0, post, &rstr, &headers, 0, 0);
 
         /* done with the URL and the POST parameters */
         t3free(url);
@@ -445,14 +445,14 @@ static int server_file_check(VMG_ const char *srvfname, const char *mode)
     char reply[128] = "";
     CVmMemoryStream rstr(reply, sizeof(reply));
     int hstat = OS_HttpClient::request(
-        G_net_config->get("storage.domain"), 80,
-        "GET", url, 0, &rstr, 0, 0, 0);
+        0, G_net_config->get("storage.domain"), 80,
+        "GET", url, 0, 0, 0, &rstr, 0, 0, 0);
     
     /* done with the URL */
     t3free(url);
     
     /* check the result */
-    return reply[0] == 'Y';
+    return hstat == 200 && reply[0] == 'Y';
 }
 
 /* ------------------------------------------------------------------------ */

@@ -600,6 +600,11 @@ public:
     int log_event(VMG_ int evt)
         { return log_event(vmg_ evt, 0, 0, FALSE); }
 
+    /* log an event with the given event type tag */
+    void log_event(VMG_ const char *tag, 
+                   const char *param, size_t paramlen,
+                   int param_is_utf8);
+
     /* read an event from an event script */
     int read_event_script(VMG_ int *evt, char *buf, size_t buflen,
                           const int *filter, int filter_cnt,

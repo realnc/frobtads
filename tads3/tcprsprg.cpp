@@ -2985,7 +2985,6 @@ CTPNStmTop *CTcParser::parse_intrinsic_class(int *err)
     int got_name_tok = FALSE;
     CTcToken meta_tok;
     CTcSymMetaclass *meta_sym = 0;
-    CTcSymMetaclass *old_meta_sym = 0;
     
     /* skip the 'class' keyword and check the class name symbol */
     if (G_tok->next() == TOKT_SYM)
@@ -2993,18 +2992,23 @@ CTPNStmTop *CTcParser::parse_intrinsic_class(int *err)
         /* get the token */
         meta_tok = *G_tok->copycur();
 
-        /* see if it's defined yet */
-        old_meta_sym = (CTcSymMetaclass *)
-                       global_symtab_->find(meta_tok.get_text(),
-                                            meta_tok.get_text_len());
-        if (old_meta_sym != 0)
+        /* 
+         *   See if it's defined yet.  If it was previously defined as an
+         *   external metaclass, 
+         */
+        meta_sym = (CTcSymMetaclass *)global_symtab_->find(
+            meta_tok.get_text(), meta_tok.get_text_len());
+        if (meta_sym != 0
+            && (meta_sym->get_type() != TC_SYM_METACLASS
+                || !meta_sym->is_ext()))
         {
-            /* log an error */
+            /* duplicate definition - log an error and forget the symbol */
             G_tok->log_error_curtok(TCERR_REDEF_INTRINS_NAME);
+            meta_sym = 0;
         }
         else
         {
-            /* note that we got the name token successfully */
+            /* note that we successfully parsed the class name token */
             got_name_tok = TRUE;
         }
 
@@ -3026,24 +3030,35 @@ CTPNStmTop *CTcParser::parse_intrinsic_class(int *err)
         /* set up the definitions if we got a valid name token */
         if (got_name_tok)
         {
-            CTcSymMetaclass *table_sym;
-            
-            /* define the new symbol */
-            meta_sym = new CTcSymMetaclass(meta_tok.get_text(),
-                                           meta_tok.get_text_len(),
-                                           FALSE, 0, G_cg->new_obj_id());
-            global_symtab_->add_entry(meta_sym);
+            /* if we don't already have a symbol table entry, create one */
+            if (meta_sym == 0)
+            {
+                /* no prior symbol table entry - create it and add it */
+                meta_sym = new CTcSymMetaclass(
+                    meta_tok.get_text(), meta_tok.get_text_len(),
+                    FALSE, 0, G_cg->new_obj_id());
+                global_symtab_->add_entry(meta_sym);
+            }
+            else
+            {
+                /* 
+                 *   we have a prior definition, which must have been an
+                 *   external import from a symbol file; remove the external
+                 *   attribute since we're actually defining it now
+                 */
+                meta_sym->set_ext(FALSE);
+            }
 
             /* tell the code generator to add this metaclass */
-            meta_id = G_cg->find_or_add_meta(G_tok->getcur()->get_text(),
-                                             G_tok->getcur()->get_text_len(),
-                                             meta_sym);
+            meta_id = G_cg->find_or_add_meta(
+                G_tok->getcur()->get_text(), G_tok->getcur()->get_text_len(),
+                meta_sym);
 
             /* 
              *   if the metaclass was already defined for another symbol,
              *   it's an error
              */
-            table_sym = G_cg->get_meta_sym(meta_id);
+            CTcSymMetaclass *table_sym = G_cg->get_meta_sym(meta_id);
             if (table_sym != meta_sym)
                 G_tok->log_error(TCERR_META_ALREADY_DEF,
                                  (int)table_sym->get_sym_len(),
@@ -3076,11 +3091,11 @@ CTPNStmTop *CTcParser::parse_intrinsic_class(int *err)
         }
         else
         {
-            CTcSymMetaclass *sc_meta_sym;
-            
             /* look up the superclass in the global symbols */
-            sc_meta_sym = (CTcSymMetaclass *)global_symtab_->find(
-                G_tok->getcur()->get_text(), G_tok->getcur()->get_text_len());
+            CTcSymMetaclass *sc_meta_sym =
+                (CTcSymMetaclass *)global_symtab_->find(
+                    G_tok->getcur()->get_text(),
+                    G_tok->getcur()->get_text_len());
 
             /* make sure we found the symbol, and that it's a metaclass */
             if (sc_meta_sym == 0)
@@ -3121,10 +3136,9 @@ CTPNStmTop *CTcParser::parse_intrinsic_class(int *err)
     for (list_done = FALSE ; !list_done ; )
     {
         CTcToken prop_tok;
-        int is_static;
 
         /* presume it won't be a 'static' property */
-        is_static = FALSE;
+        int is_static = FALSE;
 
         /* check what we have */
         switch(G_tok->cur())
@@ -5510,6 +5524,7 @@ CTPNStmObject *CTcParser::parse_object_body(int *err, CTcSymObj *obj_sym,
     switch(G_tok->cur())
     {
     case TOKT_SSTR:
+    case TOKT_SSTR_START:
     case TOKT_DSTR:
     case TOKT_DSTR_START:
     case TOKT_LBRACK:
@@ -6292,13 +6307,21 @@ void CTcParser::parse_obj_template(int *err, CTPNStmObject *obj_stm)
             p->expr_ = CTcPrsOpUnary::parse_primary();
             break;
 
+        case TOKT_SSTR_START:
+            /* start of single-quoted embedded expression string - parse it */
+            p->expr_ = CTcPrsOpUnary::parse_primary();
+
+            /* treat it as a regular string for template matching */
+            p->def_tok_ = TOKT_SSTR;
+            break;
+
         case TOKT_DSTR:
             /* string - parse it */
             p->expr_ = parse_expr_or_dstr(TRUE);
             break;
 
         case TOKT_DSTR_START:
-            /* it's a single-quoted string - parse it */
+            /* start of a double-quoted embedded expression string */
             p->expr_ = parse_expr_or_dstr(TRUE);
 
             /* 

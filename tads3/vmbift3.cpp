@@ -593,9 +593,21 @@ void CVmBifT3::get_stack_trace(VMG_ uint argc)
         }
         if (want_named_args)
         {
-            /* retrieve the named arguments */
+            /* 
+             *   the constructor has a slot for named arguments - push either
+             *   a table or nil, depending...
+             */
             vm_val_t *argp;
-            const uchar *t = CVmRun::get_named_args_from_frame(vmg_ fp, &argp);
+            const uchar *t = 0;
+
+            /* if the flags request locals, retrieve the named arguments */
+            if ((flags & T3_GST_LOCALS) != 0)
+                t = CVmRun::get_named_args_from_frame(vmg_ fp, &argp);
+
+            /* 
+             *   if we do in fact have named arguments, build a lookup table
+             *   copy and push it; otherwise just push nil 
+             */
             if (t != 0)
             {
                 /* get the number of table entries */

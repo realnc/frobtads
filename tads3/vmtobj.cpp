@@ -323,7 +323,9 @@ const int PROPIDX_CREATE_TRANS_INSTANCE_OF = 5;
 void CVmObjTads::class_init(VMG0_)
 {
     /* allocate the inheritance analysis object */
-    VM_IF_ALLOC_PRE_GLOBAL(G_tadsobj_queue = new CVmObjTadsInhQueue());
+    VM_IFELSE_ALLOC_PRE_GLOBAL(
+        G_tadsobj_queue = new CVmObjTadsInhQueue(),
+        G_tadsobj_queue->init());
 }
 
 /*

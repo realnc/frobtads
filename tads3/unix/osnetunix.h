@@ -17,7 +17,7 @@ Modified
 /* system headers */
 #include <pthread.h>
 #include <unistd.h>
-#include <linux/unistd.h>
+#include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -33,6 +33,7 @@ Modified
 #include <fcntl.h>
 #include <signal.h>
 #include <execinfo.h>
+#include <stdarg.h>
 
 /* true/false */
 #ifndef TRUE
@@ -53,6 +54,9 @@ Modified
 
 /* base TADS 3 header */
 #include "t3std.h"
+
+/* debug logging */
+void oss_debug_log(const char *fmt, ...);
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -751,6 +755,15 @@ public:
         return parse_addr(addr, len, ip, port);
     }
 
+    /* 
+     *   System time (as returned by time()) of last incoming network
+     *   activity.  The watchdog thread (if enabled) uses this to make sure
+     *   that the bytecode program is actually serving a client, and
+     *   terminate the program if it appears to be running without a client
+     *   for an extended period.
+     */
+    static time_t last_incoming_time;
+
 protected:
     /* create a socket object wrapping an existing system socket */
     OS_CoreSocket(int s)
@@ -841,7 +854,7 @@ protected:
     OS_Event *blocked_evt;
 
     /* non-blocking status monitor thread */
-    class OS_Thread *mon_thread;
+    class OS_Socket_Mon_Thread *mon_thread;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -909,6 +922,10 @@ public:
             blocked_evt->signal();
         }
 
+        /* if we successfully received data, this is incoming activity */
+        if (err == 0)
+            last_incoming_time = time(0);
+        
         /* return the result */
         return ret;
     }
@@ -965,6 +982,7 @@ public:
         saddr.sin_family = PF_INET;
         saddr.sin_addr.s_addr = inet_addr(ip);
         saddr.sin_port = htons(port_num);
+        memset(saddr.sin_zero, 0, sizeof(saddr.sin_zero));
 
         /* done with the IP address */
         delete [] ip;
@@ -1012,6 +1030,9 @@ public:
         {
             /* success - clear the error memory */
             err = 0;
+
+            /* this counts as incoming network activity - note the time */
+            last_incoming_time = time(0);
 
             /* 
              *   Set the "linger" option on close.  This helps ensure that we
@@ -1111,23 +1132,43 @@ public:
         }
         else
         {
-            /* launched successfully */
+            /* launched successfully - mark the thread ID as valid */
+            tid_valid = TRUE;
+
+            /* indicate success */
             return TRUE;
         }
     }
 
+#if 0
     /*
-     *   Cancel the thread 
+     *   Cancel the thread.
+     *   
+     *   [This method is currently disabled because of problems that appear
+     *   with some versions of Linux and/or gcc - it's not clear who's at
+     *   fault, but there appears to be a known bug where pthread_cancel()
+     *   fails to trigger cleanup handlers in the target thread.  This method
+     *   was only used in one place, which was to kill the monitor thread
+     *   associated with a non-blocking socket when the socket was closed.
+     *   That's now handled instead via a message through a pipe, so no code
+     *   currently uses the routine, and we've #if'd it out to make sure that
+     *   no new code uses it without being aware of the cleanup handler bug.
+     *   If it becomes desirable to re-enable the routine at some point, we
+     *   need to first make sure that there's a solution to the cleanup
+     *   handler bug, since that will cause unexpected behavior on platforms
+     *   where the bug occurs.]
      */
     void cancel_thread(int wait = FALSE)
     {
         /* request cancellation of the pthreads thread */
-        pthread_cancel(tid);
+        if (tid_valid)
+            pthread_cancel(tid);
 
         /* if desired, wait for the thrad */
         if (wait)
             done_evt->wait();
     }
+#endif
 
     /*
      *   Thread entrypoint routine.  Callers must subclass this class and
@@ -1140,7 +1181,6 @@ protected:
     /* get the waitable event */
     virtual class OS_Event *get_event() { return done_evt; }
 
-private:
     /* 
      *   Static entrypoint.  This is the routine the system calls directly;
      *   we then invoke the virtual method with the subclassed thread main. 
@@ -1152,15 +1192,6 @@ private:
         
         /* the context is the thread structure */
         OS_Thread *t = (OS_Thread *)ctx;
-
-        /* 
-         *   Detach the thread.  We don't use 'join' to detect when the
-         *   thread terminates; instead, we use our thread event.  This lets
-         *   the operating system delete the thread resources (in particular,
-         *   its stack memory) immediately when the thread exits, rather than
-         *   waiting for a 'join' that might never come.  
-         */
-        pthread_detach(pthread_self());
 
         /* launch the real thread and remember the result code */
         t->thread_main();
@@ -1198,6 +1229,7 @@ private:
     }
 
     /* system thread ID */
+    int tid_valid;
     pthread_t tid;
 
     /* end-of-thread event */
@@ -1206,5 +1238,214 @@ private:
 
 /* master thread list global */
 extern class TadsThreadList *G_thread_list;
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   Watchdog thread.  This is an optional system thread that monitors the
+ *   program's activity, and terminates the program if it appears to be
+ *   either inactive or looping.  When TADS is running as a network server
+ *   that's open to anyone's bytecode programs, we can't count on the
+ *   underlying bytecode program being well-behaved.  The watchdog thread
+ *   handles some common problem areas:
+ *   
+ *   - If the bytecode program has a bug that gets it stuck in an infinite
+ *   loop, it will consume as much CPU time as it's given, which will bring
+ *   other processes on the server to a crawl.  The watchdog checks
+ *   periodically to see if our process has been consuming a disproportionate
+ *   amount of CPU time over a recent interval, and will terminate the
+ *   process if so.  This will also shut down programs that are intentionally
+ *   (not buggily) doing CPU-intensive computations for long stretches, but
+ *   this is a reasonable policy anyway: shared TADS game servers are meant
+ *   for interactive games, and if someone wants to run heavy-duty number
+ *   crunching, they really shouldn't be using a shared game server for it.
+ *   
+ *   - If the bytecode program has a long period without any network requests
+ *   from clients, it probably has a bug in its internal session management
+ *   code.  On a public server, a given interpreter session is meant to run
+ *   only as long as it's actively being used by a client.  The standard TADS
+ *   web server library has an internal watchdog that monitors for client
+ *   activity, and shuts itself down after a period of inactivity.  However,
+ *   we can't count on every bytecode program using the standard library, and
+ *   even those that do could have bugs (in the library itself or in user
+ *   code) that prevent the internal inactivity watchdog from working
+ *   properly.  So, our system watchdog thread serves as a backup here; if we
+ *   don't see any incoming client network requests for an extended period,
+ *   we'll assume that the program no longer has any job to do, so we'll shut
+ *   it down.  Note that a bytecode program could be intentionally running as
+ *   a continuous service, e.g., acting as a web server; but that's really an
+ *   abuse of a public TADS server, since a continuously resident process
+ *   takes up a lot of memory that's meant to be shared with other users.  So
+ *   we don't care whether the bytecode program is running without clients
+ *   due to bugs or by design; in either case we want to shut it down.
+ *   
+ *   The system administrator enables the watchdog thread by putting the
+ *   variable "watchdog = yes" in the tadsweb.config file.
+ */
+
+/* the statistics we collect each time the watchdog wakes up */
+struct watchdog_stats
+{
+    /* total user CPU time used as of this interval, in seconds */
+    clock_t cpu_time;
+
+    /* wall clock time (time() value) as of this interval, in seconds */
+    time_t wall_time;
+};
+
+/*
+ *   Watchdog thread object class 
+ */
+class OSS_Watchdog: public OS_Thread
+{
+public:
+    OSS_Watchdog()
+    {
+        /* create our 'quit' event object */
+        quit_evt = new OS_Event(TRUE);
+
+        /* we haven't collected any statistics yet */
+        cnt = 0;
+        idx = 0;
+
+        /* 
+         *   Initialize the last incoming network activity time to the
+         *   current time.  We haven't actually seen any network activity
+         *   yet, of course, but what we're really interested in is the
+         *   interval, and it's not meaningful to talk about an interval
+         *   longer than we've been running.
+         */
+        OS_CoreSocket::last_incoming_time = time(0);
+    }
+
+    ~OSS_Watchdog()
+    {
+        /* we're done with our 'quit' event */
+        quit_evt->release_ref();
+    }
+
+    virtual void thread_main()
+    {
+        oss_debug_log("watchdog thread started");
+        
+        /* loop until our 'quit' event has fired */
+        while (!quit_evt->test())
+        {
+            /* wake up every 10 seconds, or when the 'quit' event fires */
+            if (quit_evt->wait(10000) == OSWAIT_TIMEOUT)
+            {
+                /* 
+                 *   That timed out, so it's time for another watchdog check.
+                 *   First, update the timers. 
+                 */
+                stats[idx].cpu_time = clock() / CLOCKS_PER_SEC;
+                stats[idx].wall_time = time(0);
+
+                /* bump the statistics counters */
+                ++cnt;
+                if (++idx >= NSTATS)
+                    idx = 0;
+
+                /* 
+                 *   If we've collected enough statistics, do our checks.  We
+                 *   need at least 60 seconds of trailing data, and we wake
+                 *   up every 10 seconds, so we need at least seven samples
+                 *   (#0 is 0 seconds ago, #1 is 10 seconds ago, ... #6 is 60
+                 *   seconds ago, hence we need 0-6 = 7 samples).
+                 */
+                if (cnt >= 7)
+                {
+                    /* get the last and the 60-seconds-ago stats */
+                    const watchdog_stats *cur = get_stats(0);
+                    const watchdog_stats *prv = get_stats(6);
+
+                    /* calculate the percentage of CPU time */
+                    double cpu_pct = ((double)(cur->cpu_time - prv->cpu_time))
+                                     / (cur->wall_time - prv->wall_time);
+
+                    /* calculate the time since the last network event */
+                    time_t time_since_net =
+                        cur->wall_time - OS_CoreSocket::last_incoming_time;
+
+                    /*
+                     *   Check for termination conditions:
+                     *   
+                     *   1.  If we've consumed 40% or higher CPU over the
+                     *   last minute, we're probably stuck in a loop; we
+                     *   might also be running an intentionally
+                     *   compute-intensive program, which isn't a bug but is
+                     *   an abuse of a shared server, so in either case kill
+                     *   the program.  (We're not worried about short bursts
+                     *   of high CPU usage, which is why we average over a
+                     *   fairly long real-time period.)
+                     *   
+                     *   2.  If we haven't seen any incoming network activity
+                     *   in 6 minutes, the program is probably idle and
+                     *   should probably have noticed that and shut itself
+                     *   down already, so it might have a bug in its internal
+                     *   inactivity monitor.  It could also be intentionally
+                     *   running as a continuous service, but that's abusive
+                     *   on a shared server because it uses memory that's
+                     *   meant to be shared.  In either case, shut it down.
+                     */
+                    if (cpu_pct >= 0.4)
+                    {
+                        oss_debug_log("watchdog terminating process due to "
+                                      "high CPU usage (cpu_pct = %0.2ld%%)",
+                                      cpu_pct);
+                        kill(getpid(), 9);
+                    }
+                    if (time_since_net > 6*60)
+                    {
+                        oss_debug_log("watchdog terminating process due to "
+                                      "network inactivity (time_since_net"
+                                      " = %ld seconds)", (long)time_since_net);
+                        kill(getpid(), 9);
+                    }
+                }
+            }
+        }
+    }
+
+    /* the watchdog thread 'quit' event */
+    static OS_Event *quit_evt;
+
+private:
+    /* number of times we've collected statistics */
+    int cnt;
+
+    /* next statistics write index */
+    int idx;
+
+    /* 
+     *   Statistics array.  We keep records for the latest NSTATS iterations.
+     *   idx points to the next element to write, so idx-1 is the last one we
+     *   wrote, and so on.  The array is circular, so the actual array index
+     *   of element i is i % NSTATS. 
+     */
+    static const int NSTATS = 10;
+    watchdog_stats stats[NSTATS];
+
+    /* 
+     *   get the nth most recent stats entry - 0 is the latest entry, 1 is
+     *   the second older entry, etc 
+     */
+    const watchdog_stats *get_stats(int i) const
+    {
+        /* 
+         *   idx points to the next to write, so idx-1 is the latest entry,
+         *   idx-2 is the second entry, etc 
+         */
+        i = idx - 1 - i;
+
+        /* the array is circular, so adjust for wrapping */
+        if (i < 0)
+            i += NSTATS;
+
+        /* return the element */
+        return &stats[i];
+    }
+};
+
 
 #endif /* OSNETUNIX_H */

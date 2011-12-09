@@ -105,7 +105,7 @@ FrobTadsApplication::fRunTads2( char* filename )
 
 int
 FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* argv,
-                                class TadsNetConfig* netconfig )
+                                const char *savedState, class TadsNetConfig* netconfig )
 {
     // Create the Tads 3 host and client services interfaces.
     CVmMainClientConsole clientifc;
@@ -120,7 +120,7 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
     // Run the Tads 3 VM.
     int vmRet = vm_run_image(&clientifc, filename, hostifc, argv, argc,
                              this->options.replayFile, false, 0, 0, false, false,
-                             this->options.seedRand, 0, 0, 0, 0, netconfig);
+                             this->options.seedRand, 0, 0, savedState, 0, netconfig);
     delete hostifc;
     return vmRet;
 }
@@ -128,7 +128,7 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
 
 int
 FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char *const *argv,
-                              class TadsNetConfig* netconfig )
+                              const char* savedState, class TadsNetConfig* netconfig )
 {
     // We might strip the path from the filename later, in case we
     // change the current directory.
@@ -182,7 +182,7 @@ FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char
 
     // Run the VM.
     int vmRet = vm == 0 ? this->fRunTads2(finalFilenamePtr)
-                        : this->fRunTads3(finalFilenamePtr, argc, argv, netconfig);
+                        : this->fRunTads3(finalFilenamePtr, argc, argv, savedState, netconfig);
 
     // Done with the filename.
     delete[] finalFilename;

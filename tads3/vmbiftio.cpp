@@ -1027,8 +1027,7 @@ void CVmBifTIO::askfile(VMG_ uint argc)
     int evt;
     unsigned long attrs;
     if (G_console->read_event_script(
-        vmg_ &evt, fname, sizeof(fname),
-        filter, sizeof(filter)/sizeof(filter[0]), &attrs))
+        vmg_ &evt, fname, sizeof(fname), filter, countof(filter), &attrs))
     {
         int ok = TRUE;
         
@@ -2396,6 +2395,9 @@ void CVmBifTIO::log_console_close(VMG_ uint argc)
 
     /* delete the console */
     G_console->get_log_console_manager()->delete_log_console(vmg_ handle);
+
+    /* no return value */
+    retval_nil(vmg0_);
 }
 
 /*
@@ -2448,3 +2450,72 @@ void CVmBifTIO::log_console_say(VMG_ uint argc)
     err_end;
 }
 
+/* ------------------------------------------------------------------------ */
+/*
+ *   Log an input event obtained from an external source, such as the Web UI 
+ */
+void CVmBifTIO::log_input_event(VMG_ uint argc)
+{
+    /* check arguments */
+    check_argc(vmg_ argc, 1);
+
+    /* retrieve the list */
+    const vm_val_t *lst = G_stk->get(0);
+    if (!lst->is_listlike(vmg0_))
+        err_throw(VMERR_BAD_TYPE_BIF);
+
+    /* make sure we have at least one element */
+    int len = lst->ll_length(vmg0_);
+    if (len < 1)
+        err_throw(VMERR_BAD_VAL_BIF);
+
+    /* retrieve the event type code or tag name from the first element */
+    vm_val_t ele1;
+    lst->ll_index(vmg_ &ele1, 1);
+
+    /* if there's a second element, retrieve the parameter string */
+    const char *param = 0;
+    size_t paramlen = 0;
+    if (len >= 2)
+    {
+        /* there's a parameter - retrieve it */
+        vm_val_t ele2;
+        lst->ll_index(vmg_ &ele2, 2);
+
+        /* get its string value */
+        if ((param = ele2.get_as_string(vmg0_)) == 0)
+            err_throw(VMERR_BAD_VAL_BIF);
+
+        /* get the parameter length and buffer pointer */
+        paramlen = vmb_get_len(param);
+        param += VMB_LEN;
+    }
+
+    /* log the event, according to the type of the event code */
+    if (ele1.is_numeric())
+    {
+        /* it's an integer event type code - log it */
+        G_console->log_event(vmg_ ele1.num_to_int(), param, paramlen, TRUE);
+    }
+    else if (ele1.get_as_string(vmg0_) != 0)
+    {
+        /* it's a string event tag - retrieve it in the UI character set */
+        char tag[128];
+        G_stk->push(&ele1);
+        pop_str_val_ui(vmg_ tag, sizeof(tag));
+
+        /* log the event with the given tag */
+        G_console->log_event(vmg_ tag, param, paramlen, TRUE);
+    }
+    else
+    {
+        /* other types are invalid */
+        err_throw(VMERR_BAD_VAL_BIF);
+    }
+
+    /* discard arguments */
+    G_stk->discard(1);
+
+    /* no return value */
+    retval_nil(vmg0_);
+}

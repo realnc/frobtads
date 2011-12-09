@@ -334,7 +334,6 @@ static void new_ascii_string(VMG_ vm_val_t *ret, const char *str)
 int CVmObjHTTPRequest::getp_getServer(VMG_ vm_obj_id_t self,
                                       vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -352,7 +351,6 @@ int CVmObjHTTPRequest::getp_getServer(VMG_ vm_obj_id_t self,
 int CVmObjHTTPRequest::getp_getVerb(VMG_ vm_obj_id_t self,
                                     vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -370,7 +368,6 @@ int CVmObjHTTPRequest::getp_getVerb(VMG_ vm_obj_id_t self,
 int CVmObjHTTPRequest::getp_getQuery(VMG_ vm_obj_id_t self,
                                      vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -593,7 +590,6 @@ static void parse_query_params(VMG_ CVmObjLookupTable *tab, const char *p,
 int CVmObjHTTPRequest::getp_parseQuery(VMG_ vm_obj_id_t self,
                                        vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -708,7 +704,6 @@ int CVmObjHTTPRequest::getp_getQueryParam(VMG_ vm_obj_id_t self,
 int CVmObjHTTPRequest::getp_getHeaders(VMG_ vm_obj_id_t self,
                                        vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -824,7 +819,6 @@ done:
 int CVmObjHTTPRequest::getp_getCookies(VMG_ vm_obj_id_t self,
                                        vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -1403,7 +1397,6 @@ static void parse_multipart(VMG_ CVmObjLookupTable *tab, StringRef *body,
 int CVmObjHTTPRequest::getp_getFormFields(VMG_ vm_obj_id_t self,
                                           vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -1481,7 +1474,6 @@ int CVmObjHTTPRequest::getp_getFormFields(VMG_ vm_obj_id_t self,
 int CVmObjHTTPRequest::getp_getClientAddress(VMG_ vm_obj_id_t self,
                                              vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -1505,7 +1497,6 @@ int CVmObjHTTPRequest::getp_getClientAddress(VMG_ vm_obj_id_t self,
 int CVmObjHTTPRequest::getp_getBody(VMG_ vm_obj_id_t self,
                                     vm_val_t *retval, uint *oargc)
 {
-    uint argc = (oargc != 0 ? *oargc : 0);
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, oargc, &desc))
         return TRUE;
@@ -1722,6 +1713,7 @@ struct bodyArg
         bytarr = 0;
         len = 0;
         status_code = 0;
+        init_err = 0;
 
         /* get the argument value pointer out of the stack */
         const vm_val_t *v = G_stk->get(argn);
@@ -1753,6 +1745,10 @@ struct bodyArg
             /* it's a file object */
             file = (CVmObjFile *)vm_objp(vmg_ v->val.obj);
             len = file->get_file_size(vmg0_);
+
+            /* it's an error if the file isn't open or valid */
+            if (len < 0)
+                init_err = VMERR_READ_FILE;
         }
         else if (v->typ == VM_INT)
         {
@@ -1784,7 +1780,7 @@ struct bodyArg
         else
         {
             /* it's a type we can't handle */
-            err_throw(VMERR_BAD_TYPE_BIF);
+            init_err = VMERR_BAD_TYPE_BIF;
         }
     }
 
@@ -1969,6 +1965,9 @@ struct bodyArg
     /* true -> no content body */
     int none;
 
+    /* construction error code, if applicable */
+    int init_err;
+
     /* if it's a string, the string */
     const char *str;
 
@@ -2081,7 +2080,11 @@ int CVmObjHTTPRequest::getp_sendReply(VMG_ vm_obj_id_t self,
         /* get the content type, if present */
         const char *cont_type = 0;
         size_t cont_type_len = 0;
-        if (body->status_code != 0)
+        if (body->init_err != 0)
+        {
+            err_throw(body->init_err);
+        }
+        else if (body->status_code != 0)
         {
             /* we're using a generated HTML reply, so it's always text/html */
             cont_type = "text/html";
@@ -2272,8 +2275,9 @@ int CVmObjHTTPRequest::getp_sendReply(VMG_ vm_obj_id_t self,
             char hbuf[256];
             t3sprintf(hbuf, sizeof(hbuf),
                       "Content-Type: %.*s%s\r\n"
-                      "Content-Length: %ld\r\n",
-                      (int)cont_type_len, cont_type, charset, body->len);
+                      "Content-Length: %lu\r\n",
+                      (int)cont_type_len, cont_type, charset,
+                      (ulong)body->len);
             if (!t->send(hbuf))
                 throw_net_err(vmg_ "error sending headers", t->last_error());
         }
@@ -2411,9 +2415,13 @@ int CVmObjHTTPRequest::getp_sendReplyChunk(VMG_ vm_obj_id_t self,
 
     err_try
     {
+        /* make sure we initialized the body correctly */
+        if (body->init_err != 0)
+            err_throw(body->init_err);
+        
         /* send the length prefix */
         char lbuf[20];
-        t3sprintf(lbuf, sizeof(lbuf), "%lx\r\n", body->len);
+        t3sprintf(lbuf, sizeof(lbuf), "%lx\r\n", (long)body->len);
         if (!t->send(lbuf))
             throw_net_err(vmg_ "error sending length prefix", t->last_error());
 
