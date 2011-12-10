@@ -105,7 +105,8 @@ endif
 T3_INC_DIR = $(pkgdatadir)/tads3/include
 T3_LIB_DIR = $(pkgdatadir)/tads3/lib
 T3_RES_DIR = $(pkgdatadir)/tads3/res
-AM_CPPFLAGS += -DT3_INC_DIR=\"$(T3_INC_DIR)\" -DT3_LIB_DIR=\"$(T3_LIB_DIR)\" -DT3_RES_DIR=\"$(T3_RES_DIR)\"
+T3_LOG_FILE = /tmp/frob.log
+AM_CPPFLAGS += -DT3_INC_DIR=\"$(T3_INC_DIR)\" -DT3_LIB_DIR=\"$(T3_LIB_DIR)\" -DT3_RES_DIR=\"$(T3_RES_DIR)\" -DT3_LOG_FILE=\"$(T3_LOG_FILE)\"
 
 ## This is not needed at runtime so we don't add it to AM_CPPFLAGS.
 ##

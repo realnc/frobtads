@@ -815,7 +815,7 @@ os_get_special_path( char* buf, size_t buflen, const char* argv0, int id )
       case OS_GSP_LOGFILE:
         res = getenv("T3_LOGDIR");
         if (res == 0 or res[0] == '\0') {
-            res = T3_LOG_DIR;
+            res = T3_LOG_FILE;
         }
         break;
 
