@@ -49,6 +49,16 @@ Modified
 /* libcurl headers */
 #include <curl/curl.h>
 
+/* OS X spinlocks */
+#ifdef __APPLE__
+#include <libkern/OSAtomic.h>
+typedef OSSpinLock pthread_spinlock_t;
+inline void pthread_spin_init(OSSpinLock* p, int) { *p = OS_SPINLOCK_INIT; }
+inline void pthread_spin_destroy(OSSpinLock*) { }
+#define pthread_spin_lock OSSpinLockLock
+#define pthread_spin_unlock OSSpinLockUnlock
+#endif /* __APPLE__ */
+
 /* include the base layer headers */
 #include "osifcnet.h"
 
