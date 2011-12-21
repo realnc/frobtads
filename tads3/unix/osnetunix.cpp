@@ -476,7 +476,7 @@ public:
             pollfd fd[1];
             fd[0].fd = s->s;
             fd[0].events = (s->wouldblock_sending ? POLLOUT : POLLIN | POLLPRI)
-                           | POLLHUP | POLLRDHUP;
+                           | POLLHUP;
             fd[1].fd = qpipe[0];
             fd[1].events = POLLIN;
 
