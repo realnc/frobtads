@@ -59,6 +59,21 @@ inline void pthread_spin_destroy(OSSpinLock*) { }
 #define pthread_spin_unlock OSSpinLockUnlock
 #endif /* __APPLE__ */
 
+/* Make sure SO_NOSIGPIPE and MSG_NOSIGNAL are both defined if at least
+ * one of them already is. They are redundant to each other and it
+ * doesn't matter if we define one of them to 0 if it's missing. We
+ * avoid doing that if both are missing, as that would allow the build
+ * to complete but without a way of suppressing SIGPIPE signals.  */
+#ifdef SO_NOSIGPIPE
+#  ifndef MSG_NOSIGNAL
+#    define MSG_NOSIGNAL 0
+#  endif
+#else
+#  ifdef MSG_NOSIGNAL
+#    define SO_NOSIGPIPE 0
+#  endif
+#endif
+
 /* include the base layer headers */
 #include "osifcnet.h"
 
