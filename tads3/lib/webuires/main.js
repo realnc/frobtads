@@ -48,26 +48,6 @@ function mainInit()
     cacheImage("/webuires/errorPopupBkg.gif");
     cacheImage("/webuires/warningPopupBkg.gif");
     cacheImage("/webuires/modal-cover.png");
-
-    // When we finish loading TADS.swf, kick off the font list builder.
-    // We pre-build the list rather than building it on demand because
-    // building it can take a significant amount of time (5-10 seconds).
-    // Doing this in advance avoids a long wait when the user first
-    // opens a dialog using the font list.  On the other hand, we don't
-    // want to tie up the UI for all this time on the initial load,
-    // either.  Our solution is to do the pre-build as a pseudo-thread
-    // (basically a series of timeouts that do a little chunk of the
-    // work and return, allowing UI events to get processed in between).
-    // This allows the UI to become responsive immediately, while still
-    // doing the font-list build up front.  As long as the user doesn't
-    // bring up the dialog immediately, they'll never notice a delay at
-    // all related to the font list - it'll be built unobtrusively during
-    // the first few seconds of play, and by the time they bring up a
-    // dialog it'll be cached and ready to go.  Even if they *do* open
-    // a dialog immediately, everything will still work properly; the
-    // font selector widget knows to coordinate with the thread to wait
-    // until the list is ready.
-    TADS_swf.loaded.whenDone(function() { buildFontList(); });
 }
 
 /* ------------------------------------------------------------------------ */
@@ -449,7 +429,10 @@ var errorPopupVis = false;
 // If 'id' is null, we'll supply a default.
 function logError(msg, detail, id)
 {
-    debugLog("Error: " + msg + "<br>" + detail + "<br><br>");
+    // for testing purposes, it's sometimes useful to pop this up
+    // in the separate debug log window, but we don't want to do
+    // this in release builds
+    // debugLog("Error: " + msg + "<br>" + detail + "<br><br>");
 
     // if there's no 'id' object, supply a default
     if (!id)
@@ -770,12 +753,16 @@ function debugLog(msg)
  *   will still be available as a keystroke handler.
  *   
  *   init: a function to call to initialize the dialog.  This is called after
- *   the new dialog has been displayed, with the dialog's root element as the
- *   argument - init(dialogElement).
+ *   the new dialog has been set up, but before it's been displayed.  The
+ *   dialog's root element is passed as the argument - init(dialogElement).
  *   
  *   initFocus: the control that should initially receive focus.  If this
  *   isn't set, we'll search for a focusable control (INPUT, SELECT, <A>) and
  *   set focus there.
+ *   
+ *   initAfterVisible: a function to call to initialize after the dialog has
+ *   been displayed and focus has been set.  As with init(), this is called
+ *   with the dialog's root element as the argument.
  *   
  *   dismiss: a function to call when dismissing the dialog.  This will be
  *   called as dismiss(dialogElement, button), where 'button' is the button
@@ -798,6 +785,30 @@ function debugLog(msg)
 var dialogStack = [];
 var fontSelectorOptions = null;
 function showDialog(params)
+{
+    // get the contents, retrieving HTML source if it's a DOM object
+    var contents = params.contents;
+    if (typeof(contents) == "object")
+        contents = contents.innerHTML;
+
+    // assume all we'll need to do is show the dialog
+    var go = function() { showDialogMain(params); };
+
+    // check for $[fontpicker] macros
+    if (contents.match(/\$\[fontpicker([^\]]*)\]/))
+    {
+        // we have one or more font pickers, so we need to build the 
+        // list of installed fonts before we can show the dialog
+        var go1 = go;
+        go = function() { TADS_swf.waitForFontList(go1); };
+    }
+
+    // execute the dialog display procedure we've built up
+    go();
+}
+
+// main dialog builder
+function showDialogMain(params)
 {
     // figure the z-index for the new dialog
     var z = 10500 + dialogStack.length*10;
@@ -878,6 +889,7 @@ function showDialog(params)
     fontSizeOptions = "<option value=\"*\">(Default)</option>"
                       + fontSizeOptions;
     var fontPickers = [];
+    var preFontCont = contents;
     contents = contents.replace(
         /\$\[fontpicker([^\]]*)\]/gm, function(match, attrs) {
 
@@ -894,6 +906,10 @@ function showDialog(params)
         return createCombo(pattrs.id, 40, "")
             + createCombo(pattrs.id + "Size", 5, fontSizeOptions);
     });
+
+    // note if we actually needed any font pickers - we do if we found
+    // any $[fontpicker] macros to expand
+    var needFonts = (contents != preFontCont);
 
     // expand $[colorpicker] macros
     var colorPickers = [];
@@ -965,13 +981,20 @@ function showDialog(params)
 
         // set the initial focus
         initDialogFocus();
+
+        // run the after-visible function
+        if (params.initAfterVisible)
+            setTimeout(
+                function() { params.initAfterVisible(dlg, params); },
+                10);
     }, 1);
 
-    // populate the font pickers after the font list thread is finished
-    TADS_swf.fontListThread.whenDone(function() {
-
-        // get the font list
-        var fonts = getFontList();
+    // If we needed any font pickers, load the system's font list, if
+    // we haven't already.  When that's done, populate the font pickers.
+    if (needFonts)
+    {
+        // get the cached font list
+        var fonts = TADS_swf.fontList;
 
         // build the font select list
         fontSelectorOptions = fonts.map(function(ele) {
@@ -982,7 +1005,7 @@ function showDialog(params)
         // add "Default" as the first item
         fontSelectorOptions = "<option value=\"*\">(Default)</option>"
                               + fontSelectorOptions;
-
+        
         // populate each font picker
         for (var i = 0 ; i < fontPickers.length ; ++i)
         {
@@ -990,7 +1013,7 @@ function showDialog(params)
             var f = fontPickers[i];
             var fld = $(dlg, f.pattrs.id);
             var sel = comboGetElement(fld, "SELECT");
-
+            
             // If we have outerHTML, replace the entire SELECT with a new
             // one.  This is for IE's sake; IE doesn't rebuild the option
             // list if we only replace the SELECT's innerHTML.  If we don't
@@ -1004,14 +1027,14 @@ function showDialog(params)
             // the control from HTML.  I think the best argument in favor
             // of the API approach is that it should perform better than
             // going through all that string building and parsing, but in
-            // this case at least it turns out to be just the opposite.
+            // this case, at least, it turns out to be just the opposite.
             if (sel.outerHTML)
             {
                 // outerHTML available - replace the whole <SELECT>
                 sel.outerHTML = sel.outerHTML.replace(
                     /<\/select>/im, fontSelectorOptions + "</SELECT>")
-                   .replace(/size=("[^"]+"|'[^']'|[^'"][^\s>]*)/im,
-                   "size=\"20\"");
+                    .replace(/size=("[^"]+"|'[^']'|[^'"][^\s>]*)/im,
+                             "size=\"20\"");
             }
             else
             {
@@ -1020,7 +1043,7 @@ function showDialog(params)
                 sel.size = "20";
             }
         }
-    }, true);
+    }
 }
 
 /*
@@ -1894,163 +1917,124 @@ var TADS_swf = {
     // TADS.swf object, so be sure to specify the "onload" in those tags.
     loaded: new AbsEvent(),
     
-    // Event coordinator for font list loading.  Loading the font list can
-    // take quite a while because of the filtering process, which requires
-    // the browser to render large print for
-    fontListThread: new AbsEvent(),
-
     // cached font list
     fontList: null,
 
-    // Rebuild the font list.  This starts the build process and returns
-    // immediately.  The build process runs in the background; when complete,
-    // we call the callback, if provided.
-    buildFontList: function(doneFunc)
+    // Wait for the font list to load, then proceed with the callback.
+    // If the font list is already loaded, this simply invokes the callback
+    // immediately.  If the font list isn't loaded, we'll populate it.
+    //
+    // The reason that we have to structure this as a wait-for routine
+    // with a callback is that we rely on a Flash object to enumerate
+    // installed fonts, and Flash objects can load asynchronously.  We
+    // can't just assume that our Flash object is ready; we have to await
+    // a go-ahead signal that it generates when it finished loading.
+    // The wait-for structure lets us ensure that the Flash object is
+    // ready before we try to invoke it.
+    waitForFontList: function(doneFunc)
     {
-        // Build the candidate font list.  First try the TADS.swf embedded
-        // Flash object.  Flash isn't everywhere, so if we don't find it,
-        // fall back on our canned list of candidate fonts.
-        var fonts;
-        try
-        {
-            // get the flash object
-            var ie = navigator.userAgent.indexOf("Microsoft") != -1;
-            var mobj = (ie ? window["__TADS_swf"] : document["__TADS_swf"]);
+        // First, we have to make sure we've loaded the Flash object.
+        // Flash objects can be loaded asynchronously, so we have to
+        // await the ready event from Flash before we can proceed.
+        TADS_swf.loaded.whenDone(function() {
 
-            // ask the Flash object for the list of installed fonts
-            var sfonts = mobj.getFonts();
-
-            // Build a list of the font names, filtering for "regular" style
-            // fonts.  We ignore other styles (bold, italic, etc), since we
-            // don't want to show these in the UI.  
-            fonts = [];
-            for (var i = 0 ; i < sfonts.length ; ++i)
+            // if we haven't already done so, build the font list
+            if (!TADS_swf.fontList)
             {
-                if (sfonts[i].fontStyle == "regular")
-                    fonts.push(sfonts[i].fontName);
+                // Build the candidate font list.  First try the TADS.swf
+                // embedded Flash object.  Flash isn't everywhere (especially
+                // on mobile devices), so if we don't find it, fall back on
+                // our canned list of candidate fonts.
+                var fonts;
+                try
+                {
+                    // get the flash object
+                    var ie = navigator.userAgent.indexOf("Microsoft") != -1;
+                    var mobj = (ie ? window["__TADS_swf"] :
+                                document["__TADS_swf"]);
+
+                    // ask the Flash object for the list of installed fonts
+                    var sfonts = mobj.getFonts();
+
+                    // Filter the list to keep only the first font of
+                    // each family.  Style variations (bold, italic, etc)
+                    // are represented internally on most systems as whole
+                    // separate font objects, but for UI purposes we only
+                    // want to show one list entry per font family.
+                    // Keep only the font names in the final list.
+                    fonts = [];
+                    for (var i = 0 ; i < sfonts.length ; ++i)
+                    {
+                        // if this is a new name, add it to the list
+                        if (sfonts[i].fontStyle == "regular")
+                            fonts.push(sfonts[i].fontName);
+                    }
+                }
+                catch (e)
+                {
+                    // An error occurred; we'll assume that the problem is
+                    // that Flash isn't available.  Default to a canned list
+                    // of common fonts.  We'll check each entry in a moment
+                    // to see if it's actually installed, so the final list
+                    // will only include fonts that are locally available.
+                    // Of course, it won't necessarily include *all* of the
+                    // available fonts, since we obviously can't include all
+                    // possible fonts in our prefab list.  This list is only
+                    // meant to capture the basic set of fonts that most
+                    // operating systems include in their base installs.
+                    // Note that this list is actually a union of common
+                    // fonts from various operating systems, so it's unlikely
+                    // that all of them will be installed on any one machine.
+                    fonts = [
+                        "Arial",
+                        "Arial Black",
+                        "Book Antiqua",
+                        "Charcoal",
+                        "Comic Sans MS",
+                        "Courier",
+                        "Courier New",
+                        "Gadget",
+                        "Geneva",
+                        "Georgia",
+                        "Helvetica",
+                        "Impact",
+                        "Lucida Console",
+                        "Lucida Grande",
+                        "Lucida Sans Unicode",
+                        "Monaco",
+                        "MS Sans Serif",
+                        "MS Serif",
+                        "New York",
+                        "Palatino",
+                        "Palatino Linotype",
+                        "Symbol",
+                        "Tahoma",
+                        "Times",
+                        "Times New Roman",
+                        "Trebuchet MS",
+                        "Verdana",
+                        "Webdings",
+                        "Wingdings",
+                        "Zapf Chancery",
+                        "ZapfChancery",
+                        "Zapf Dingbats"
+                    ];
+                }
+
+                // sort the font list by name (ignoring case)
+                fonts.sort(function(a, b) {
+                    return a.toLowerCase().localeCompare(b.toLowerCase());
+                });
+
+                // save the list
+                TADS_swf.fontList = fonts;
             }
-        }
-        catch (e)
-        {
-            // An error occurred; we'll assume that the problem is that Flash
-            // isn't available.  Default to a canned list of common fonts.
-            // We'll check each entry to see if it's actually installed, so
-            // the final list won't include any missing fonts.  We can't hope
-            // to guess every possible font a given system might have installed;
-            // simply try a list of very common fonts in the hope of finding a
-            // reasonable selection of installed fonts on a typical system.
-            fonts = [
-                "Arial",
-                "Arial Black",
-                "Book Antiqua",
-                "Charcoal",
-                "Comic Sans MS",
-                "Courier",
-                "Courier New",
-                "Gadget",
-                "Geneva",
-                "Georgia",
-                "Helvetica",
-                "Impact",
-                "Lucida Console",
-                "Lucida Grande",
-                "Lucida Sans Unicode",
-                "Monaco",
-                "MS Sans Serif",
-                "MS Serif",
-                "New York",
-                "Palatino",
-                "Palatino Linotype",
-                "Symbol",
-                "Tahoma",
-                "Times New Roman",
-                "Times",
-                "Trebuchet MS",
-                "Verdana",
-                "Webdings",
-                "Wingdings",
-                "Zapf Chancery",
-                "ZapfChancery",
-                "Zapf Dingbats"
-            ];
-        }
 
-        // kick off the filtering thread
-        var thread = TADS_swf.fontListThread;
-        var goodFonts = [];
-        thread.startThread(function(step) {
-            return TADS_swf.filterFontList(fonts, goodFonts, step);
-        }, 15);
-
-        // when done, install the new font list and call the user callback
-        thread.whenDone(function() {
-
-            // sort the final list by name
-            goodFonts.sort(function(a, b) {
-                return a.toLowerCase().localeCompare(b.toLowerCase());
-            });
-
-            // install it
-            TADS_swf.fontList = goodFonts;
-
-            // call the user callback
-            if (doneFunc)
-                doneFunc();
+            // the font list is now ready - fire the callback
+            doneFunc();
         });
-    },
-
-    // Filter the font list timer callback.  This processes one font, then
-    // sets another callback for the next font and returns.  On
-    filterFontList: function(fonts, goodFonts, step)
-    {
-        // process a few fonts on this pass
-        var fontsPerStep = 5;
-        var start = step * fontsPerStep, stop = start + fontsPerStep;
-        for (var i = start ; i < fonts.length && i < stop ; ++i)
-        {
-            // Check to see if the current font is actually installed.
-            //
-            // We need to filter the font list for two reasons.  First,
-            // the Flash font enumerator reportedly returns garbage font 
-            // names on some systems.  I haven't seen this myself, so it
-            // might be a problem with an older version that's now fixed,
-            // but it might also just vary by system.  In any case, the
-            // second reason for filtering is that when we don't have
-            // Flash installed, we use a fixed list of common fonts, 
-            // since we have no way to enumerate the actual fonts without
-            // Flash's help; in this case, any given system will almost
-            // certainly be lacking many of the fonts on our list.
-            //
-            // To do the filtering, we test each font name by styling a 
-            // test span with it.  We compare the pixel width of the test 
-            // span with that of a reference span that's styled in a
-            // fallback font.  If the test and reference spans have the 
-            // same widths, it's a good bet that the test span is actually
-            // being rendered in the fallback font, which will presumably
-            // only happen when the tested font doesn't exist on the system.
-            var testSpan = $("__font_test");
-            var refSpan = $("__font_ref");
-            var refHt = refSpan.offsetHeight, refWid = refSpan.offsetWidth;
-            var n = fonts[i];
-            testSpan.style.fontFamily = n + ", Comic Sans MS, Times New Roman";
-            if (n == "Comic Sans MS"
-                || n == "Times New Roman"
-                || testSpan.offsetWidth != refWid
-                || testSpan.offsetHeight != refHt)
-                goodFonts.push(n);
-        }
-
-        // keep going if we haven't reached the end of the font list yet
-        return i < fonts.length;
     }
 };
-
-// get the cached font list
-function getFontList()
-{
-    // return the font list 
-    return TADS_swf.fontList;
-}
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -3196,7 +3180,7 @@ function showMenuSys(r)
                  + "<a href=\"#\" id=\"menuSysLink" + idx
                  + "\" onclick=\"javascript:menuSysSel(" + idx
                  + ");return false;\">"
-                 + item.htmlify() + "</a></div>";
+                 + item + "</a></div>";
         }
 
         // 'select' selects the item with focus, if any
@@ -3236,7 +3220,7 @@ function showMenuSys(r)
             var idx = i + 1;
             var item = xmlNodeText(contents[i]);
             s += "<div class=\"menuSysItem\" id=\"menuSysTopic" + idx + "\">"
-                 + item.htmlify()
+                 + item
                  + " [" + idx + "/" + menuSysTopicCount + "]"
                  + "</div>";
         }
@@ -3299,7 +3283,7 @@ function showMenuSys(r)
             {
                 s += "<a href=\"#\" onclick=\"javascript:menuSysGoChapter("
                      + "'next');return false;\">Next: "
-                     + xmlChildText(r, "nextChapter").htmlify()
+                     + xmlChildText(r, "nextChapter")
                      + " &gt;</a>";
                 
                 sel = down = function() { menuSysGoChapter('next'); };
@@ -3468,7 +3452,7 @@ function menuSysNextTopic()
             var ele = document.createElement("DIV");
             ele.className = "menuSysItem";
             ele.id = "menuSysTopic" + menuSysLastTopic;
-            ele.innerHTML = txt.htmlify()
+            ele.innerHTML = txt
                             + " [" + menuSysLastTopic
                             + "/" + menuSysTopicCount + "]";
 

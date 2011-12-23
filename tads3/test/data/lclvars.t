@@ -66,6 +66,9 @@ dumpStack(id)
     {
         local ti = t[i];
         "\t<<reflectionServices.formatStackFrame(ti, nil)>>";
+        if (ti.frameDesc_ != nil)
+            " [invokee=<<
+              reflectionServices.valToSymbol(ti.frameDesc_.getInvokee())>>]";
 
         if (ti.locals_ != nil)
         {

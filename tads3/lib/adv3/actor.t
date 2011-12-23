@@ -6795,12 +6795,9 @@ class Actor: Thing, Schedulable, Traveler, ActorTopicDatabase
          */
         if (actor == nil || !canTalkTo(actor))
         {
-            local tt;
-            local res;
-            
             /* set up a TALK TO command and a resolver */
-            tt = new TalkToAction();
-            res = new Resolver(tt, gIssuingActor, gActor);
+            local tt = new TalkToAction();
+            local res = new Resolver(tt, gIssuingActor, gActor);
             
             /* get the default direct object */
             actor = tt.getDefaultDobj(new EmptyNounPhraseProd(), res);

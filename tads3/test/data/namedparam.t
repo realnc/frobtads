@@ -45,7 +45,7 @@ h(a:)
         "(all named arguments: <<t3GetNamedArgList().mapAll(
             { a: a + '=' + t3GetNamedArg(a, nil) }).myjoin()>>)\n";
 
-        local t = t3GetStackTrace();
+        local t = t3GetStackTrace(nil, T3GetStackLocals);
         "Stack trace:\n";
         foreach (local f in t)
         {

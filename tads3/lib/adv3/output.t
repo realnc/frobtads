@@ -1196,6 +1196,7 @@ class MessageBuilder: OutputFilter, PreinitObject
             allCaps = (rexMatch(patAllCaps, paramStr) != nil);
 
             /* lower-case the entire parameter string for matching */
+            local origParamStr = paramStr;
             paramStr = paramStr.toLower();
 
             /* perform any language-specific rewriting on the string */
@@ -1280,7 +1281,7 @@ class MessageBuilder: OutputFilter, PreinitObject
                      *   the parameter is completely undefined; simply add
                      *   the original text, including the braces 
                      */
-                    result += processResult('{' + paramStr + '}');
+                    result += processResult('{<<origParamStr>>}');
                 }
                     
                 /* 

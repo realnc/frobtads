@@ -15,6 +15,8 @@ Modified
   12/01/11 MJRoberts  - Creation
 */
 
+#include <time.h>
+
 #include "t3std.h"
 #include "vmglob.h"
 #include "vmlog.h"

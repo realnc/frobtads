@@ -5610,7 +5610,7 @@ class SuggestedTopicLister: Lister
         {
             gMessageParams(askingActor, targetActor);
             "<<isExplicit ? '' : '('>>{You askingActor/he} {have} nothing
-            specific in mind right now to discuss with
+            specific in mind {right now|just then} to discuss with
             {the targetActor/him}.<<isExplicit ? '' : ')'>> ";
         }
     }

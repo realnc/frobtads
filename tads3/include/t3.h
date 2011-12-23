@@ -92,7 +92,15 @@ intrinsic 't3vm/010006'
      *   additional arguments; after the user proceeds with execution, the
      *   function returns true to indicate that a debugger is present.  If no
      *   debugger is present, the function simply returns nil, and has no
-     *   other effect.  
+     *   other effect.
+     *   
+     *   T3DebugLog - writes a message to the debug log.  The second argument
+     *   is a string with the text of the message to write.  When running
+     *   under an interactive debugger, the log is usually displayed as a
+     *   window in the UI, or something similar.  When running in a regular
+     *   interpreter, the log is stored as a text file called tadslog.txt, in
+     *   a directory location that varies by system.  When a log file is
+     *   used, the system automatically adds a timestamp to each message.
      */
     t3DebugTrace(mode, ...);
 
@@ -150,10 +158,12 @@ intrinsic 't3vm/010006'
      *   level that called this function), the second element represents the
      *   caller of the first element, and so on.
      *   
-     *   If 'level' is specified, we'll return a single T3StackInfo object
+     *   If 'level' is an integer, we'll return a single T3StackInfo object
      *   giving the context at the given stack level - 1 is the active level,
      *   2 is its caller, and so on, so 'level' would simply be the index in
-     *   the returned list when this argument is omitted.
+     *   the returned list when this argument is omitted.  If 'level' is
+     *   omitted or nil, we return a list of T3StackInfo objects giving the
+     *   entire stack trace.
      *   
      *   If 'flags' is specified, it's a combination of T3GetStackXxx flags
      *   specifying additional options.  If this isn't included, the default
@@ -194,6 +204,9 @@ intrinsic 't3vm/010006'
 
 /* break into the debugger */
 #define T3DebugBreak     2
+
+/* log a message to the system/debug log */
+#define T3DebugLog       3
 
 /*
  *   t3SetSay() special values.  These can be passed in lieu of a function

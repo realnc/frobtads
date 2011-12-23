@@ -343,11 +343,12 @@ class ResolveAsker: object
  *   describing the objects matched to the noun phrase.  
  */
 class ResolveInfo: object
-    construct(obj, flags)
+    construct(obj, flags, np = nil)
     {
         /* remember the members */
         obj_ = obj;
         flags_ = flags;
+        np_ = np;
     }
 
     /*
@@ -445,10 +446,8 @@ class ResolveInfo: object
  */
 intersectNounLists(lst1, lst2)
 {
-    local ret;
-    
     /* we don't have any results yet */
-    ret = [];
+    local ret = [];
     
     /* 
      *   run through each element of the first list to see if it has a
@@ -463,11 +462,14 @@ intersectNounLists(lst1, lst2)
          */
         if ((other = lst2.valWhich({x: x.obj_ == cur.obj_})) != nil)
         {
+            /* if one or the other has a noun phrase, keep it */
+            local np = cur.np_ ?? other.np_;
+            
             /* 
              *   include this one in the result list, with the combined
              *   flags from the two original entries 
              */
-            ret += new ResolveInfo(cur.obj_, cur.flags_ | other.flags_);
+            ret += new ResolveInfo(cur.obj_, cur.flags_ | other.flags_, np);
         }
     }
 
@@ -518,6 +520,18 @@ class BasicProd: object
             firstTokenIndex, lastTokenIndex - firstTokenIndex + 1);
     }
 
+    /* 
+     *   Set my original token list.  This replaces the actual token list
+     *   we matched from the parser with a new token list provided by the
+     *   caller. 
+     */
+    setOrigTokenList(toks)
+    {
+        tokenList = toks;
+        firstTokenIndex = 1;
+        lastTokenIndex = toks.length();
+    }
+
     /*
      *   Can this object match tree resolve to the given object?  We'll
      *   resolve the phrase as though it were a topic phrase, then look for
@@ -528,7 +542,7 @@ class BasicProd: object
         /* set up a topic resolver */
         local resolver = new TopicResolver(
             action, issuingActor, targetActor, self, which,
-            createTopicQualifierResolver(issuingActor, targetActor));
+            action.createTopicQualifierResolver(issuingActor, targetActor));
 
         /* 
          *   set up a results object - use a tentative results object,
@@ -1482,10 +1496,8 @@ class YouProd: PronounProd
 class ReflexivePronounProd: PronounProd
     resolveNouns(resolver, results)
     {
-        local lst;
-
         /* ask the resolver for the reflexive pronoun binding */
-        lst = resolver.getReflexiveBinding(pronounType);
+        local lst = resolver.getReflexiveBinding(pronounType);
 
         /* 
          *   if the result is empty, the verb will provide the binding
@@ -1508,7 +1520,7 @@ class ReflexivePronounProd: PronounProd
             && resolver.actor_ != resolver.issuer_)
         {
             /* try treating the actor as the reflexive pronoun */
-            lst = [new ResolveInfo(resolver.actor_, 0)];
+            lst = [new ResolveInfo(resolver.actor_, 0, self)];
         }
 
         /* if the list is nil, it means reflexives aren't allowed here */
@@ -1814,7 +1826,7 @@ class PreResolvedProd: BasicProd
         {
             /* if it's not already a ResolveInfo, wrap it in a ResolveInfo */
             if (!obj.ofKind(ResolveInfo))
-                obj = new ResolveInfo(obj, 0);
+                obj = new ResolveInfo(obj, 0, self);
 
             /* the resolved object list is simply the one ResolveInfo */
             obj = [obj];
@@ -1848,7 +1860,7 @@ class PreResolvedAmbigProd: DefiniteNounProd
     construct(objs, asker, phrase)
     {
         /* remember my list of possible objects as a resolved object list */
-        objs_ = objs.mapAll({x: new ResolveInfo(x, 0)});
+        objs_ = objs.mapAll({x: new ResolveInfo(x, 0, nil)});
 
         /* remember the ResolveAsker to use */
         asker_ = asker;
@@ -1897,6 +1909,23 @@ class PreResolvedLiteralProd: BasicProd
 
     /* our underlying text */
     text_ = nil
+;
+
+/*
+ *   A token list production is an internally generated placeholder when we
+ *   synthesize a production rather than matching grammar, and we want to
+ *   keep track of the token list that triggered the node.
+ */
+class TokenListProd: BasicProd
+    construct(toks)
+    {
+        tokenList = toks;
+        firstTokenIndex = 1;
+        lastTokenIndex = toks.length();
+    }
+
+    /* the token list */
+    tokenList = nil
 ;
 
 
@@ -2584,9 +2613,9 @@ class PossessivePronounAdjProd: PronounProd
             if (obj != nil)
             {
                 if (obj.ofKind(Collection))
-                    lst = obj.mapAll({x: new ResolveInfo(x, 0)});
+                    lst = obj.mapAll({x: new ResolveInfo(x, 0, self)});
                 else
-                    lst = [new ResolveInfo(obj, 0)];
+                    lst = [new ResolveInfo(obj, 0, self)];
             }
         }
 
@@ -3329,7 +3358,7 @@ class VagueContainerNounPhraseProd: DefiniteNounProd
         lst = lst.subset({x: resolver.actor_.canSee(x)});
 
         /* map the contents to a resolved object list */
-        lst = lst.mapAll({x: new ResolveInfo(x, 0)});
+        lst = lst.mapAll({x: new ResolveInfo(x, 0, self)});
 
         /* make sure the list isn't empty */
         if (lst.length() == 0)
@@ -3779,10 +3808,8 @@ class NounPhraseWithVocab: NounPhraseProd
         for (local i = 1, local cnt = dictionaryMatches.length() ;
              i <= cnt ; i += 2)
         {
-            local cur;
-
             /* get this object */
-            cur = dictionaryMatches[i];
+            local cur = dictionaryMatches[i];
 
             /* if it's in scope, add a ResolveInfo for this object */
             if (resolver.objInScope(cur))
@@ -3804,7 +3831,7 @@ class NounPhraseWithVocab: NounPhraseProd
                     curFlags = flags;
 
                 /* add the item to the results */
-                ret.append(new ResolveInfo(cur, curFlags));
+                ret.append(new ResolveInfo(cur, curFlags, self));
             }
         }
 
@@ -3864,10 +3891,9 @@ class NounPhraseWithVocab: NounPhraseProd
         /* consider each preliminary match */
         foreach (local cur in matchList)
         {
-            local newObj;
-            
             /* ask this object if it wants to be included */
-            newObj = resolver.matchName(cur.obj_, origTokens, adjustedTokens);
+            local newObj = resolver.matchName(
+                cur.obj_, origTokens, adjustedTokens);
 
             /* check the result */
             if (newObj == nil)
@@ -3884,7 +3910,7 @@ class NounPhraseWithVocab: NounPhraseProd
                  *   the result list, using the same flags as the original 
                  */
                 foreach (local curObj in newObj)
-                    objVec.append(new ResolveInfo(curObj, cur.flags_));
+                    objVec.append(new ResolveInfo(curObj, cur.flags_, self));
             }
             else
             {
@@ -3892,7 +3918,7 @@ class NounPhraseWithVocab: NounPhraseProd
                  *   it's a single object - add it ito the result list,
                  *   using the same flags as the original 
                  */
-                objVec.append(new ResolveInfo(newObj, cur.flags_));
+                objVec.append(new ResolveInfo(newObj, cur.flags_, self));
             }
         }
 
@@ -4086,14 +4112,13 @@ class ImpliedActorNounPhraseProd: EmptyNounPhraseProd
     /* get my implied object */
     getImpliedObject(resolver, results)
     {
-        local actor;
-        
         /* 
          *   If the actor has a default interlocutor, use that, bypassing
          *   the normal implied object search. 
          */
-        if ((actor = resolver.actor_.getDefaultInterlocutor()) != nil)
-            return [new ResolveInfo(actor, DefaultObject)];
+        local actor = resolver.actor_.getDefaultInterlocutor();
+        if (actor != nil)
+            return [new ResolveInfo(actor, DefaultObject, nil)];
 
         /* ask the 'results' object for the information */
         return results.getImpliedObject(self, resolver);
@@ -4838,40 +4863,40 @@ class BasicResolveResults: ResolveResults
                         matchList, fullMatchList, scopeList,
                         requiredNum, resolver)
     {
-        local stillToResolve;
-        local resultList;
-        local disambigResults;
-        local pastResponses;
-        local pastIdx;
-        local everAsked;
-        local askingAgain;
-        local promptTxt;
-
         /* put the match list in disambigPromptOrder order */
         matchList = matchList.sort(
             SortAsc, {a, b: (a.obj_.disambigPromptOrder
                              - b.obj_.disambigPromptOrder) });
 
+        /* 
+         *   Get the token list for the original phrase.  Since the whole
+         *   point is to disambiguate a phrase that matched multiple
+         *   objects, all of the matched objects came from the same phrase,
+         *   so we can just grab the tokens from the first item. 
+         */
+        local np = matchList[1].np_;
+        local npToks = np ? np.getOrigTokenList() : [];
+
         /* for the prompt, use the lower-cased version of the input text */
-        promptTxt = txt.toLower().htmlify();
+        local promptTxt = txt.toLower().htmlify();
 
         /* ask the response keeper for its list of past responses, if any */
-        pastResponses = keeper.getAmbigResponses();
+        local pastResponses = keeper.getAmbigResponses();
 
         /* 
          *   set up a results object - use the special disambiguation
          *   results object instead of the basic resolver type 
          */
-        disambigResults = new DisambigResults(self);
+        local disambigResults = new DisambigResults(self);
 
         /* 
          *   start out with an empty still-to-resolve list - we have only
          *   the one list to resolve so far 
          */
-        stillToResolve = [];
+        local stillToResolve = [];
 
         /* we have nothing in the result list yet */
-        resultList = [];
+        local resultList = [];
 
         /* determine if we can ask for clarification interactively */
         if (!canResolveInteractively(resolver.getAction()))
@@ -4886,8 +4911,8 @@ class BasicResolveResults: ResolveResults
         }
 
         /* we're asking for the first time */
-        everAsked = nil;
-        askingAgain = nil;
+        local everAsked = nil;
+        local askingAgain = nil;
 
         /* 
          *   Keep going until we run out of things left to resolve.  Each
@@ -4897,17 +4922,12 @@ class BasicResolveResults: ResolveResults
          *   questions.  
          */
     queryLoop:
-        for (pastIdx = 1 ;; )
+        for (local pastIdx = 1 ;; )
         {
             local str;
             local toks;
-            local prodList;
-            local rankings;
-            local disResolver;
-            local scopeDisResolver;
-            local respList;
             local dist;
-            local curMatchList;
+            local curMatchList = [];
 
             /*
              *   Find the first distinguisher that can tell one or more of
@@ -4964,8 +4984,6 @@ class BasicResolveResults: ResolveResults
             }
             else
             {
-                local basicDistList;
-
                 /* 
                  *   Try filtering the options with the basic
                  *   distinguisher, to see if all of the remaining options
@@ -4973,7 +4991,7 @@ class BasicResolveResults: ResolveResults
                  *   refer to them by the object name, since every one has
                  *   the same object name.  
                  */
-                basicDistList = filterWithDistinguisher(
+                local basicDistList = filterWithDistinguisher(
                     matchList, basicDistinguisher);
 
                 /* 
@@ -5028,13 +5046,24 @@ class BasicResolveResults: ResolveResults
             /* presume we won't have to ask again */
             askingAgain = nil;
 
+            /* 
+             *   Add the new tokens to the noun phrase token list, at the
+             *   end, enclosed in parentheses.  The effect is that each
+             *   time we answer a disambiguation question, the answer
+             *   appears as a parenthetical at the end of the phrase: "take
+             *   the box (cardboard) (the big one)".
+             */
+            npToks = npToks.append(['(', tokPunct, '(']);
+            npToks += toks;
+            npToks = npToks.append([')', tokPunct, ')']);
+
         retryParse:
             /*
              *   Check for narrowing syntax.  If the command doesn't
              *   appear to match a narrowing syntax, then treat it as an
              *   entirely new command.  
              */
-            prodList = mainDisambigPhrase.parseTokens(toks, cmdDict);
+            local prodList = mainDisambigPhrase.parseTokens(toks, cmdDict);
 
             /* 
              *   if we didn't get any structural matches for a
@@ -5048,23 +5077,22 @@ class BasicResolveResults: ResolveResults
             dbgShowGrammarList(prodList);
 
             /* create a disambiguation response resolver */
-            disResolver = new DisambigResolver(txt, matchList, fullMatchList,
-                                               fullMatchList, resolver, dist);
+            local disResolver = new DisambigResolver(
+                txt, matchList, fullMatchList, fullMatchList, resolver, dist);
 
             /* 
              *   create a disambiguation resolver that uses the full scope
              *   list - we'll use this as a fallback if we can't match any
              *   objects with the narrowed possibility list 
              */
-            scopeDisResolver =
-                new DisambigResolver(txt, matchList, fullMatchList,
-                                     scopeList, resolver, dist);
+            local scopeDisResolver = new DisambigResolver(
+                txt, matchList, fullMatchList, scopeList, resolver, dist);
 
             /*
              *   Run the alternatives through the disambiguation response
              *   ranking process.  
              */
-            rankings =
+            local rankings =
                 DisambigRanking.sortByRanking(prodList, disResolver);
 
             /*
@@ -5118,7 +5146,7 @@ class BasicResolveResults: ResolveResults
             dbgShowGrammarWithCaption('Disambig Winner', rankings[1].match);
 
             /* get the response list */
-            respList = rankings[1].match.getResponseList();
+            local respList = rankings[1].match.getResponseList();
 
             /* 
              *   Select the objects for each response in our winning list.
@@ -5136,8 +5164,18 @@ class BasicResolveResults: ResolveResults
                          *   select the objects for this match, and add
                          *   them into the matches so far 
                          */
-                        resultList +=
-                            resp.resolveNouns(disResolver, disambigResults);
+                        local newObjs = resp.resolveNouns(
+                            disResolver, disambigResults);
+
+                        /* set the new token list in the new matches */
+                        for (local n in newObjs)
+                        {
+                            if (n.np_ != nil)
+                                n.np_.setOrigTokenList(npToks);
+                        }
+
+                        /* add them to the matches so far */
+                        resultList += newObjs;
                     }
                     catch (UnmatchedDisambigException udExc)
                     {
@@ -5156,9 +5194,6 @@ class BasicResolveResults: ResolveResults
                 }
                 catch (StillAmbiguousException saExc)
                 {
-                    local newList;
-                    local newFullList;
-
                     /* 
                      *   Get the new "reduced" list from the exception.
                      *   Use our original full list, and reduce it to
@@ -5168,7 +5203,7 @@ class BasicResolveResults: ResolveResults
                      *   original list, which keeps the next iteration's
                      *   question in the same order.  
                      */
-                    newList = new Vector(saExc.matchList_.length());
+                    local newList = new Vector(saExc.matchList_.length());
                     foreach (local cur in fullMatchList)
                     {
                         /* 
@@ -5204,7 +5239,7 @@ class BasicResolveResults: ResolveResults
                      *   about the reduced list, as the reduced list is
                      *   its scope for narrowing the results.  
                      */
-                    newFullList = new Vector(fullMatchList.length());
+                    local newFullList = new Vector(fullMatchList.length());
                     foreach (local cur in fullMatchList)
                     {
                         /* 
@@ -6575,15 +6610,14 @@ class OopsResults: CommandRanking
      */
     unknownNounPhrase(match, resolver)
     {
-        local wordList;
-        local ret;
         
         /* 
          *   if the resolver can handle this set of unknown words, treat
          *   it as a good noun phrase
          */
-        wordList = match.getOrigTokenList();
-        if ((ret = resolver.resolveUnknownNounPhrase(wordList)) != nil)
+        local wordList = match.getOrigTokenList();
+        local ret = resolver.resolveUnknownNounPhrase(wordList);
+        if (ret != nil)
             return ret;
         
         /* 

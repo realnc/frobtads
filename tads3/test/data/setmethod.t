@@ -52,7 +52,7 @@ obj5: obj4
 ;
 
 
-property a, b, c;
+property a, b, c, d, e;
 
 method m_topLoc()
 {
@@ -65,6 +65,14 @@ fopt(a, b, c = 0)
     return a + b + c;
 }
 
+testConcat([args])
+{
+    local ret = '';
+    for (local s in args)
+        ret += s;
+    return ret;
+}
+
 main(args)
 {
     local i = 100;
@@ -73,11 +81,14 @@ main(args)
     obj1.setMethod(&b, { y : "This is b - y=<<y>>\n" });
     obj1.setMethod(&c, 'This is c\n');
     obj1.setMethod(&d, obj2.getMethod(&d));
+    obj1.setMethod(&e, testConcat('This is e: ', makeString('Test... ', 5),
+                                  '\n'));
 
     obj1.a(200);
     obj1.b(300);
     obj1.c;
     obj1.d(400);
+    obj1.e;
     "\b";
 
     local s = obj2.getMethod(&e);

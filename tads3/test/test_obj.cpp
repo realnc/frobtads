@@ -198,3 +198,4 @@ vm_prop_id_t CVmImageLoader::get_last_prop(VMG0_)
 {
     return (vm_prop_id_t)0;
 }
+

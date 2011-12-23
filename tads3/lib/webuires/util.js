@@ -1324,7 +1324,7 @@ function removeKeyHandler(obj, func, ctx)
 /* ------------------------------------------------------------------------ */
 /*
  *   Abstract event handler object.  This simplifies handling for code that's
- *   conditional on some external event or process completing.  Use
+ *   conditional on some external event or process completing.  Use the
  *   whenDone() method to invoke a callback if and when the event has
  *   occurred: if the event has already occurred, we'll invoke the callback
  *   immediately, otherwise we'll queue it up to be invoked when the event
@@ -2642,10 +2642,16 @@ ServerRequest.Subscription = 2; // subscription to event or other update
 ServerRequest.nextID = 1;
 
 // Sequence number.  This is a parameter we add to all request URLs to
-// ensure that each request is unique.  Some browsers improperly cache
-// responses to XML requests, even when the server explicitly sets the
-// no-cache headers.  The caching is based on URL, so by making each
-// request's URL unique, we ensure that no caching can occur.
+// ensure that each request is unique, to prevent the browser from using
+// a cached reply to a past request as the answer to a new request.  This
+// really shouldn't be necessary, because the server *should* set the
+// reply headers to indicate that the reply is not to be cached, and the
+// browser *should* obey those headers.  But some browsers are buggy.
+// We work around this by making each URL unique, using a sequence number
+// parameter added to the other URL parameters.  The browser uses the URL
+// as the cache key, so adding a different sequence number to each request's
+// URL effectively eliminates caching by ensuring that no two requests ever
+// have the exact same URL.
 ServerRequest.sequenceNum = (new Date()).getTime();
 
 // Number of outstanding Command requests.  While command requests are
@@ -2669,11 +2675,15 @@ ServerRequest.prototype.send = function()
         var sr = this;
         req.onreadystatechange = function() { sr.xmlEvent(req); }
 
-        // Add a sequence number parameter to the command.  This is important
-        // because some browsers improperly cache responses.
+        // Add a sequence number parameter to the URL.  We presume the
+        // server will ignore this, as it's just an extra parameter that
+        // it's not looking for; this is simply to make certain the URL
+        // is distinct from any past URLs we've ever sent, so that the
+        // browser will actually send the request to the server rather
+        // than using a cached reply from a past request.
         var resource = this.resource;
         resource += (resource.indexOf("?") < 0 ? "?" : "&")
-                    + "seqno=" + ServerRequest.sequenceNum++;
+                    + "TADSWseqno=" + ServerRequest.sequenceNum++;
 
         // open the request
         req.open(this.postData ? "POST" : "GET", resource, true);
@@ -2790,6 +2800,7 @@ ServerRequest.prototype.xmlEvent = function(req)
         }
         else
         {
+            // get the status text, if available
             try { var statusText = req.statusText; }
             catch (e) { statusText = ""; }
 
@@ -2813,8 +2824,44 @@ ServerRequest.prototype.xmlEvent = function(req)
             // assume we won't retry this request
             var retry = false;
 
-            // check the response code and presence of a reply body
-            if (req.status >= 400 & req.status <= 499 && req.status != 408)
+            // Check for server disconnection in standalone mode on
+            // Windows.  On Windows, the standalone interpreter uses
+            // the IE window.external interface to provide access to
+            // this information.  The disconnect flag tells us when the
+            // user terminates the server program explicitly, such as
+            // via the Workbench debugger.  If we're not running on the
+            // Windows interpreter in standalone mode, this interface
+            // won't be available, so we'll harmlessly skip this test
+            // on other platforms.
+            //
+            // Otherwise, check the HTTP status and the reply body to
+            // determine what went wrong.
+            //
+            if (window.external
+                && window.external.IsConnected
+                && !window.external.IsConnected())
+            {
+                // The server program has been explicitly terminated,
+                // such as with a Terminate Game command in the Workbench
+                // debugger.
+                this.failed = true;
+                msg = "The program has been terminated.";
+            }
+            else if (req.status == 503
+                     && req.statusText.match(/\(Shutting Down\)/))
+            {
+                // Normally, the server won't shut down until all clients
+                // disconnect.  However, there are ways to force it to shut
+                // down externally, such as via a Terminate Game command
+                // in the debugger.  When the server shuts down while
+                // requests are still pending, it bounces the pending
+                // requests with a 503 error with "(Shutting Down)" in
+                // the status text.
+                this.failed = true;
+                msg = "The program has been terminated.";
+            }
+            else if (req.status != 408
+                     && req.status >= 400 && req.status <= 499)
             {
                 // Most 400 status codes indicate that the request was
                 // transmitted properly but is not acceptable to the
@@ -2823,6 +2870,17 @@ ServerRequest.prototype.xmlEvent = function(req)
                 msg = "The server rejected a network request from the "
                       + "client. This could be due to a programming "
                       + "error in the " + selfNoun + "'s display logic."
+                      + errorRecoveryAction;
+            }
+            else if (req.status == 500 || req.status == 501)
+            {
+                // 500 (internal server error) and 501 (not implemented)
+                // indicate server-side errors that are most likely
+                // permanent.
+                this.failed = true;
+                msg = "An error occurred on the server. This could be "
+                      + "due to a programming error in the "
+                      + selfNoun + "."
                       + errorRecoveryAction;
             }
             else if (req.status != 200 || !req.responseText)

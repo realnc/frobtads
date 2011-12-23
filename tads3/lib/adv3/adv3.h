@@ -26,6 +26,7 @@
 #include <tok.h>
 #include <t3.h>
 #include <vector.h>
+#include <strbuf.h>
 #include <file.h>
 #include <dict.h>
 

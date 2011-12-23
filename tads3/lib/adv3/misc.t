@@ -1020,6 +1020,9 @@ class EventList: Script
     /* the list of events */
     eventList = []
 
+    /* cached length of the event list */
+    eventListLen = (eventList.length())
+
     /* advance to the next state */
     advanceState()
     {
@@ -1033,16 +1036,20 @@ class EventList: Script
     /* process the next step of the script */
     doScript()
     {
-        local idx;
-        
         /* get our current event state */
-        idx = getScriptState();
+        local idx = getScriptState();
+
+        /* get the list (evaluate it once to avoid repeated side effects) */
+        local lst = eventList;
+
+        /* cache the length */
+        eventListLen = lst.length();
 
         /* if it's a valid index in our list, fire the event */
-        if (idx >= 1 && idx <= eventList.length())
+        if (idx >= 1 && idx <= eventListLen)
         {
             /* carry out the event */
-            doScriptEvent(eventList[idx]);
+            doScriptEvent(lst[idx]);
         }
 
         /* perform any end-of-script processing */
@@ -1122,7 +1129,7 @@ class CyclicEventList: EventList
         ++curScriptState;
 
         /* if we've passed the end of the list, loop back to the start */
-        if (curScriptState > eventList.length())
+        if (curScriptState > eventListLen)
             curScriptState = 1;
     }
 ;
@@ -1161,7 +1168,7 @@ class StopEventList: EventList
     advanceState()
     {
         /* if we haven't yet reached the last state, go to the next one */
-        if (curScriptState < eventList.length())
+        if (curScriptState < eventListLen)
             ++curScriptState;
     }
 ;
@@ -1201,18 +1208,20 @@ class RandomEventList: RandomFiringScript, EventList
     /* process the next step of the script */
     doScript()
     {
-        local idx;
-
         /* check the odds to see if we want to fire an event at all */
         if (!checkEventOdds())
             return;
         
         /* get our next random number */
-        idx = getNextRandom();
+        local idx = getNextRandom();
+
+        /* cache the list and its length, to avoid repeated side effects */
+        local lst = eventList;
+        eventListLen = lst.length();
         
         /* run the event, if the index is valid */
-        if (idx >= 1 && idx <= eventList.length())
-            doScriptEvent(eventList[idx]);
+        if (idx >= 1 && idx <= eventListLen)
+            doScriptEvent(lst[idx]);
     }
     
     /*
@@ -1229,7 +1238,7 @@ class RandomEventList: RandomFiringScript, EventList
          *   result of rand(list.length) to get a value in the proper range
          *   for a list index.  
          */
-        return rand(eventList.length()) + 1;
+        return rand(eventListLen) + 1;
     }
 ;
 
@@ -1291,9 +1300,11 @@ class ShuffledEventList: RandomFiringScript, EventList
     /* process the next step of the script */
     doScript()
     {
-        local evt;
-        local firstLen = firstEvents.length();
-        local eventLen = eventList.length();
+        /* cache the lists to avoid repeated side effects */
+        local firstLst = firstEvents;
+        local firstLen = firstLst.length();
+        local lst = eventList;
+        eventListLen = lst.length();
 
         /* process the script step only if the event odds allow it */
         if (!checkEventOdds())
@@ -1317,20 +1328,21 @@ class ShuffledEventList: RandomFiringScript, EventList
          *   States above N+M show elements from the eventList list in
          *   shuffled order.  
          */
+        local evt;
         if (curScriptState <= firstLen)
         {
             /* simply fetch the next string from firstEvents */
             evt = firstEvents[curScriptState++];
         }
-        else if (!shuffleFirst && curScriptState <= firstLen + eventLen)
+        else if (!shuffleFirst && curScriptState <= firstLen + eventListLen)
         {
             /* fetch the next string from eventList */
-            evt = eventList[curScriptState++ - firstLen];
+            evt = lst[curScriptState++ - firstLen];
         }
         else
         {
             /* we're showing shuffled strings from the eventList list */
-            evt = eventList[getNextRandom()];
+            evt = lst[getNextRandom()];
         }
 
         /* execute the event */
@@ -1352,7 +1364,7 @@ class ShuffledEventList: RandomFiringScript, EventList
              *   create a shuffled integer list - we'll use these shuffled
              *   integers as indices into our event list 
              */
-            shuffledList_ = new ShuffledIntegerList(1, eventList.length());
+            shuffledList_ = new ShuffledIntegerList(1, eventListLen);
 
             /* apply our suppressRepeats option to the shuffled list */
             shuffledList_.suppressRepeats = suppressRepeats;

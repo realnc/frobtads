@@ -563,7 +563,7 @@ intrinsic class File 'file/030003': Object
  *   You create a temporary file with 'new TemporaryFile()'.  This
  *   automatically assigns the object a unique filename in the local file
  *   system, typically in a system directory reserved for temporary files.
- *   The local file can then be opened, read and written, and otherwise
+ *   The local file can then be opened, read, written, and otherwise
  *   manipulated via the File class, just like any other file.  Simply pass
  *   the TemporaryFile object in place of a filename to the File.openXxx
  *   methods.  
@@ -579,7 +579,11 @@ intrinsic class File 'file/030003': Object
  *   
  *   TemporaryFile objects are inherently transient - they're only valid for
  *   the current session on the current local system, so they can't be saved
- *   or restored.  
+ *   or restored.
+ *   
+ *   Temporary files are exempt from the file safety level settings, because
+ *   the inherent restrictions on temporary files provide the same system
+ *   protections that the safety level settings provide for ordinary files.
  */
 intrinsic class TemporaryFile 'tempfile/030000': Object
 {
@@ -591,8 +595,8 @@ intrinsic class TemporaryFile 'tempfile/030000': Object
      *   is usually in a system directory reserved for temporary files, and
      *   the file safety level settings often prohibit opening files outside
      *   of the program's own home directory.  To open the temp file, you
-     *   should always simply pass the TemporaryFile object itself in place
-     *   of the filename.
+     *   should always pass the TemporaryFile object itself in place of the
+     *   filename.
      */
     getFilename();
 

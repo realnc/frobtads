@@ -846,6 +846,12 @@ function maybeOpenCommandLine()
 
         // set the default focus
         $win().setDefaultFocus(null, null);
+
+        // We only open the command line when it's in view, so it must
+        // be in view.  Reset the scroll anchor to the new command line
+        // on the assumption that the user has had a chance to view
+        // everything up to this point.
+        scrollAnchor = getObjectRect("cmdline").y - 5;
     }, 0);
 
     // set the initial field width

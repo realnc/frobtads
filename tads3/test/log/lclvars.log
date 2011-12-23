@@ -16,7 +16,7 @@
 
 Total blocks in use: 0
 Stack trace for f #1:
-   dumpStack('f #1')
+   dumpStack('f #1') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'f #1'
        t = nil
@@ -24,7 +24,7 @@ Stack trace for f #1:
        id = 'f #1'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -41,7 +41,7 @@ Stack trace for f #1:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -52,14 +52,14 @@ Stack trace for f #1:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
@@ -68,7 +68,7 @@ Stack trace for f #1:
 g: i=4, j=6, k=5
 
 Stack trace for g 1:
-   dumpStack('g 1')
+   dumpStack('g 1') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'g 1'
        t = nil
@@ -76,7 +76,7 @@ Stack trace for g 1:
        id = 'g 1'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -95,7 +95,7 @@ Stack trace for g 1:
        j = 6
        k = 5
        af1 = nil
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -112,7 +112,7 @@ Stack trace for g 1:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -123,21 +123,21 @@ Stack trace for g 1:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -146,7 +146,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(1)
+   {anonFunc}(1) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 1
        cnt = 1
@@ -158,7 +158,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 1
@@ -169,7 +169,7 @@ Stack trace for af1-nested:
        sum = 1
        cnt = 1
        i = 4
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -188,7 +188,7 @@ Stack trace for af1-nested:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -205,7 +205,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -216,21 +216,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -239,7 +239,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(2)
+   {anonFunc}(2) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 2
        cnt = 2
@@ -251,7 +251,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 3
@@ -262,7 +262,7 @@ Stack trace for af1-nested:
        sum = 3
        cnt = 2
        i = 4
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -281,7 +281,7 @@ Stack trace for af1-nested:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -298,7 +298,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -309,21 +309,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -332,7 +332,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(3)
+   {anonFunc}(3) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 3
        cnt = 3
@@ -344,7 +344,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 6
@@ -355,7 +355,7 @@ Stack trace for af1-nested:
        sum = 6
        cnt = 3
        i = 4
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -374,7 +374,7 @@ Stack trace for af1-nested:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -391,7 +391,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -402,21 +402,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -425,7 +425,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(4)
+   {anonFunc}(4) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 4
        cnt = 4
@@ -437,7 +437,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 10
@@ -448,7 +448,7 @@ Stack trace for af1-nested:
        sum = 10
        cnt = 4
        i = 4
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -467,7 +467,7 @@ Stack trace for af1-nested:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -484,7 +484,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -495,21 +495,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -518,7 +518,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(5)
+   {anonFunc}(5) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 5
        cnt = 5
@@ -530,7 +530,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 15
@@ -541,7 +541,7 @@ Stack trace for af1-nested:
        sum = 15
        cnt = 5
        i = 4
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -560,7 +560,7 @@ Stack trace for af1-nested:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -577,7 +577,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -588,21 +588,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1 - done:
-   dumpStack('af1 - done')
+   dumpStack('af1 - done') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1 - done'
        t = nil
@@ -610,7 +610,7 @@ Stack trace for af1 - done:
        id = 'af1 - done'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 15
@@ -621,7 +621,7 @@ Stack trace for af1 - done:
        sum = 15
        cnt = 5
        i = 15
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -640,7 +640,7 @@ Stack trace for af1 - done:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -657,7 +657,7 @@ Stack trace for af1 - done:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -668,21 +668,21 @@ Stack trace for af1 - done:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for g 2:
-   dumpStack('g 2')
+   dumpStack('g 2') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'g 2'
        t = nil
@@ -690,7 +690,7 @@ Stack trace for g 2:
        id = 'g 2'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   g(3, 5, 4)
+   g(3, 5, 4) [invokee=g]
    Locals via T3GetStackLocals:
        a = 3
        b = 5
@@ -709,7 +709,7 @@ Stack trace for g 2:
        j = 6
        k = 5
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -726,7 +726,7 @@ Stack trace for g 2:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -737,14 +737,14 @@ Stack trace for g 2:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
@@ -752,7 +752,7 @@ Stack trace for g 2:
 
 f #2: aa=2, bb=4, cc=6
 Stack trace for f #2:
-   dumpStack('f #2')
+   dumpStack('f #2') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'f #2'
        t = nil
@@ -760,7 +760,7 @@ Stack trace for f #2:
        id = 'f #2'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -783,7 +783,7 @@ Stack trace for f #2:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -794,14 +794,14 @@ Stack trace for f #2:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
@@ -810,7 +810,7 @@ Stack trace for f #2:
 g: i=301, j=501, k=401
 
 Stack trace for g 1:
-   dumpStack('g 1')
+   dumpStack('g 1') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'g 1'
        t = nil
@@ -818,7 +818,7 @@ Stack trace for g 1:
        id = 'g 1'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -837,7 +837,7 @@ Stack trace for g 1:
        j = 501
        k = 401
        af1 = nil
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -860,7 +860,7 @@ Stack trace for g 1:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -871,21 +871,21 @@ Stack trace for g 1:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -894,7 +894,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(1)
+   {anonFunc}(1) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 1
        cnt = 1
@@ -906,7 +906,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 1
@@ -917,7 +917,7 @@ Stack trace for af1-nested:
        sum = 1
        cnt = 1
        i = 301
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -936,7 +936,7 @@ Stack trace for af1-nested:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -959,7 +959,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -970,21 +970,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -993,7 +993,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(2)
+   {anonFunc}(2) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 2
        cnt = 2
@@ -1005,7 +1005,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 3
@@ -1016,7 +1016,7 @@ Stack trace for af1-nested:
        sum = 3
        cnt = 2
        i = 301
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1035,7 +1035,7 @@ Stack trace for af1-nested:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1058,7 +1058,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1069,21 +1069,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -1092,7 +1092,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(3)
+   {anonFunc}(3) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 3
        cnt = 3
@@ -1104,7 +1104,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 6
@@ -1115,7 +1115,7 @@ Stack trace for af1-nested:
        sum = 6
        cnt = 3
        i = 301
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1134,7 +1134,7 @@ Stack trace for af1-nested:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1157,7 +1157,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1168,21 +1168,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -1191,7 +1191,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(4)
+   {anonFunc}(4) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 4
        cnt = 4
@@ -1203,7 +1203,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 10
@@ -1214,7 +1214,7 @@ Stack trace for af1-nested:
        sum = 10
        cnt = 4
        i = 301
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1233,7 +1233,7 @@ Stack trace for af1-nested:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1256,7 +1256,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1267,21 +1267,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1-nested:
-   dumpStack('af1-nested')
+   dumpStack('af1-nested') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1-nested'
        t = nil
@@ -1290,7 +1290,7 @@ Stack trace for af1-nested:
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}(5)
+   {anonFunc}(5) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        k = 5
        cnt = 5
@@ -1302,7 +1302,7 @@ Stack trace for af1-nested:
    [1, 2, 3, 4, 5].forEach({obj:AnonFuncPtr})
    (no locals)
    (no frame ref)
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 15
@@ -1313,7 +1313,7 @@ Stack trace for af1-nested:
        sum = 15
        cnt = 5
        i = 301
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1332,7 +1332,7 @@ Stack trace for af1-nested:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1355,7 +1355,7 @@ Stack trace for af1-nested:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1366,21 +1366,21 @@ Stack trace for af1-nested:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for af1 - done:
-   dumpStack('af1 - done')
+   dumpStack('af1 - done') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'af1 - done'
        t = nil
@@ -1388,7 +1388,7 @@ Stack trace for af1 - done:
        id = 'af1 - done'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}([1, 2, 3, 4, 5])
+   {anonFunc}([1, 2, 3, 4, 5]) [invokee={obj:AnonFuncPtr}]
    Locals via T3GetStackLocals:
        a = [1, 2, 3, 4, 5]
        sum = 15
@@ -1399,7 +1399,7 @@ Stack trace for af1 - done:
        sum = 15
        cnt = 5
        i = 15
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1418,7 +1418,7 @@ Stack trace for af1 - done:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1441,7 +1441,7 @@ Stack trace for af1 - done:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1452,21 +1452,21 @@ Stack trace for af1 - done:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for g 2:
-   dumpStack('g 2')
+   dumpStack('g 2') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'g 2'
        t = nil
@@ -1474,7 +1474,7 @@ Stack trace for g 2:
        id = 'g 2'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   g(300, 500, 400)
+   g(300, 500, 400) [invokee=g]
    Locals via T3GetStackLocals:
        a = 300
        b = 500
@@ -1493,7 +1493,7 @@ Stack trace for g 2:
        j = 501
        k = 401
        af1 = {obj:AnonFuncPtr}
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        aa = 2
        bb = 4
@@ -1516,7 +1516,7 @@ Stack trace for g 2:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1527,21 +1527,21 @@ Stack trace for g 2:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for f #3:
-   dumpStack('f #3')
+   dumpStack('f #3') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'f #3'
        t = nil
@@ -1549,7 +1549,7 @@ Stack trace for f #3:
        id = 'f #3'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -1566,7 +1566,7 @@ Stack trace for f #3:
        x = 3
        y = 5
        z = 4
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1577,21 +1577,21 @@ Stack trace for f #3:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for f #4:
-   dumpStack('f #4')
+   dumpStack('f #4') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'f #4'
        t = nil
@@ -1599,7 +1599,7 @@ Stack trace for f #4:
        id = 'f #4'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}]
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -1616,7 +1616,7 @@ Stack trace for f #4:
        x = 30
        y = 50
        z = 40
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1627,14 +1627,14 @@ Stack trace for f #4:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
@@ -1642,7 +1642,7 @@ Stack trace for f #4:
 
 This is DynamicFunc 1 (cx=101, cy=202)!
 Stack trace for DynamicFunc 1:
-   dumpStack('DynamicFunc 1')
+   dumpStack('DynamicFunc 1') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'DynamicFunc 1'
        t = nil
@@ -1650,14 +1650,14 @@ Stack trace for DynamicFunc 1:
        id = 'DynamicFunc 1'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {obj:DynamicFunc}(101, 202)
+   {obj:DynamicFunc}(101, 202) [invokee={obj:DynamicFunc}]
    Locals via T3GetStackLocals:
        cx = 101
        cy = 202
    Locals via StackFrameDesc.getVars():
        cx = 101
        cy = 202
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -1674,7 +1674,7 @@ Stack trace for DynamicFunc 1:
        x = 30
        y = 50
        z = 40
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1685,21 +1685,21 @@ Stack trace for DynamicFunc 1:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for rexReplace callback:
-   dumpStack('rexReplace callback')
+   dumpStack('rexReplace callback') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'rexReplace callback'
        t = nil
@@ -1707,7 +1707,7 @@ Stack trace for rexReplace callback:
        id = 'rexReplace callback'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}('test', 1)
+   {anonFunc}('test', 1) [invokee={anonFunc}]
    Locals via T3GetStackLocals:
        idx = 1
        match = 'test'
@@ -1717,7 +1717,7 @@ Stack trace for rexReplace callback:
    rexReplace('<alpha>+', 'test string', {anonFunc})
    (no locals)
    (no frame ref)
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -1734,7 +1734,7 @@ Stack trace for rexReplace callback:
        x = 30
        y = 50
        z = 40
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1745,21 +1745,21 @@ Stack trace for rexReplace callback:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        args = ['lclvars.t3']
 
 Stack trace for rexReplace callback:
-   dumpStack('rexReplace callback')
+   dumpStack('rexReplace callback') [invokee=dumpStack]
    Locals via T3GetStackLocals:
        id = 'rexReplace callback'
        t = nil
@@ -1767,7 +1767,7 @@ Stack trace for rexReplace callback:
        id = 'rexReplace callback'
        t = [{obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo},
 {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}, {obj:T3StackInfo}]
-   {anonFunc}('string', 6)
+   {anonFunc}('string', 6) [invokee={anonFunc}]
    Locals via T3GetStackLocals:
        idx = 6
        match = 'string'
@@ -1777,7 +1777,7 @@ Stack trace for rexReplace callback:
    rexReplace('<alpha>+', 'test string', {anonFunc})
    (no locals)
    (no frame ref)
-   f(1, 2, 3)
+   f(1, 2, 3) [invokee=f]
    Locals via T3GetStackLocals:
        a = 1
        b = 2
@@ -1794,7 +1794,7 @@ Stack trace for rexReplace callback:
        x = 30
        y = 50
        z = 40
-   main(['lclvars.t3'])
+   main(['lclvars.t3']) [invokee=main]
    Locals via T3GetStackLocals:
        i = 1
        j = 2
@@ -1805,14 +1805,14 @@ Stack trace for rexReplace callback:
        j = 2
        k = 3
        args = ['lclvars.t3']
-   _mainCommon(['lclvars.t3'], nil)
+   _mainCommon(['lclvars.t3'], nil) [invokee=_mainCommon]
    Locals via T3GetStackLocals:
        restoreFile = nil
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():
        restoreFile = nil
        args = ['lclvars.t3']
-   _main(['lclvars.t3'])
+   _main(['lclvars.t3']) [invokee=_main]
    Locals via T3GetStackLocals:
        args = ['lclvars.t3']
    Locals via StackFrameDesc.getVars():

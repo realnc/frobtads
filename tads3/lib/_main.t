@@ -91,7 +91,7 @@ _mainCommon(args, restoreFile)
                      *   force a function called mainRestore() to be linked
                      *   with the program.  
                      */
-                    mainGlobal.mainRestoreFunc(args, restoreFile);
+                    (mainGlobal.mainRestoreFunc)(args, restoreFile);
                 }
                 else
                 {
@@ -586,8 +586,9 @@ class BreakLoopSignal: Exception
 /* ------------------------------------------------------------------------ */
 /*
  *   Get the "translated" datatype of a value.  This is essentially the
- *   same as dataType(), except that anonymous function objects are
- *   indicated as ordinary function pointer (TypeFuncPtr).  
+ *   same as dataType(), except that anonymous function objects and dynamic
+ *   function objects are treated as being "function pointer" types
+ *   (TypeFuncPtr).  
  */
 dataTypeXlat(val)
 {
@@ -597,7 +598,9 @@ dataTypeXlat(val)
     t = dataType(val);
     
     /* if it's an anonymous function, return TypeFuncPtr */
-    if (t == TypeObject && val.ofKind(AnonFuncPtr))
+    if (t == TypeObject
+        && (val.ofKind(AnonFuncPtr)
+            || (defined(DynamicFunc) && val.ofKind(DynamicFunc))))
         return TypeFuncPtr;
 
     /* otherwise, just return the base type */

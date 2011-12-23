@@ -15,6 +15,13 @@
 #include <file.h>
 
 /* ------------------------------------------------------------------------ */
+/* 
+ *   write a message to the system debug log
+ */
+#define DbgMsg(msg) t3DebugTrace(T3DebugLog, msg)
+
+
+/* ------------------------------------------------------------------------ */
 /*
  *   Session timeout settings.  All times are in milliseconds.
  */
@@ -182,7 +189,7 @@ transient webSession: object
      *   first evaluation, and it remains fixed at that point for as long
      *   as we're running.  
      */
-    key = (key = generateRandomKey())
+    sessionKey = (sessionKey = generateRandomKey())
 
     /*
      *   The collaborative session key.  This is a secondary session key
@@ -210,7 +217,7 @@ transient webSession: object
         }
 
         /* the key has to match either the main key or the collab key */
-        if (rkey != key && rkey != collabKey)
+        if (rkey != sessionKey && rkey != collabKey)
         {
             /* invalid key -> forbidden */
             req.sendReply(403);
@@ -258,7 +265,7 @@ transient webSession: object
     {
         /* return the main window URL */
         return webSession.getFullUrl(
-            '<<webMainWin.path>>?TADS_session=<<collabKey>>');
+            '<<webMainWin.vpath>>?TADS_session=<<collabKey>>');
     }
 
     /* list of active client sessions (ClientSession objects) */
@@ -376,7 +383,7 @@ class ClientSession: object
         storageSID = ssid;
 
         /* note if we're a secondary (collaborative play) user */
-        isPrimary = (skey == webSession.key);
+        isPrimary = (skey == webSession.sessionKey);
         
         /* add me to the master list of sessions */
         webSession.addClient(self);
@@ -429,7 +436,7 @@ class ClientSession: object
      *   requests.  We send this to the client as a cookie when they
      *   connect, so we get it back on each request.  
      */
-    key = perInstance(generateRandomKey())
+    clientKey = perInstance(generateRandomKey())
 
     /* 
      *   The storage server session key for the user connected to this
@@ -738,7 +745,7 @@ class ClientSession: object
         }
 
         /* find the client that matches the key string */
-        return webSession.clientSessions.valWhich({ x: x.key == key });
+        return webSession.clientSessions.valWhich({ x: x.clientKey == key });
     }
 
     /*
@@ -790,18 +797,34 @@ class ClientEventRequest: object
  */
 class WebResource: object
     /*
-     *   The path to the resource.  This is simply the part of the URL
-     *   following the host address, starting with a slash "/" and
-     *   continuing up to and not including any "?"  query parameters.  For
-     *   example, for the URL "http://192.168.1.15/test/path?param=1", the
-     *   resource path would be "/test/path".
+     *   The virtual path to the resource.  This is the apparent URL path
+     *   to this resource, as seen by the client.
      *   
-     *   This can be given as a string or a RexPattern.  If it's a string,
-     *   it must match the resource path in the request exactly, including
-     *   upper/lower case.  If it's a RexPattern, the path will be matched
-     *   to the pattern with the usual regular expression rules.  
+     *   URL paths follow the Unix file system conventions in terms of
+     *   format, but don't confuse the virtual path with an actual file
+     *   system path.  The vpath doesn't have anything to do with the disk
+     *   file system on the server machine or anywhere else.  That's why we
+     *   call it "virtual" - it's merely the apparent location, from the
+     *   client's perspective.
+     *   
+     *   When the server receives a request from the client, it looks at
+     *   the URL sent by the client to determine which WebResource object
+     *   should handle the request.  The server does this by matching the
+     *   resource path portion of the URL to the virtual path of each
+     *   WebResource, until it finds a WebResource that matches.  The
+     *   resource path in the URL is the part of the URL following the
+     *   domain, and continuing up to but not including any "?" query
+     *   parameters.  The resource path always starts with a slash "/".
+     *   For example, for the URL "http://192.168.1.15/test/path?param=1",
+     *   the resource path would be "/test/path".
+     *   
+     *   The virtual path can be given as a string or as a RexPattern.  If
+     *   it's a string, a URL resource path must match the virtual path
+     *   exactly, including upper/lower case.  If the virtual path is given
+     *   as a RexPattern, the URL resource path will be matched to the
+     *   pattern with the usual regular expression rules.  
      */
-    path = ''
+    vpath = ''
 
     /*
      *   Process the request.  This is invoked when we determine that this
@@ -867,13 +890,13 @@ class WebResource: object
         if (verb != 'GET' && verb != 'POST')
             return nil;
 
-        /* if 'path' a string, simply match the string exactly */
-        if (dataType(path) == TypeSString)
-            return path == qpath;
+        /* if the virtual path a string, simply match the string exactly */
+        if (dataType(vpath) == TypeSString)
+            return vpath == qpath;
 
         /* if it's a regular expression, match the pattern */
-        if (dataType(path) == TypeObject && path.ofKind(RexPattern))
-            return rexMatch(path, qpath) != nil;
+        if (dataType(vpath) == TypeObject && vpath.ofKind(RexPattern))
+            return rexMatch(vpath, qpath) != nil;
 
         /* we can't match other path types */
         return nil;
@@ -893,9 +916,9 @@ class WebResource: object
          *   characters).  Otherwise, use a default root of <reply>.  
          */
         local root = 'reply';
-        if (dataType(path) == TypeSString
-            && path.length() > 0
-            && rexSearch(path, '/([^/]+)$') != nil)
+        if (dataType(vpath) == TypeSString
+            && vpath.length() > 0
+            && rexSearch(vpath, '/([^/]+)$') != nil)
             root = rexGroup(1)[3];
         
         /* send the reply, wrapping the fragment in a proper XML document */
@@ -920,33 +943,34 @@ class WebResource: object
  *   
  *   To expose a bundled game resource as a Web object that the client can
  *   access and download via HTTP, simply create an instance of this class,
- *   and set the path to the resource name.  See coverArtResource below for
- *   an example - that object creates a URL for the Cover Art image so that
- *   the browser can download and display it.
+ *   and set the virtual path (the vpath property) to the resource name.
+ *   See coverArtResource below for an example - that object creates a URL
+ *   for the Cover Art image so that the browser can download and display
+ *   it.
  *   
  *   You can expose *all* bundled resources in the entire game simply by
  *   creating an object like this:
  *   
  *.     WebResourceFile
- *.         path = static new RexPattern('/')
+ *.         vpath = static new RexPattern('/')
  *.     ;
  *   
  *   That creates a URL mapping that matches *any* URL path that
  *   corresponds to a bundled resource name.  The library intentionally
  *   doesn't provide an object like this by default, as a security measure;
- *   we think it's generally better for the default configuration to err on
- *   the side of caution, and in this case the cautious thing to do is to
- *   hide everything by default.  There's no system-level security risk in
- *   exposing all resources, since the only files available as resources
- *   are files you explicitly bundle into the build anyway; but some
- *   resources might be for internal use within the game, so we don't want
- *   to just assume that everything should be downloadable.
+ *   the default configuration as a rule tries to err on the side of
+ *   caution, and in this case the cautious thing to do is to hide
+ *   everything by default.  There's really no system-level security risk
+ *   in exposing all resources, since the only files available as resources
+ *   are files you explicitly bundle into the build anyway; but even so,
+ *   some resources might be for internal use within the game, so we don't
+ *   want to just assume that everything should be downloadable.
  *   
  *   You can also expose resources on a directory-by-directory basis,
  *   simply by specifying a longer path prefix:
  *   
  *.     WebResourceFile
- *.         path = static new RexPattern('/graphics/')
+ *.         vpath = static new RexPattern('/graphics/')
  *.     ;
  *   
  *   Again, the library doesn't define anything like this by default, since
@@ -956,8 +980,8 @@ class WebResource: object
 class WebResourceResFile: WebResource
     /* 
      *   Match a request.  A resource file resource matches if we match the
-     *   path setting for the resource, and the requested resource file
-     *   exists. 
+     *   virtual path setting for the resource, and the requested resource
+     *   file exists.  
      */
     matchRequest(query, req)
     {
@@ -998,7 +1022,7 @@ class WebResourceResFile: WebResource
          *   contents, so as a fallback infer the media type from the
          *   filename suffix if possible.
          */
-        local mimeType = ['css' -> 'text/css'][ext];
+        local mimeType = browserExtToMime[ext];
 
         /* send the file's contents */
         req.sendReply(fp, mimeType);
@@ -1007,13 +1031,19 @@ class WebResourceResFile: WebResource
         fp.closeFile();
     }
 
+    /* extension to MIME type map for important browser file types */
+    browserExtToMime = static [
+        'css' -> 'text/css',
+        'js' -> 'text/javascript'
+    ]
+
     /*
      *   Process the name.  This takes the path string from the query, and
      *   returns the resource file name to look for.  By default, we simply
      *   return the same name specified by the client, minus the leading
      *   '/' (since resource paths are always relative).  
      */
-    processName(path) { return path.substr(2); }
+    processName(n) { return n.substr(2); }
 
     /*
      *   Determine if the given file is a text file or a binary file.  By
@@ -1054,12 +1084,12 @@ class WebResourceResFile: WebResource
  *   everything in that folder as a downloadable Web object.  
  */
 webuiResources: WebResourceResFile
-    path = static new RexPattern('/webuires/')
+    vpath = static new RexPattern('/webuires/')
 ;
 
 /* the special cover art resource */
 coverArtResource: WebResourceResFile
-    path = static new RexPattern('/%.system/CoverArt%.(jpg|png)$')
+    vpath = static new RexPattern('/%.system/CoverArt%.(jpg|png)$')
 ;
 
 /*
@@ -1099,9 +1129,10 @@ coverArtResource: WebResourceResFile
  *   instances or sessions.
  *   
  *   Note that instances should always provide a string (as opposed to a
- *   regular expression) for the 'path' property.  We have to send the path
- *   to the browser UI as part of the connection information, so we need a
- *   string we can send rather than a pattern to match.  
+ *   regular expression) for the virtual path (the 'vpath' property).  We
+ *   have to send the path to the browser UI as part of the connection
+ *   information, so we need a string we can send rather than a pattern to
+ *   match.  
  */
 class WebResourceInit: object
     /*
@@ -1116,7 +1147,7 @@ class WebResourceInit: object
          *   point the client to our start page, adding the session key as
          *   a query parameter 
          */
-        connectWebUI(srv, '<<path>>?TADS_session=<<webSession.key>>');
+        connectWebUI(srv, '<<vpath>>?TADS_session=<<webSession.sessionKey>>');
     }
 
     /*
@@ -1152,7 +1183,7 @@ class WebResourceInit: object
              *   connecting under the primary server session key, use the
              *   primary user's storage server session
              */
-            if (ssid == nil && skey == webSession.key)
+            if (ssid == nil && skey == webSession.sessionKey)
                 ssid = webSession.storageSID;
 
             /* create the new session object */
@@ -1165,7 +1196,7 @@ class WebResourceInit: object
                 client.setDefaultScreenName();
 
             /* send the client session ID to the browser as a cookie */
-            req.setCookie('TADS_client', '<<client.key>>; path=/;');
+            req.setCookie('TADS_client', '<<client.clientKey>>; path=/;');
 
             /* if this is a guest, alert everyone to the new connection */
             if (!client.isPrimary)
@@ -1338,7 +1369,7 @@ PreinitObject
  *   that here as well: our reply body is the client connection URL.  
  */
 guestConnectPage: WebResource
-    path = '/webui/guestConnect'
+    vpath = '/webui/guestConnect'
     processRequest(req, query)
     {
         /* send the collaborative connection URL */
@@ -1356,7 +1387,7 @@ guestConnectPage: WebResource
  *   event we want to send.  
  */
 eventPage: WebResource
-    path = '/webui/getEvent'
+    vpath = '/webui/getEvent'
     processRequest(req, query)
     {
         /* find the client */
@@ -1396,7 +1427,7 @@ eventPage: WebResource
  *   event requests from a past incarnation of the page.  
  */
 flushEventsPage: WebResource
-    path = '/webui/flushEvents'
+    vpath = '/webui/flushEvents'
     processRequest(req, query)
     {
         /* find the client */
@@ -1423,7 +1454,7 @@ flushEventsPage: WebResource
  *   We handle this by asking the main window to generate its state.  
  */
 uiStatePage: WebResource
-    path = '/webui/getState'
+    vpath = '/webui/getState'
     processRequest(req, query)
     {
         /* get the window making the request */
@@ -1638,7 +1669,7 @@ class WebWindow: WebResourceResFile
      *   folder, embedded object paths don't have to worry about
      *   referencing parent folders.  
      */
-    path = nil
+    vpath = nil
 
     /* 
      *   The window's actual source location, as a resource path.  A given
@@ -1650,7 +1681,7 @@ class WebWindow: WebResourceResFile
     src = nil
 
     /* process a request path referencing me into my actual resource path */
-    processName(path) { return src; }
+    processName(n) { return src; }
 
     /*
      *   Resolve a window path name.  For container windows, this should
@@ -1841,7 +1872,7 @@ class WebLayoutWindow: WebWindow
         sendWinEvent('<subwin>'
                      + '<name><<name>></name>'
                      + '<pos><<pos>></pos>'
-                     + '<src><<win.path.htmlify()>></src>'
+                     + '<src><<win.vpath.htmlify()>></src>'
                      + '</subwin>');
     }
 
@@ -1865,7 +1896,7 @@ class WebLayoutWindow: WebWindow
         frames.forEachAssoc(function(name, info) {
             s += '<subwin><name><<name>></name>'
                 + '<pos><<info[2]>></pos>'
-                + '<src><<info[1].path.htmlify()>></src>'
+                + '<src><<info[1].vpath.htmlify()>></src>'
                 + '</subwin>';
         });
 
@@ -1881,8 +1912,8 @@ class WebLayoutWindow: WebWindow
      */
     frames = perInstance(new LookupTable(16, 32))
 
-    /* my request path and actual resource path */
-    path = '/layoutwin.htm'
+    /* my virtual path and the actual resource file location */
+    vpath = '/layoutwin.htm'
     src = 'webuires/layoutwin.htm'
 ;
 
@@ -2022,44 +2053,6 @@ class WebCommandWin: WebWindow
 
         /* set the input-ready flag so we exit the modal input loop */
         lastInputReady = true;
-
-        // $$$ testing only
-        if (lastInput == '$error')
-        {
-            req.sendReply('<?xml version="1.0"?><badXml><unclosed></badXml>');
-            lastInput = nil;
-            return;
-        }
-        if (lastInput == '$hiccup')
-        {
-            req.sendReply(rand(504, 503, 500, 500, 418));
-            lastInput = nil;
-            return;
-        }
-        if (lastInput.startsWith('$delay '))
-        {
-            lastInput = lastInput.substr(8);
-            timeDelay(toInteger(lastInput));
-            local idx = lastInput.find(' ');
-            lastInput = idx ? lastInput.substr(idx+1) : '';
-        }
-        if (lastInput == '$url')
-        {
-            local url = webSession.getFullUrl(
-                '<<webMainWin.path>>?TADS_session=<<webSession.key>>');
-            sendWinEvent('<say><<url.htmlify()>>&lt;br&gt;</say>');
-            lastInput = nil;
-        }
-        if (lastInput == '$cookies')
-        {
-            local c = req.getCookies();
-            c = c.keysToList().mapAll(
-                {n: '<<n.htmlify()>>=<<c[n].htmlify()>>'}).join('<br>');
-            sendWinEvent('<say><<c.htmlify()>>&lt;br&gt;</say>');
-            lastInput = nil;
-        }
-
-        // $$$ end testing
 
         /* get the user who entered the command */
         local user = (lastInputClient != nil
@@ -2207,8 +2200,8 @@ class WebCommandWin: WebWindow
      */
     mode = 'working'
 
-    /* my request path and actual resource path */
-    path = '/cmdwin.htm'
+    /* my virtual path, and the actual resource file location */
+    vpath = '/cmdwin.htm'
     src = 'webuires/cmdwin.htm'
 ;
 
@@ -2216,7 +2209,7 @@ class WebCommandWin: WebWindow
  *   input-line event page 
  */
 inputLinePage: WebResource
-    path = '/webui/inputLine'
+    vpath = '/webui/inputLine'
     processRequest(req, query)
     {
         /* find the window */
@@ -2240,7 +2233,7 @@ inputLinePage: WebResource
  *   "More" prompt done event page
  */
 morePromptDonePage: WebResource
-    path = '/webui/morePromptDone'
+    vpath = '/webui/morePromptDone'
     processRequest(req, query)
     {
         /* find the target winodw */
@@ -2264,7 +2257,7 @@ morePromptDonePage: WebResource
  *   Set Preferences command
  */
 setPrefsPage: WebResource
-    path = '/webui/setPrefs'
+    vpath = '/webui/setPrefs'
     processRequest(req, query)
     {
         /* get the request body */
@@ -2570,7 +2563,7 @@ class WebUIPrefs: object
  */
 class WebStatusWin: WebWindow
     /* my request path and actual resource path */
-    path = '/statwin.htm'
+    vpath = '/statwin.htm'
     src = 'webuires/statwin.htm'
 
     /* 
@@ -2712,8 +2705,8 @@ transient webMainWin: WebResourceInit, WebLayoutWindow, WebResourceResFile
      *   match the webuires directory path as the URL path, but map this to
      *   main.htm as the underlying resource name 
      */
-    path = '/'
-    processName(path) { return 'webuires/main.htm'; }
+    vpath = '/'
+    processName(n) { return 'webuires/main.htm'; }
 
     /* the top window is always called "main" */
     name = 'main'
@@ -3231,7 +3224,7 @@ transient webMainWin: WebResourceInit, WebLayoutWindow, WebResourceResFile
  *   created via inputFile() as HTTP downloads to the client.  
  */
 transient tempFileDownloadPage: WebResource
-    path = static new RexPattern('/clienttmp/')
+    vpath = static new RexPattern('/clienttmp/')
     processRequest(req, query)
     {
         /* 
@@ -3420,7 +3413,7 @@ class DownloadTempFile: object
  *   to send us an input event.  
  */
 inputEventPage: WebResource
-    path = '/webui/inputEvent'
+    vpath = '/webui/inputEvent'
     processRequest(req, query)
     {
         /* send the event to the main window object */
@@ -3437,7 +3430,7 @@ inputEventPage: WebResource
  *   user selects a button in an input dialog.  
  */
 inputDialogPage: WebResource
-    path = '/webui/inputDialog'
+    vpath = '/webui/inputDialog'
     processRequest(req, query)
     {
         /* send the event to the main window */
@@ -3465,7 +3458,7 @@ inputDialogPage: WebResource
  *   the UI.
  */
 inputFilePage: WebResource
-    path = '/webui/inputFile'
+    vpath = '/webui/inputFile'
     processRequest(req, query)
     {
         /* set the file selection in the main window */
@@ -3495,7 +3488,7 @@ inputFilePage: WebResource
  *   basically a variation on the regular input file dialog.  
  */
 inputFileCancel: WebResource
-    path = '/webui/inputFileDismissed'
+    vpath = '/webui/inputFileDismissed'
     processRequest(req, query)
     {
         /* note that the dialog has been dismissed */
@@ -3510,7 +3503,7 @@ inputFileCancel: WebResource
  *   Receive results from the input file dialog 
  */
 uploadFilePage: WebResource
-    path = '/webui/uploadFileDialog'
+    vpath = '/webui/uploadFileDialog'
     processRequest(req, query)
     {
         /* send the request to the main window */
@@ -3531,7 +3524,7 @@ uploadFilePage: WebResource
  *   Receive the client's screen name setting 
  */
 setScreenNamePage: WebResource
-    path = '/webui/setScreenName'
+    vpath = '/webui/setScreenName'
     processRequest(req, query)
     {
         /* set the name in the client session */

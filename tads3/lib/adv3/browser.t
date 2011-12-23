@@ -213,7 +213,7 @@ aioInputLineTimeout(timeout)
                 aioSay(e[2].htmlify() + '\n');
 
             /* log and return the event */
-            return logInputEvent(e);
+            return aioLogInputEvent(e);
         }
     }
 
@@ -221,7 +221,7 @@ aioInputLineTimeout(timeout)
      *   read an input line event from the main command window, log it, and
      *   return it 
      */
-    return logInputEvent(commandWin.getInputLine(timeout));
+    return aioLogInputEvent(commandWin.getInputLine(timeout));
 }
 
 /*
@@ -252,11 +252,11 @@ aioInputEvent(timeout)
          *   return to reading from the live client UI.  
          */
         if (e[1] != InEvtEof)
-            return logInputEvent(e);
+            return aioLogInputEvent(e);
     }
 
     /* read an event from the main command window, log it, and return it */
-    return logInputEvent(webMainWin.getInputEvent(timeout));
+    return aioLogInputEvent(webMainWin.getInputEvent(timeout));
 }
 
 
@@ -381,7 +381,11 @@ aioInputFile(prompt, dialogType, fileType, flags)
         f = webMainWin.getInputFile(prompt, dialogType, fileType, flags);
 
     /* log a synthetic <file> event, if applicable */
-    logInputEvent(['<file>', f[1] == InFileSuccess ? f[2] : '']);
+    aioLogInputEvent(
+        ['<file>',
+         f[1] != InFileSuccess ? '' :
+         dataType(f[2]) == TypeObject ? 't' :
+         f[2]]);
     
     /* return the file information */
     return f;
@@ -411,7 +415,7 @@ aioInputDialog(icon, prompt, buttons, defaultButton, cancelButton)
                                       defaultButton, cancelButton);
 
     /* log a synthetic <dialog> event, if applicable */
-    logInputEvent(['<dialog>', d]);
+    aioLogInputEvent(['<dialog>', d]);
 
     /* return the result */
     return d;
@@ -518,13 +522,20 @@ aioSetLogFile(fname, typ = LogTypeTranscript)
  *   input routines to add the event to any event or command log we're
  *   creating. 
  */
-logInputEvent(evt)
+aioLogInputEvent(evt)
 {
+    /* if the system is maintaining its own input log, write it there */
+    logInputEvent(evt);
+
+    /* get the script globals */
     local ltyp = browserGlobals.logFileType;
     local log = browserGlobals.logFile;
+
+    /* get the basic event parameters */
     local evtType = evt[1];
     local param = (evt.length() > 1 ? evt[2] : nil);
-        
+
+    /* format the event based on the event type */
     switch (ltyp)
     {
     case LogTypeTranscript:
@@ -662,7 +673,7 @@ aHrefAlt(href, linkedText, altText, title?)
 /*
  *   The standard main command window. 
  */
-commandWin: WebCommandWin
+transient commandWin: WebCommandWin
 ;
     
 

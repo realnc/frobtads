@@ -3421,7 +3421,7 @@ modify InteractiveResolver
         if (actor_.canMatchPronounType(typ) && !actor_.isPlayerChar())
         {
             /* the match is the target actor */
-            return [new ResolveInfo(actor_, 0)];
+            return [new ResolveInfo(actor_, 0, nil)];
         }
 
         /* we didn't match it */
@@ -5059,10 +5059,13 @@ cmdTokenizer: Tokenizer
             }
 
             /*
-             *   if another token follows, and the next token isn't a
-             *   punctuation mark, add a space before the next token
+             *   If another token follows, and the next token isn't a
+             *   punctuation mark, and the previous token wasn't an open
+             *   paren, add a space before the next token.
              */
-            if (i != len && rexMatch(patPunct, getTokVal(toks[i+1])) == nil)
+            if (i != len
+                && rexMatch(patPunct, getTokVal(toks[i+1])) == nil
+                && getTokVal(toks[i]) != '(')
                 str += ' ';
         }
 
@@ -5075,7 +5078,7 @@ cmdTokenizer: Tokenizer
         '<nocase>twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety')
     patSpelledUnits = static new RexPattern(
         '<nocase>one|two|three|four|five|six|seven|eight|nine')
-    patPunct = static new RexPattern('[.,;:?!]')
+    patPunct = static new RexPattern('[.,;:?!)]')
 ;
 
 
@@ -8417,14 +8420,12 @@ modify TAction
     /* announce a default object used with this action */
     announceDefaultObject(obj, whichObj, resolvedAllObjects)
     {
-        local prep;
-
         /*
          *   get any direct object preposition - this is the part inside
          *   the "(what)" specifier parens, excluding the last word
          */
         rexSearch('<lparen>(.*<space>+)?<alpha>+<rparen>', verbPhrase);
-        prep = (rexGroup(1) == nil ? '' : rexGroup(1)[3]);
+        local prep = (rexGroup(1) == nil ? '' : rexGroup(1)[3]);
 
         /* do any verb-specific adjustment of the preposition */
         if (prep != nil)
@@ -8696,12 +8697,9 @@ modify TIAction
     /* announce a default object used with this action */
     announceDefaultObject(obj, whichObj, resolvedAllObjects)
     {
-        local verb;
-        local prep;
-
         /* presume we won't have a verb or preposition */
-        verb = '';
-        prep = '';
+        local verb = '';
+        local prep = '';
 
         /*
          *   Check the full phrasing - if we're showing the direct object,

@@ -880,7 +880,7 @@ class Action: BasicProd
      *   looking for, and 'oldRole' is the role the object previously
      *   played in the action.  
      */
-    getResolveInfo(obj, oldRole) { return new ResolveInfo(obj, 0); }
+    getResolveInfo(obj, oldRole) { return new ResolveInfo(obj, 0, nil); }
 
     /*
      *   Explicitly set the resolved objects.  This should be overridden
@@ -1023,11 +1023,14 @@ class Action: BasicProd
     /* wrap an object with a ResolveInfo */
     makeResolveInfo(val)
     {
-        /* if it's already a ResolveInfo object, return it as-is */
+        /* 
+         *   if it's already a ResolveInfo object, return it as-is;
+         *   otherwise, create a new ResolveInfo wrapper for it
+         */
         if (dataType(val) == TypeObject && val.ofKind(ResolveInfo))
             return val;
         else
-            return new ResolveInfo(val, 0);
+            return new ResolveInfo(val, 0, nil);
     }
 
     /*
@@ -2935,6 +2938,21 @@ class Action: BasicProd
         return inherited();
     }
     
+    /* 
+     *   Create a topic qualifier resolver.  This type of resolver is used
+     *   for qualifier phrases (e.g., possessives) within topic phrases
+     *   within objects of this verb.  Topics *usually* only apply to
+     *   TopicActionBase subclasses, but not exclusively: action remappings
+     *   can sometimes require a topic phrase from one action to be
+     *   resolved in the context of another action that wouldn't normally
+     *   involve a topic phrase.  That's why this is needed on the base
+     *   Action class. 
+     */
+    createTopicQualifierResolver(issuingActor, targetActor)
+    {
+        /* create and return a topic qualifier object resolver */
+        return new TopicQualifierResolver(self, issuingActor, targetActor);
+    }
 
     /* 
      *   List of objects that verified okay on a prior pass.  This is a
@@ -3126,14 +3144,11 @@ class TAction: Action, Resolver
      */
     testRetryDefaultDobj(orig)
     {
-        local action;
-        local def;
-        
         /* create the new action for checking for a direct object */
-        action = createForMissingDobj(orig, ResolveAsker);
+        local action = createForMissingDobj(orig, ResolveAsker);
 
         /* get the default dobj */
-        def = action.getDefaultDobj(
+        local def = action.getDefaultDobj(
             action.dobjMatch,
             action.getDobjResolver(gIssuingActor, gActor, nil));
 
@@ -3267,7 +3282,7 @@ class TAction: Action, Resolver
     /* get the ResolveInfo for the given object */
     getResolveInfo(obj, oldRole)
     {
-        local info;
+        local info = nil;
         
         /* scan our resolved direct object list for the given object */
         if (dobjList_ != nil)
@@ -3276,11 +3291,21 @@ class TAction: Action, Resolver
         /* if we didn't find one, create one from scratch */
         if (info == nil)
         {
-            /* get the flags for the first object in the old role */
-            local flags = (dobjList_.length() > 0 ? dobjList_[1].flags_ : 0);
-
-            /* create a ResolveInfo to represent the object */
-            info = new ResolveInfo(obj, flags);
+            /* 
+             *   if there's anything in the old dobj role, copy the flags
+             *   and noun phrase to the new role
+             */
+            if (dobjList_.length() > 0)
+            {
+                /* get the flags and noun phrase from the old role */
+                info = new ResolveInfo(
+                    obj, dobjList_[1].flags_, dobjList_[1].np_);
+            }
+            else
+            {
+                /* there's no old role, so start from scratch */
+                info = new ResolveInfo(obj, 0, nil);
+            }
         }
 
         /* return what we found (or created) */
@@ -3410,35 +3435,6 @@ class TAction: Action, Resolver
             if (parentAction == nil)
                 gTranscript.newIter();
         }
-    }
-
-    /* announce a default object used with this action */
-    announceDefaultObject(obj, whichObj, resolvedAllObjects)
-    {
-        local prep;
-        local nm;
-
-        /* 
-         *   Get the name to display.  Since we're selecting an object
-         *   automatically from everything in scope, we need to
-         *   differentiate the object from the other objects in scope. 
-         */
-        nm = obj.getAnnouncementDistinguisher(gActor.scopeList())
-            .theName(obj);
-
-        /*
-         *   get any direct object preposition - this is the part inside
-         *   the "(what)" specifier parens, excluding the last word
-         */
-        rexSearch('<lparen>(.*<space>+)?<alpha>+<rparen>', verbPhrase);
-        prep = (rexGroup(1) == nil ? '' : rexGroup(1)[3]);
-
-        /* do any verb-specific adjustment of the preposition */
-        if (prep != nil)
-            prep = adjustDefaultObjectPrep(prep, obj);
-
-        /* show the preposition (if any) and the object */
-        return (prep == '' ? nm : prep + nm);
     }
 
     /* get the precondition descriptor list for the action */
@@ -3691,6 +3687,20 @@ class TAction: Action, Resolver
 
     /* get the number of direct objects */
     getDobjCount() { return dobjList_ != nil ? dobjList_.length() : 0; }
+
+    /* get the original token list of the current direct object phrase */
+    getDobjTokens()
+    {
+        return dobjInfoCur_ != nil && dobjInfoCur_.np_ != nil
+            ? dobjInfoCur_.np_.getOrigTokenList() : nil;
+    }
+
+    /* get the original words (as a list of strings) of the current dobj */
+    getDobjWords()
+    {
+        local l = getDobjTokens();
+        return l != nil ? l.mapAll({x: getTokOrig(x)}) : nil;
+    }
 
     /* the predicate must assign the direct object production tree here */
     dobjMatch = nil
@@ -4310,17 +4320,23 @@ class TIAction: TAction
         /* if we didn't find one, create one from scratch */
         if (info == nil)
         {
-            local lst;
-            local flags;
-
             /* get the list for the old role */
-            lst = (oldRole == DirectObject ? dobjList_ : iobjList_);
+            local lst = (oldRole == DirectObject ? dobjList_ : iobjList_);
 
-            /* get the flags from the first element of the old list */
-            flags = (lst.length() > 0 ? lst[1].flags_ : 0);
-
-            /* create a ResolveInfo to wrap the object */
-            info = new ResolveInfo(obj, flags);
+            /* 
+             *   if there's anything in the old role, copy its flags and
+             *   noun phrase to the new role 
+             */
+            if (lst.length() > 0)
+            {
+                /* copy the old role's attributes */
+                info = new ResolveInfo(obj, lst[1].flags_, lst[1].np_);
+            }
+            else
+            {
+                /* nothing in the old role - start from scratch */
+                info = new ResolveInfo(obj, 0, nil);
+            }
         }
 
         /* return what we found (or created) */
@@ -4706,66 +4722,6 @@ class TIAction: TAction
         }
     }
 
-    /* announce a default object used with this action */
-    announceDefaultObject(obj, whichObj, resolvedAllObjects)
-    {
-        local verb;
-        local prep;
-        local nm;
-
-        /* presume we won't have a verb or preposition */
-        verb = '';
-        prep = '';
-
-        /*
-         *   Check the full phrasing - if we're showing the direct object,
-         *   but an indirect object was supplied, use the verb's
-         *   participle form ("asking bob") in the default string, since
-         *   we must clarify that we're not tagging the default string on
-         *   to the command line.  Don't include the participle form if we
-         *   don't know all the objects yet, since in this case we are in
-         *   fact tagging the default string onto the command so far, as
-         *   there's nothing else in the command to get in the way.
-         */
-        if (whichObj == DirectObject && resolvedAllObjects)
-        {
-            /*
-             *   extract the verb's participle form (including any
-             *   complementizer phrase)
-             */
-            rexSearch('/(<^lparen>+) <lparen>', verbPhrase);
-            verb = rexGroup(1)[3] + ' ';
-        }
-
-        /* get the preposition to use, if any */
-        switch(whichObj)
-        {
-        case DirectObject:
-            /* use the preposition in the first "(what)" phrase */
-            rexSearch('<lparen>(.*?)<space>*<alpha>+<rparen>', verbPhrase);
-            prep = rexGroup(1)[3];
-            break;
-
-        case IndirectObject:
-            /* use the preposition in the second "(what)" phrase */
-            rexSearch('<rparen>.*<lparen>(.*?)<space>*<alpha>+<rparen>',
-                      verbPhrase);
-            prep = rexGroup(1)[3];
-            break;
-        }
-
-        /* 
-         *   get the name to display - since we selected this object
-         *   automatically from among the objects in scope, we need to
-         *   differentiate it from the other objects in scope 
-         */
-        nm = obj.getAnnouncementDistinguisher(gActor.scopeList())
-            .theName(obj);
-
-        /* build and return the complete phrase */
-        return spSuffix(verb) + spSuffix(prep) + nm;
-    }
-
     /*
      *   Set the pronoun according to the pronoun type actually used in
      *   the input.  For example, if we said PUT BOX ON IT, we want IT to
@@ -4985,15 +4941,13 @@ class TIAction: TAction
      */
     checkAction()
     {
-        local defIo, defDo;
-                
         try
         {
             /* invoke the catch-all 'check' methods on each object */
-            defIo = callCatchAllProp(iobjCur_, checkIobjProp,
-                                     &checkIobjDefault, &checkIobjAll);
-            defDo = callCatchAllProp(dobjCur_, checkDobjProp,
-                                     &checkDobjDefault, &checkDobjAll);
+            local defIo = callCatchAllProp(
+                iobjCur_, checkIobjProp, &checkIobjDefault, &checkIobjAll);
+            local defDo = callCatchAllProp(
+                dobjCur_, checkDobjProp, &checkDobjDefault, &checkDobjAll);
 
             /* 
              *   invoke the 'check' method on each object, as long as it
@@ -5091,6 +5045,20 @@ class TIAction: TAction
 
     /* get the number of direct objects */
     getIobjCount() { return iobjList_ != nil ? iobjList_.length() : 0; }
+
+    /* get the original token list of the current indirect object phrase */
+    getIobjTokens()
+    {
+        return iobjInfoCur_ != nil && iobjInfoCur_.np_ != nil
+            ? iobjInfoCur_.np_.getOrigTokenList() : nil;
+    }
+
+    /* get the original words (as a list of strings) of the current iobj */
+    getIobjWords()
+    {
+        local l = getIobjTokens();
+        return l != nil ? l.mapAll({x: getTokOrig(x)}) : nil;
+    }
 
     /*
      *   Get the list of active objects.  We have a direct and indirect
@@ -5699,13 +5667,6 @@ class TopicActionBase: object
         return topicQualResolver_;
     }
 
-    /* create a topic qualifier resolver */
-    createTopicQualifierResolver(issuingActor, targetActor)
-    {
-        /* create and return a topic qualifier object resolver */
-        return new TopicQualifierResolver(self, issuingActor, targetActor);
-    }
-
     /* the topic qualifier resolver */
     topicQualResolver_ = nil
     
@@ -6077,16 +6038,14 @@ class TopicTAction: TopicActionBase, TAction
 class ConvTopicTAction: TopicTAction
     getDefaultDobj(np, resolver)
     {
-        local obj;
-        
         /* 
          *   check to see if the actor has a default interlocutor; if so,
          *   use it as the default actor to be addressed here, otherwise
          *   use the default handling 
          */
-        obj = resolver.getTargetActor().getCurrentInterlocutor();
+        local obj = resolver.getTargetActor().getCurrentInterlocutor();
         if (obj != nil)
-            return [new ResolveInfo(obj, 0)];
+            return [new ResolveInfo(obj, 0, nil)];
         else
             return inherited(np, resolver);
     }
@@ -6465,13 +6424,11 @@ class TopicResolver: Resolver
      */
     filterAmbiguousNounPhrase(lst, requiredNum, np)
     {
-        local rt;
-            
         /* ask the action to create the ResolvedTopic */
-        rt = resolveTopic(lst, requiredNum, np);
+        local rt = resolveTopic(lst, requiredNum, np);
 
         /* wrap the ResolvedTopic in the usual ResolveInfo list */
-        return [new ResolveInfo(rt, 0)];
+        return [new ResolveInfo(rt, 0, np)];
     }
         
     /*
@@ -6497,17 +6454,15 @@ class TopicResolver: Resolver
      */
     resolveUnknownNounPhrase(tokList)
     {
-        local rt;
-        
         /* 
          *   Create our ResolvedTopic object for the results.  We have
          *   words we don't know, so we're not referring to any objects,
          *   so our underlying simulation object list is empty.  
          */
-        rt = new ResolvedTopic([], [], [], topicProd);
+        local rt = new ResolvedTopic([], [], [], topicProd);
 
         /* return a resolved topic object with the empty list */
-        return [new ResolveInfo(rt, 0)];
+        return [new ResolveInfo(rt, 0, new TokenListProd(tokList))];
     }
 
     /* filter a plural */

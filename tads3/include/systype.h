@@ -1089,6 +1089,11 @@ intrinsic class StackFrameDesc 'stack-frame-desc/030000'
      *   Get the value of 'targetprop' in this frame. 
      */
     getTargetProp();
+
+    /*
+     *   Get the value of 'invokee' in this frame. 
+     */
+    getInvokee();
 }
 
 /*

@@ -456,6 +456,29 @@ intrinsic 'tads-io/030007'
      *   output window.  
      */
     logConsoleSay(handle, ...);
+
+    /*
+     *   Log an input event that's obtained externally - i.e., from a source
+     *   other than the system input APIs (inputLine, inputKey, inputEvent,
+     *   etc).  This adds the event to any command or event log that the
+     *   system is currently writing, as set with setLogFile().
+     *   
+     *   It's only necessary to call this function when obtaining user input
+     *   from custom code that bypasses the system input APIs.  The system
+     *   input functions all log events automatically, so you must not call
+     *   this for input obtained from them (doing so would write each input
+     *   twice, since it's already being written once by the input
+     *   functions).  For example, this is useful for the Web UI, since it
+     *   obtains input via network transactions with the javascript client.
+     *   
+     *   'evt' is a list describing the event, using the same format that
+     *   inputEvent() returns.  Note one special extension: if the first
+     *   element of the list is a string, the string is used as the tag name
+     *   if we're writing an event script.  This can be used to write custom
+     *   events or events with no InEvtXxx type code, such as <dialog> input
+     *   events.
+     */
+    logInputEvent(evt);
 }
 
 /* log file types */

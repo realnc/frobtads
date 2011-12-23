@@ -1490,7 +1490,8 @@ DefineAction(Replay, FileOpAction)
          *   acknowledgment even if we're in 'quiet' mode. 
          */
         if (ack)
-            gLibMessages.inputScriptOkay(fname);
+            gLibMessages.inputScriptOkay(
+                fname.ofKind(TemporaryFile) ? fname.getFilename() : fname);
 
         /* activate the script file */
         if (!setScriptFile(fname, scriptOptionFlags))
@@ -2116,12 +2117,10 @@ DefineSystemAction(Topics)
 DefineTIAction(GiveTo)
     getDefaultIobj(np, resolver)
     {
-        local obj;
-
         /* check the actor for a current interlocutor */
-        obj = resolver.getTargetActor().getCurrentInterlocutor();
+        local obj = resolver.getTargetActor().getCurrentInterlocutor();
         if (obj != nil)
-            return [new ResolveInfo(obj, 0)];
+            return [new ResolveInfo(obj, 0, np)];
         else
             return inherited(np, resolver);
     }
@@ -2209,12 +2208,10 @@ giveMeToAskFor: GlobalRemapping
 DefineTIAction(ShowTo)
     getDefaultIobj(np, resolver)
     {
-        local obj;
-
         /* check the actor for a current interlocutor */
-        obj = resolver.getTargetActor().getCurrentInterlocutor();
+        local obj = resolver.getTargetActor().getCurrentInterlocutor();
         if (obj != nil)
-            return [new ResolveInfo(obj, 0)];
+            return [new ResolveInfo(obj, 0, np)];
         else
             return inherited(np, resolver);
     }
@@ -2356,17 +2353,14 @@ DefineTAction(Consult)
 DefineTopicTAction(ConsultAbout, IndirectObject)
     getDefaultDobj(np, resolver)
     {
-        local actor;
-        local obj;
-        
         /* 
          *   if the actor has consulted something before, and that object
-         *   is still visible, use it as the default this consultation 
+         *   is still visible, use it as the default for this consultation 
          */
-        actor = resolver.getTargetActor();
-        obj = actor.lastConsulted;
+        local actor = resolver.getTargetActor();
+        local obj = actor.lastConsulted;
         if (obj != nil && actor.canSee(obj))
-            return [new ResolveInfo(obj, DefaultObject)];
+            return [new ResolveInfo(obj, DefaultObject, np)];
         else
             return inherited(np, resolver);
     }

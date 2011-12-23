@@ -39,7 +39,7 @@
 /*
  *   tads-net - the TADS Network function set
  */
-intrinsic 'tads-net/030000'
+intrinsic 'tads-net/030001'
 {
     /*
      *   Connect to the Web UI client.  This connects the Web browser client
@@ -149,7 +149,91 @@ intrinsic 'tads-net/030000'
      *   use "localhost" as the networking binding address in this case.  
      */
     getLaunchHostAddr();
+
+    /*
+     *   Send a network request to a remote server.  This initiates
+     *   processing the request and immediately returns; the process of
+     *   setting up the network connection to the remote server, sending the
+     *   request data, and receiving the reply proceeds asynchronously while
+     *   the program continues running.  When the request completes (or fails
+     *   due to an error), a NetEvent of type NetEvReply is queued.
+     *   
+     *   'id' is a user-defined identifier for the request.  This can be any
+     *   value, but is typically an object that you create to keep track of
+     *   the request and process the reply.  TADS doesn't use this value
+     *   itself, but simply hangs onto it while the request is being
+     *   processed, and then stores it in the NetEvent object generated when
+     *   the request completes.  This lets you relate the reply event back to
+     *   the request, so that you know which request it applies to.
+     *   
+     *   'url' is a string giving the URL of the resource.  This starts with
+     *   a protocol name that specifies which protocol to use.  The possible
+     *   protocols are:
+     *   
+     *   - HTTP: the URL has the form 'http://server:port/resource'.  It can
+     *   also start with 'https://' for a secure HTTP connection.  The port
+     *   number is optional; if omitted, the default port is 80 for regular
+     *   HTTP, or 443 for HTTPS.
+     *   
+     *   Currently, the only protocol supported is HTTP.  An error occurs if
+     *   another protocol is specified.
+     *   
+     *   Additional parameters depend on the protocol.
+     *   
+     *   HTTP Additional Parameters:
+     *   
+     *   'verb' - a string giving the HTTP verb for the request (GET, POST,
+     *   HEAD, PUT, etc).
+     *   
+     *   'options' - optional; a bitwise combination of NetReqXXX option
+     *   flags specifying special settings.  Omit this argument or pass 0 to
+     *   use the default settings.
+     *   
+     *   'headers' - optional; a string giving any custom headers to include
+     *   with the request.  The system automatically generates any required
+     *   headers for the type of request, but you can add your own custom
+     *   headers with this parameter.  The headers must be specified using
+     *   the standard 'name: value' format.  Use '\r\n' to separate multiple
+     *   headers.  If you don't need to specify any custom headers, pass nil
+     *   or simply omit this argument.
+     *   
+     *   'body' - optional; a string or ByteArray giving the content body of
+     *   the request, if any.  This is suitable for verbs such as PUT and
+     *   POST.  For verbs that don't send any content with the request, pass
+     *   nil or simply omit the argument.
+     *   
+     *   'bodyType' - optional; a string giving the MIME type of the content
+     *   body.  If this is omitted, a default MIME type is assumed according
+     *   to the type of 'body': for a string, "text/plain; charset=utf-8";
+     *   for a ByteArray, "appliation/octet-stream".
+     *   
+     *   This routine has no return value, since the request is processed
+     *   asynchronously.  The result can't be determined until the
+     *   corresponding NetEvReqReply event occurs, at which point you can
+     *   inspect that NetEvent object to find out if the request was
+     *   successful, and if so retrieve the reply data.
+     */
+    sendNetRequest(id, url, ...);
 }
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   sendNetRequest option flags for HTTP requests.
+ */
+
+/* 
+ *   DO NOT follow "redirect" (301) results.  By default (i.e., without this
+ *   option flag), if the server sends back a 301 HTTP status code
+ *   ("permanently moved"), we'll automatically follow the link to the new
+ *   location and return the result from that new request.  This is
+ *   transparent to the caller; the caller just sees the final result from
+ *   the final server we're redirected to.  If this flag is specified, we
+ *   DON'T follow a redirection, but instead simply stop and return the 301
+ *   result.  The caller can inspect the reply headers to get the redirection
+ *   link.
+ */
+#define NetReqNoRedirect    0x0001
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -206,6 +290,14 @@ intrinsic 'tads-net/030000'
  *   intends to quit the application, generally with inactivity timers.  
  */
 #define NetEvUIClose     4
+
+/*
+ *   Network reply.  This type of event occurs when a network request
+ *   initiated by sendNetRequest() completes, or fails with an error.  The
+ *   event object contains the status of the request and, if successful, the
+ *   result information sent back from the server.
+ */
+#define NetEvReply   5
 
 
 #endif /* TADSNET_H */

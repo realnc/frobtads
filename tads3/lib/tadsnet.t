@@ -105,10 +105,147 @@ class NetTimeoutEvent: NetEvent
     evType = NetEvTimeout
 ;
 
+/*
+ *   Network Reply event.  This type of event occurs when we receive a
+ *   reply to a network request made with sendNetRequest().
+ */
+class NetReplyEvent: NetEvent
+    /* construction */
+    construct(t, id, status, body, headers, loc)
+    {
+        inherited(t, id, body, headers, loc);
+        statusCode = status;
+        requestID = id;
+        replyBody = body;
+        replyHeadersRaw = headers;
+        redirectLoc = loc;
+
+        /* parse the headers into a lookup table keyed by header name */
+        if (headers != nil)
+        {
+            /* create the lookup table */
+            local ht = replyHeaders = new LookupTable();
+
+            /* split the headers at the CR-LF separators */
+            headers = headers.split('\r\n');
+
+            /* the first line of the headers is actually the HTTP status */
+            if (headers.length() > 1)
+            {
+                /* save the status line */
+                httpStatusLine = headers[1];
+                headers = headers.sublist(2);
+            }
+            
+            /* process the rest of the headers */
+            for (local h in headers)
+            {
+                /* split the header at the ":", and trim spaces */
+                h = h.split(':', 2).mapAll(
+                    { s: rexReplace('^<space>+|<space>+$', s, '') });
+                
+                /* 
+                 *   If it looks like a header, add it to the table.  If
+                 *   the header is repeated, append it to the previous
+                 *   value with a comma delimiter. 
+                 */
+                if (h.length() == 2)
+                {
+                    local name = h[1].toLower(), val = h[2];
+                    if (ht.isKeyPresent(name))
+                        val = '<<ht[name]>>, <<val>>';
+                    ht[name] = val;
+                }
+            }
+        }
+    }
+
+    /* our default event type is NetEvReply */
+    evType = NetEvReply
+
+    /*
+     *   The request identifier.  This is the ID value provided by the
+     *   caller in the call to sendNetRequest(), so that the caller can
+     *   relate the reply back to the corresponding request.
+     */
+    requestID = nil
+
+    /*
+     *   The network status code.  This is an integer value indicating
+     *   whether the request was successful or failed with an error.  A
+     *   negative value is a low-level TADS error indicating that the
+     *   request couldn't be sent to the server, or that a network error
+     *   occurred receiving the reply:
+     *   
+     *.    -1    - out of memory
+     *.    -2    - couldn't connect to host
+     *.    -3    - other network/socket error
+     *.    -4    - invalid parameters
+     *.    -5    - error reading the content data to send to the server
+     *.    -6    - error saving the reply data received from the server
+     *.    -7    - error retrieving reply headers
+     *.    -8    - error starting background thread
+     *.    -100  - other TADS/network error
+     *   
+     *   A positive value means that the network transaction itself was
+     *   successful, and reflects the status information returned by the
+     *   network server that handled the request.  This must be interpreted
+     *   according to the protocol used to send the request:
+     *   
+     *   - For HTTP requests, the value is an HTTP status code.  A code in
+     *   the 200 range generally indicates success, while other ranges
+     *   generally indicate errors.
+     */
+    statusCode = nil
+
+    /* the content body from the reply */
+    replyBody = nil
+
+    /* 
+     *   the HTTP headers from the reply, as a lookup table indexed by
+     *   header name 
+     */
+    replyHeaders = nil
+
+    /* the HTTP status string (the first line of the headers) */
+    httpStatusLine = nil
+
+    /* 
+     *   the HTTP headers from the reply, in the raw text format - this is
+     *   simply a string of all the headers, separated by CR-LF (\r\n)
+     *   sequences 
+     */
+    replyHeadersRaw = nil
+
+    /* 
+     *   Redirect location, if applicable.  By default, this will be nil
+     *   whether or not a redirection took place, because sendNetRequest()
+     *   normally follows redirection links transparently, returning only
+     *   the final result from the final server we're redirected to.
+     *   However, you can override automatic redirection with an option
+     *   flag (NetReqNoRedirect) when calling sendNetRequest().  When that
+     *   option is selected, the function won't follow redirection links at
+     *   all, but will instead simply return the redirect information as
+     *   the result from the request.  When that happens, this property is
+     *   set to a string giving the target of the redirect.  You can then
+     *   follow the redirect manually, if desired, by sending a new request
+     *   to the target given here.
+     */
+    redirectLoc = nil
+;
+
 /* ------------------------------------------------------------------------ */
 /*
  *   A FileUpload represents a file uploaded by a network client via a
- *   protocol server, such as an HTTPServer.  
+ *   protocol server, such as an HTTPServer.
+ *   
+ *   When your program is acting as a network server, a FileUpload object
+ *   represents a file received from the client.  For example,
+ *   HTTPRequest.getFormFields() returns a FileUpload object to represent
+ *   each <INPUT TYPE=FILE> field in the posted form.
+ *   
+ *   When your program acts as a network client (via sendNetRequest), you
+ *   can create use FileUpload to post file attachments to posted forms.
  */
 class FileUpload: object
     construct(file, contentType, filename)
@@ -119,16 +256,22 @@ class FileUpload: object
     }
 
     /*
-     *   A File object with the uploaded content.  This is open for
-     *   read-only access.
+     *   The file data.
      *   
-     *   If the contentType parameter is a text type ("text/html",
-     *   "text/plain", etc), and the interpreter recognizes the character
-     *   set parameter in the contentType, the file is in Text mode
-     *   (FileModeText) with the appropriate character mapper in effect.
-     *   Otherwise, the file is in raw binary mode (FileModeRaw).  If you
-     *   need the file to be opened in a different mode, you can use
-     *   setFileMode() on the file to change the mode.  
+     *   When you create the FileUpload object for use with
+     *   sendNetRequest() to post form data, you must use a string or
+     *   ByteArray value for this property.
+     *   
+     *   When the FileUpload is created by HTTPRequest.getFormFields(),
+     *   this property contains a File object with the uploaded content.
+     *   This is open for read-only access.  If the contentType parameter
+     *   is a text type ("text/html", "text/plain", etc), and the
+     *   interpreter recognizes the character set parameter in the
+     *   contentType, the file is in Text mode (FileModeText) with the
+     *   appropriate character mapper in effect.  Otherwise, the file is in
+     *   raw binary mode (FileModeRaw).  If you need the file to be opened
+     *   in a different mode, you can use setFileMode() on the file to
+     *   change the mode.  
      */
     file = nil
 
@@ -140,11 +283,12 @@ class FileUpload: object
      *   
      *   It's important to recognize that this information is supplied by
      *   the client, and is NOT validated by the protocol server.  At best
-     *   you should consider it a suggestion, and at worst you should be
-     *   suspicious of it.  The client could be wrong about the type, or
-     *   could even maliciously misrepresent it.  You should always
-     *   validate the actual contents if you're using the file in a way
-     *   that relies upon well-formed data in any particular format.  
+     *   you should consider it a suggestion, and at worst a malicious lie.
+     *   The client could be innocently mistaken about the type, or could
+     *   even be intentionally misrepresenting it.  You should always
+     *   validate the actual contents, rather than relying on the client's
+     *   description of the format; in particular, be careful not to assume
+     *   that expected data fields are present, in the valid range, etc.
      */
     contentType = nil
 
@@ -182,7 +326,7 @@ class NetException: Exception
     displayException() { "<<errMsg>>"; }
 
     /* a descriptive error message provided by the system */
-    errMsg = 'Network error';
+    errMsg = 'Network error'
 ;
 
 /*
@@ -212,8 +356,12 @@ class SocketDisconnectException: NetException
 export NetEvent 'TadsNet.NetEvent';
 export NetRequestEvent 'TadsNet.NetRequestEvent';
 export NetTimeoutEvent 'TadsNet.NetTimeoutEvent';
+export NetReplyEvent 'TadsNet.NetReplyEvent';
 export NetException 'TadsNet.NetException';
 export SocketDisconnectException 'TadsNet.SocketDisconnectException';
 export NetSafetyException 'TadsNet.NetSafetyException';
 export FileUpload 'TadsNet.FileUpload';
+export file 'TadsNet.FileUpload.file';
+export contentType 'TadsNet.FileUpload.contentType';
+export filename 'TadsNet.FileUpload.filename';
 

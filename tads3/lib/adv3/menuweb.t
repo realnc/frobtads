@@ -7,7 +7,6 @@
  *   console-mode interpreters.  
  */
 #include "adv3.h"
-#include <strbuf.h>
 
 
 /* ------------------------------------------------------------------------ */
@@ -160,7 +159,7 @@ modify MenuItem
  *   navigating to the parent menu, closing the menu. 
  */
 menuSysEventPage: WebResource
-    path = '/webui/menusys'
+    vpath = '/webui/menusys'
     processRequest(req, query)
     {
         /* check the action type */
@@ -289,7 +288,7 @@ modify MenuTopicItem
                          ? {: item.getItemText() } : item);
 
         /* format the item text */
-        return '<topicItem><<item.htmlify()>></topicItem>';
+        return '<topicItem><<item>></topicItem>';
     }
 ;
 

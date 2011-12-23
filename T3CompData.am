@@ -66,7 +66,8 @@ T3_EXT_FILES = \
     tads3/lib/extensions/showTranscript.t \
     tads3/lib/extensions/SimpleAttachable.t \
     tads3/lib/extensions/smartAccompany.t \
-    tads3/lib/extensions/subtime.t
+    tads3/lib/extensions/subtime.t \
+    tads3/lib/extensions/OpenState.t
 
 T3_EXT_TCOMMAND_FILES = \
     tads3/lib/extensions/TCommand/GiveToAskFor.t \
@@ -192,6 +193,6 @@ EXTRA_DIST += $(T3_INC_FILES) \
               tads3/samples/gramdisp.t \
               tads3/samples/sample.t \
               tads3/samples/sample.t3m \
-              tads3/samples/startA3.t \
+              tads3/samples/startq3.t \
               tads3/samples/startB3.t \
-              tads3/samples/startI3.t
+              tads3/samples/starti3.t
