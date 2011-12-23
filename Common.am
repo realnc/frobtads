@@ -162,13 +162,13 @@ EXTRA_DIST = \
     tads3/portnote.htm \
     tads3/README.TXT \
     testscripts/README \
-    testscripts/all_make \
-    testscripts/test_diff \
-    testscripts/test_ex \
-    testscripts/test_make \
-    testscripts/test_pp \
-    testscripts/test_pre \
-    testscripts/test_restore
+    testscripts/all_make.sh \
+    testscripts/test_diff.sh \
+    testscripts/test_ex.sh \
+    testscripts/test_make.sh \
+    testscripts/test_pp.sh \
+    testscripts/test_pre.sh \
+    testscripts/test_restore.sh
 
 ## Sources needed by both the interpreter as well as the compilers.
 ##

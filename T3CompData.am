@@ -184,15 +184,16 @@ T3_DOC_FILES = \
 EXTRA_DIST += $(T3_INC_FILES) \
               $(T3_LIB_FILES) \
               $(T3_EXT_FILES) \
-              $(T3_TCOMMAND_FILES) \
-              $(T3_TCOMMAND_DOC_FILES) \
+              $(T3_EXT_TCOMMAND_FILES) \
+              $(T3_EXT_TCOMMAND_DOC_FILES) \
               $(T3_ADV3_FILES) \
               $(T3_ADV3_EN_US_FILES) \
+              $(T3_WEBUIRES_FILES) \
               $(T3_DOC_FILES) \
               tads3/samples/bantest.t \
               tads3/samples/gramdisp.t \
               tads3/samples/sample.t \
               tads3/samples/sample.t3m \
-              tads3/samples/startq3.t \
+              tads3/samples/starta3.t \
               tads3/samples/startB3.t \
               tads3/samples/starti3.t
