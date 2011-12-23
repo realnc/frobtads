@@ -19,11 +19,6 @@ Known bugs.  Don't report them; fix them! :)
     t3make.  The systems affected are those that lack the <glob.h>
     system header.
 
-  - Currently, there's no way to pass arguments to the main() function
-    of a TADS 3 game.  The derised behavior should be something like:
-
-      frob [frob options] gamefile.t3 [T3VM options]
-
   - An interpreter crash (a segfault for example) is likely to leave the
     terminal in a weird state.  Entering "reset" (even if you can't see
     what you're typing) followed by a "unicode_start" (if applicable for
@@ -31,11 +26,3 @@ Known bugs.  Don't report them; fix them! :)
 
   - Plain-mode (pure stdout output without curses) is only partially
     supported (frob --interface plain) and buggy.
-
-  - The package does not compile on SuSE Linux 7.2 (GCC 2.9x) with -ansi
-    enabled; works just fine without it.  Looks like a bug in the
-    system's header files.  The compiler is ancient and buggy though,
-    so I don't think it's worth fixing.
-
-  - Some test suite programs fail to link with GCC 2.x.  Again, GCC 2.x
-    is ancient and buggy so a fix it's not a priority right now.

@@ -35,13 +35,14 @@ Libraries
 
 FrobTADS requires a curses compatible library along with its <curses.h>
 or <ncurses.h> header file (that means you have to install a curses
-development package, not only the runtime package).  No third-party
-libraries other than curses are needed to build and run the
-interpreter.  ncurses, plain old curses as well as PDCurses are
-supported.
+development package, not only the runtime package).  ncurses, plain old
+curses as well as PDCurses are supported.
 
 If no curses library is found, you can still build and use the
 compilers, since only the interpreter needs curses.
+
+In additon, you will need libcurl and its development files installed.
+This is needed for some of the network functionality of TADS 3.
 
 
 Compiler
@@ -325,18 +326,22 @@ Mac OS X
 OS X should work just like "regular" Unix.  Nothing special is required
 to build the interpreter on OS X, and therefore the above instructions
 also apply for OS X.  Don't forget to install the OS X curses/ncurses
-development package first.
+and libcurl development packages first.
 
 
 BeOS
 ....
 
 BeOS is supported and Like OS X, there should be no extra steps needed.
-Just make sure you have curses/ncurses installed.
+Just make sure you have curses/ncurses and libcurl installed.
 
 
 Microsoft Windows
 .................
+
+** The below is outdated; it is currently NOT possible to build FrobTADS
+** on Windows with MinGW/MSYS.  The last known version to build on
+** Windows is 1.0.  It might be possible to build using Cygwin.
 
 Yes, you can compile FrobTADS even in Windows.  If you're using
 MinGW/MSYS or cygwin, just configure and compile like in Unix.  Of
