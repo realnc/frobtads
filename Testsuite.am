@@ -177,6 +177,7 @@ test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     tads3/vmhash.cpp \
     tads3/sha2.cpp \
     tads3/md5.cpp \
+    tads3/vmlog.cpp \
     $(DYN_COMP_OBJS) \
     $(REG_METACLASS) \
     $(REG_BUILTIN_CHAR) \
@@ -342,6 +343,7 @@ test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads3/tclibprs.cpp \
     tads3/tccmdutl.cpp \
     tads3/vmrunsym.cpp \
+    tads3/vmlog.cpp \
     $(TARGET_OBJS_NO_LINK) \
     tads3/tct3prg.cpp \
     tads2/osifc.c \
@@ -453,6 +455,7 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     $(REG_METACLASS) \
     $(REG_BUILTIN_CHARNET) \
     tads3/derived/vmuni_cs.cpp \
+    tads3/vmlog.cpp \
     $(DYN_COMP_OBJS) \
     tads2/osifc.c \
     tads2/osnoui.c \
@@ -488,7 +491,6 @@ test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     tads3/tct3_d.cpp \
     tads3/vmhash.cpp \
     tads3/vmtypedh.cpp \
-    tads3/tct3stm.cpp \
     tads2/osnoui.c
 
 test_test_prs_SOURCES = tads3/test/test_prs.cpp \
