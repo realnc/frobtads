@@ -1,9 +1,9 @@
 v1.1
 ====
 
-  - Tads virtual machines and compilers updated to 2.5.14/3.1.  Tads 3.1
-    introduces network capabilities and currently it is not possible to
-    build the package without network support.  pthreads, sockets and
+  - Tads virtual machines and compilers updated to 2.5.15/3.1.0.  Tads
+    3.1 introduces network capabilities and currently it is not possible
+    to build the package without network support.  pthreads, sockets and
     libcurl are required for a successful build.
 
   - Compiler and runtime sources have been unified.  It is no longer
