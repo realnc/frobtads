@@ -4,8 +4,10 @@
 ret=0
 cd "$T3_OUT"
 
+# We don't perform the "hashes" test due to the line terminator differences
+# between Unix/Windows.
 for i in asi anon anonfunc anonobj anonvarg badnest bignum bignum2 findreplace \
-         foreach funcparm hashes htmlify ifnil inh_next isin join lclprop \
+         foreach funcparm htmlify ifnil inh_next isin join lclprop \
          listprop lookup lookup2 lookup3 lookupdef multidyn nested newprop \
          objloop opoverload propaddr propptr rexassert rexreplace setsc shr \
          spec2html spec2text split sprintf strcomp2 strcomp3 strbuf substr \
@@ -105,14 +107,16 @@ do
     fi
 done
 
-if $SCRIPTS/test_make.sh -pre multimethod_dynamic multimethod \
-                         multmethmultimethod_static -DMULTMETH_STATIC_INHERITED \
-                         multimethod multmeth
-then
-    :
-else
-    ret=1
-fi
+# Disable this for now; they can't work since they don't support building
+# in different directory than where the sources reside.
+#if $SCRIPTS/test_make.sh -pre multimethod_dynamic multimethod \
+#                         multmethmultimethod_static -DMULTMETH_STATIC_INHERITED \
+#                         multimethod multmeth
+#then
+#    :
+#else
+#    ret=1
+#fi
 
 if $SCRIPTS/test_make.sh -pre multimethod_dynamic2 multimethod multimethod2 \
                           multmeth
