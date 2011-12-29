@@ -190,8 +190,9 @@ else
   AC_DEFINE([CPU_IS_BIGENDIAN], [0], [Define to 0 if CPU is little endian.])
 fi
 
-# Check the sizes of 'int' and 'short'.
+# Check the sizes of 'long', 'int' and 'short'.
 #
+AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([short])
 
