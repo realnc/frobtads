@@ -737,7 +737,7 @@ public:
      *   string format, with VMB_LEN length prefixes.  
      */
     HttpReqThread(VMG_ const vm_val_t *id, const char *url,
-                  const char *verb, int32 options,
+                  const char *verb, int32_t options,
                   const char *hdrs, vm_val_t *body, const char *body_type,
                   const vm_rcdesc *rc)
     {
@@ -1115,7 +1115,7 @@ protected:
     TadsMessageQueue *queue;
 
     /* option flags */
-    int32 options;
+    int32_t options;
 
     /* parsed URL information */
     int https;
@@ -1250,7 +1250,7 @@ void CVmBifNet::send_net_request(VMG_ uint argc)
         const char *verb = get_str_val(vmg_ G_stk->get(2));
 
         /* get the option flags, if present */
-        int32 options = 0;
+        int32_t options = 0;
         if (argc >= 4 && G_stk->get(3)->typ != VM_NIL)
             options = G_stk->get(3)->num_to_int();
 

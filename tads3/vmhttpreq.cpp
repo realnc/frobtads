@@ -1834,11 +1834,11 @@ struct bodyArg
         {
             /* send the byte array or string buffer contents */
             char buf[1024];
-            int32 ofs = 0;
+            int32_t ofs = 0;
             for (;;)
             {
                 /* get the next chunk */
-                int32 len = sizeof(buf);
+                int32_t len = sizeof(buf);
                 const char *p = extract(vmg_ buf, ofs, len);
 
                 /* if we're out of material, we're done */
@@ -1862,7 +1862,7 @@ struct bodyArg
             {
                 /* get the next chunk */
                 char buf[1024];
-                int32 len = sizeof(buf);
+                int32_t len = sizeof(buf);
                 if (!file->read_file(vmg_ buf, len))
                     throw_net_err(
                         vmg_ "HTTPRequest: error reading file", 0);
@@ -1902,7 +1902,7 @@ struct bodyArg
      *   no guarantee that a fractional character won't be copied: some data
      *   sources won't do this, but others will.  
      */
-    const char *extract(VMG_ char *buf, int32 &ofs, int32 &len)
+    const char *extract(VMG_ char *buf, int32_t &ofs, int32_t &len)
     {
         /* assume we'll have to copy into the caller's buffer */
         const char *ret = buf;
@@ -1987,7 +1987,7 @@ struct bodyArg
     int status_code;
 
     /* length in bytes of the underlying data source */
-    int32 len;
+    int32_t len;
 };
 
 /*
@@ -2115,7 +2115,7 @@ int CVmObjHTTPRequest::getp_sendReply(VMG_ vm_obj_id_t self,
              *   section of the content to check for common signatures.  
              */
             char buf[512];
-            int32 ofs = 0, len = sizeof(buf);
+            int32_t ofs = 0, len = sizeof(buf);
             const char *bufp = body->extract(vmg_ buf, ofs, len);
             
             /* check to see if the body is text or binary */

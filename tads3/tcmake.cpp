@@ -166,6 +166,9 @@ CTcMake::CTcMake()
 
     /* assume we won't generate sourceTextGroup properties */
     src_group_mode_ = FALSE;
+
+    /* presume we won't create output directories */
+    create_dirs_ = FALSE;
 }
 
 /*
@@ -768,6 +771,37 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
 
             /* that's all we want to do */
             goto done;
+        }
+
+        /*
+         *   If desired, create the output directories.
+         */
+        if (create_dirs_)
+        {
+            /* initialize the error subsystem for this work */
+            CTcMain::init(hostifc, res_loader, source_charset_);
+            
+            /* create the symbol file directory */
+            if (symdir_.is_set())
+                create_dir(hostifc, symdir_.get(), FALSE,
+                           &fatal_error_count);
+
+            /* create the object file directory */
+            if (objdir_.is_set())
+                create_dir(hostifc, objdir_.get(),
+                           FALSE, &fatal_error_count);
+
+            /* create the image file directory */
+            if (image_fname_.is_set())
+                create_dir(hostifc, image_fname_.get(), TRUE,
+                           &fatal_error_count);
+
+            /* done with the error subsystem for now */
+            CTcMain::terminate();
+
+            /* if any of those failed, give up */
+            if (fatal_error_count != 0)
+                goto done;
         }
 
         /*
@@ -1396,6 +1430,45 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
     /* if any fatal errors occurred, include them in the error count */
     *errcnt += fatal_error_count;
 }
+
+/*
+ *   Create a directory 
+ */
+void CTcMake::create_dir(CTcHostIfc *hostifc,
+                         const char *path, int is_file, int *errcnt)
+{
+    char dir[OSFNMAX];
+
+    /*
+     *   If the path includes a filename portion, remove it to get the parent
+     *   directory path.
+     */
+    if (is_file)
+    {
+        /* extract the directory path portion */
+        os_get_path_name(dir, sizeof(dir), path);
+        path = dir;
+    }
+
+    /* if the directory doesn't already exist, create it */
+    if (osfacc(path))
+    {
+        /* mention it */
+        hostifc->print_step("creating output directory %s\n", path);
+        
+        /* try creating the folder */
+        if (!os_mkdir(path))
+        {
+            /* failed - log the error */
+            G_tcmain->log_error(0, 0, TC_SEV_ERROR,
+                                TCERR_CANNOT_CREATE_DIR, path);
+            
+            /* count it */
+            *errcnt += 1;
+        }
+    }
+}
+
 
 /*
  *   Build the version of a filename to show in a progress report. 

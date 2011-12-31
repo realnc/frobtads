@@ -702,20 +702,28 @@ parse_options:
             /* note the sub-option letter */
             subopt = argv[curarg][2];
 
-            /* get the filename/path argument */
-            p = CTcCommandUtil::get_opt_arg(argc, argv, &curarg, 2);
-            if (p == 0)
-                goto missing_option_arg;
-
-            /* make it relative to the option file path */
-            p = make_opt_file_relative(relbuf, sizeof(relbuf),
-                                       read_opt_file, opt_file_path, p);
-
             /* 
-             *   if this is an absolute path, note it so we can warn about it
-             *   if this is in an option file 
+             *   If applicable, get the filename/path argument.  Most of the
+             *   -F suboptions take an argument, but some don't, so check for
+             *   the ones that don't. 
              */
-            need_opt_file_path_warning = os_is_file_absolute(p);
+            p = 0;
+            if (strchr("C", subopt) == 0)
+            {
+                p = CTcCommandUtil::get_opt_arg(argc, argv, &curarg, 2);
+                if (p == 0)
+                    goto missing_option_arg;
+
+                /* make it relative to the option file path */
+                p = make_opt_file_relative(relbuf, sizeof(relbuf),
+                                           read_opt_file, opt_file_path, p);
+
+                /* 
+                 *   if this is an absolute path, note it so we can warn
+                 *   about it if this is in an option file 
+                 */
+                need_opt_file_path_warning = os_is_file_absolute(p);
+            }
 
             /* check the suboption */
             switch(subopt)
@@ -749,6 +757,11 @@ parse_options:
 
                 /* remember that we've set this path */
                 obj_dir_set = TRUE;
+                break;
+
+            case 'C':
+                /* set the "create output directories" flag */
+                mk->set_create_dirs(TRUE);
                 break;
 
             case 'a':
