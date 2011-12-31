@@ -25,32 +25,30 @@ extern "C++" {
 }
 #endif
 
-/* Provide typedefs for int16/uint16/int32/uint32. The base code assumes a
- * certain size for these types. The ones provided by default in
- * tads3/t3std.h (when the corresponding macro is not defined) are not
- * portable to most 64-bit compilers.
+/* The base code needs access to the C99 exact-width types (int32_t and
+ * friends.)  Those are provided by <stdint.h>, so we simply include that
+ * if it's available.  If not, we can typedef them ourselves since our
+ * autoconf script provides us with the exact sizes of the standard
+ * integer types.
  */
-#if SIZEOF_SHORT == 2
-typedef short int16;
-typedef unsigned short uint16;
-#elif SIZEOF_INT == 2
-typedef int int16;
-typedef unsigned int uint16;
+#ifdef HAVE_STDINT_
+#   include <stdint.h>
+#else
+#   if SIZEOF_SHORT == 2
+        typedef short int16_t;
+        typedef unsigned short uint16_t;
+#   elif SIZEOF_INT == 2
+        typedef int int16_t;
+        typedef unsigned int uint16_t;
+#   endif
+#   if SIZEOF_INT == 4
+        typedef int int32_t;
+        typedef unsigned int uint32_t;
+#   elif SIZEOF_LONG == 4
+        typedef long int32_t;
+        typedef unsigned long uint32_t;
+#   endif
 #endif
-#if SIZEOF_INT == 4
-typedef int int32;
-typedef unsigned int uint32;
-#elif SIZEOF_LONG == 4
-typedef long int32;
-typedef unsigned long uint32;
-#endif
-
-/* Assume we provided all types above. It's better to get a build error
- * than providing types of wrong size. */
-#define OS_INT16_DEFINED
-#define OS_UINT16_DEFINED
-#define OS_INT32_DEFINED
-#define OS_UINT32_DEFINED
 
 /* Some parts in the basecode behave differently when UNIX is defined,
  * like using "Makefile.t3m" instead "makefile.t3m" as the default
