@@ -34,6 +34,10 @@ AC_DEFINE([TADS_OEM_VERSION], ["0"], [Current TADS OEM version.])
 #
 AC_DEFINE([PACKAGE_MAINTAINER], ["Nikos Chantziaras"], [The person who currently maintains FrobTADS.])
 
+# Include custom macros we ship ourselves.
+#
+m4_include([m4/ax_func_mkdir.m4])
+
 
 #
 # Checks for programs.
@@ -262,6 +266,9 @@ AC_FUNC_MEMCMP
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS([memmove memset strchr putenv])
+
+# Check for mkdir()/_mkdir() and wether mkdir() only takes one argument.
+AX_FUNC_MKDIR
 
 # The TADS base code considers the memicmp() function to be "standard".
 # It actually isn't.  If the system doesn't provide it, our own

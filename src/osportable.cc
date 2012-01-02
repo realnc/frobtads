@@ -997,6 +997,39 @@ os_xlat_html4( unsigned int html4_char, char* result, size_t result_buf_len )
  */
 #ifndef RUNTIME
 
+int
+os_mkdir( const char* dir )
+{
+    // If the path contains multiple elements, recursively create the
+    // parent directories first.
+    if (strchr(dir, OSPATHCHAR) != 0) {
+        char par[OSFNMAX];
+
+        // Extract the parent path.
+        os_get_path_name(par, sizeof(par), dir);
+
+        // If the parent doesn't already exist, create it recursively.
+        if (osfacc(par) && !os_mkdir(par))
+            return false;
+    }
+
+    // Create the directory.
+#if HAVE_MKDIR
+#   if MKDIR_TAKES_ONE_ARG
+        return mkdir(dir) == 0;
+#   else
+        return mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+#   endif
+#else
+#   if HAVE__MKDIR
+        return _mkdir(dir) == 0;
+#   else
+#       error "Neither mkdir() nor _mkdir() is available on this system."
+#   endif
+#endif
+}
+
+
 /* Wait for a character to become available from the keyboard.
  */
 void
