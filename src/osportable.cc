@@ -1000,33 +1000,50 @@ os_xlat_html4( unsigned int html4_char, char* result, size_t result_buf_len )
 int
 os_mkdir( const char* dir )
 {
+    //assert(dir != 0);
+
+    if (dir[0] == '\0')
+        return true;
+
+    // Copy the directory name to a new string so we can strip any trailing
+    // path seperators.
+    size_t len = strlen(dir);
+    char* tmp = new char[len + 1];
+    strncpy(tmp, dir, len);
+    while (tmp[len - 1] == OSPATHCHAR)
+        --len;
+    tmp[len] = '\0';
+
     // If the path contains multiple elements, recursively create the
     // parent directories first.
-    if (strchr(dir, OSPATHCHAR) != 0) {
+    if (strchr(tmp, OSPATHCHAR) != 0) {
         char par[OSFNMAX];
 
         // Extract the parent path.
-        os_get_path_name(par, sizeof(par), dir);
+        os_get_path_name(par, sizeof(par), tmp);
 
         // If the parent doesn't already exist, create it recursively.
-        if (osfacc(par) && !os_mkdir(par))
+        if (osfacc(par) != 0 and not os_mkdir(par)) {
+            delete[] tmp;
             return false;
+        }
     }
 
     // Create the directory.
+    int ret =
 #if HAVE_MKDIR
 #   if MKDIR_TAKES_ONE_ARG
-        return mkdir(dir) == 0;
+        mkdir(tmp);
 #   else
-        return mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+        mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO);
 #   endif
+#elif HAVE__MKDIR
+    _mkdir(tmp);
 #else
-#   if HAVE__MKDIR
-        return _mkdir(dir) == 0;
-#   else
-#       error "Neither mkdir() nor _mkdir() is available on this system."
-#   endif
+#   error "Neither mkdir() nor _mkdir() is available on this system."
 #endif
+    delete[] tmp;
+    return ret == 0;
 }
 
 
