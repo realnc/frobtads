@@ -22,6 +22,7 @@ Modified
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
 #include <arpa/inet.h>
@@ -1080,6 +1081,17 @@ public:
             int nsp = 1;
             setsockopt(snew, SOL_SOCKET, SO_NOSIGPIPE, &nsp, sizeof(nsp));
 #endif
+            /*
+             *   Disable the Nagle algorithm for this socket to minimize
+             *   transmit latency.  We send a lot of very small packets and
+             *   the client must acknowledge each one in sequence before
+             *   the next one can be sent.  It is normally useful to combine
+             *   many small packets into a few large ones, but here it only
+             *   slows us down.
+             */
+            int tcpflag = 1;
+            setsockopt(snew, IPPROTO_TCP, TCP_NODELAY,
+                       (char*)&tcpflag, sizeof(tcpflag));
 
             /* wrap the socket in an OS_Socket and return the object */
             return new OS_Socket(snew);
