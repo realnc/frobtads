@@ -73,6 +73,7 @@ const char helpOutput[] =
 "  -c, --no-scrolling   Disable soft (line by line) scrolling\n"
 "  -p, --no-pause       Don't pause prior to quiting\n"
 "  -d, --no-chdir       Don't change the current directory\n"
+"  -S, --no-seed-rand   Do not seed the random number generator\n"
 "  -s, --safety-level   File I/O safety level (default is 2)\n"
 "  -N, --net-safety-level Network safety level\n"
 "  -e, --scroll-buffer  Size of the scroll-back buffer. Must be between 8 and\n"
@@ -166,7 +167,7 @@ int main( int argc, char** argv )
         "R:replay <filename>",
         "r:restore <filename>",
         "s:safety-level <00..44>",
-        "S:no-seed-rand",
+        "S|no-seed-rand",
         "t:tcolor <0..7>",
         "u:undo-size <1..64>",
         "v|version",
