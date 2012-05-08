@@ -1,3 +1,10 @@
+Git
+===
+
+  - The interpreter should now work correctly when running inside an
+    Emacs eterm.
+
+
 v1.1 - 2011/12/29
 =================
 

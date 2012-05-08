@@ -231,16 +231,18 @@ FrobTadsApplicationCurses::init()
     unsigned width = 0;
     unsigned height = 0;
     bool sizeDetected = getTermSize(width, height);
-    if (sizeDetected) {
-        // Update the environment in case we're running inside
-        // an old/broken terminal or are using an old/broken
-        // version of curses.
+
+    // Update the LINES/COLUMNS environment vars in case we're running inside
+    // an old/broken terminal or are using an old/broken version of curses.
+    // Only do this if we could determine the terminal dimensions and we're
+    // not running inside an Emacs eterm; setting the env vars in an eterm
+    // results in severe display problems.
 #if HAVE_PUTENV
-        // Note that the strings have to be static, since
-        // putenv() does not always copy the string arguments
-        // but points the environment to the application's
-        // address space (and therefore the application would
-        // segfault if the strings were not static).
+    const char* termEnv = getenv("TERM");
+    if (sizeDetected and termEnv != 0 and strncmp(termEnv, "eterm", 5) != 0) {
+        // The strings have to be static, since putenv() does not always copy
+        // the string arguments but points the environment to the application's
+        // address space.
         static char linesEnv[32];
         static char columnsEnv[32];
         char tmp[16];
@@ -263,8 +265,8 @@ FrobTadsApplicationCurses::init()
         // assume it's neither.
         //COLS = width;
         //LINES = height;
-#endif
     }
+#endif
 
     // Reset curses, in case the terminal's size has changed.
     endwin();
