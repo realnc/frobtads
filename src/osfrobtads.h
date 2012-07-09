@@ -426,6 +426,8 @@ int os_file_stat( const char* fname, int follow_links,
  *   that actually use threading; at the moment, this is limited to the
  *   network-enabled TADS 3 interpreter.
  */
+#ifdef OS_DECLARATIVE_TLS
 #define OS_DECL_TLS(typ, varname)  TLS typ varname
+#endif
 
 #endif /* OSFROBTADS_H */
