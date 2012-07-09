@@ -3029,6 +3029,18 @@ class IAction: Action
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   "All" and "Default" are a pseudo-actions used for dobjFor(All),
+ *   iobjFor(Default), and similar catch-all handlers.  These are never
+ *   executed as actual actions, but we define them so that dobjFor(All)
+ *   and the like won't generate any warnings for undefined actions.
+ */
+class AllAction: object
+;
+class DefaultAction: object
+;
+
+/* ------------------------------------------------------------------------ */
+/*
  *   Transitive Action class - this is an action that takes a direct
  *   object.
  *   

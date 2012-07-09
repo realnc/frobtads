@@ -212,12 +212,26 @@ public:
     size_t get_element_count() const
         { return vmb_get_len(get_vector_ext_ptr() + 2); }
 
-    /* get an element without any range checking */
+    /* get an element without any range checking; 0-based index */
     void get_element(size_t idx, vm_val_t *val) const
     {
         /* get the data from the data holder in our extension */
         vmb_get_dh(get_element_ptr(idx), val);
     }
+
+    /* append an element, with no undo */
+    void append_element(VMG_ vm_obj_id_t self, const vm_val_t *val);
+
+    /* set an element; 0-based index; no bounds checking or undo */
+    void set_element(size_t idx, const vm_val_t *val)
+    {
+        /* set the element's data holder from the value */
+        vmb_put_dh(get_element_ptr(idx), val);
+    }
+
+    /* set an element, recording undo for the change; 0-based index */
+    void set_element_undo(VMG_ vm_obj_id_t self,
+                          size_t idx, const vm_val_t *val);
 
 protected:
     /* load image data */
@@ -305,10 +319,8 @@ protected:
     /* push an element onto the stack */
     void push_element(VMG_ size_t idx) const
     {
-        vm_val_t *p;
-
         /* push a stack element */
-        p = G_stk->push();
+        vm_val_t *p = G_stk->push();
 
         /* 
          *   get the data from the data holder in our extension directly into
@@ -317,23 +329,8 @@ protected:
         vmb_get_dh(get_element_ptr(idx), p);
     }
 
-    /* set an element, recording undo for the change */
-    void set_element_undo(VMG_ vm_obj_id_t self,
-                          size_t idx, const vm_val_t *val);
-
-    /* set an element */
-    void set_element(size_t idx, const vm_val_t *val)
-    {
-        /* set the element's data holder from the value */
-        vmb_put_dh(get_element_ptr(idx), val);
-    }
-
     /* set the allocated size */
     void set_allocated_count(size_t cnt);
-
-    /* set the number of elements in the vector */
-    void set_element_count(size_t cnt)
-        { vmb_put_len(cons_get_vector_ext_ptr() + 2, cnt); }
 
     /* given an index, get a pointer to the element's data in the list */
     char *get_element_ptr(size_t idx) const
@@ -403,6 +400,10 @@ protected:
                 + 2*VMB_LEN
                 + get_allocated_count()*VMB_DATAHOLDER);
     }
+
+    /* set the number of elements in the vector; no undo or size checking */
+    void set_element_count(size_t cnt)
+        { vmb_put_len(cons_get_vector_ext_ptr() + 2, cnt); }
 
     /* set the element count, saving undo for the change */
     void set_element_count_undo(VMG_ vm_obj_id_t self,

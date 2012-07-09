@@ -22,7 +22,6 @@ Modified
 #include "osifcnet.h"
 #include "vmnet.h"
 #include "vmglob.h"
-#include "vmerr.h"
 #include "vmtype.h"
 #include "vmobj.h"
 #include "vmstr.h"
@@ -95,8 +94,8 @@ char *TadsServerManager::gen_rand_id(void *obj)
     sha256_begin(&s);
 
     /* add the current date/time to the hash */
-    time_t timer = time(0);
-    struct tm *tblock = localtime(&timer);
+    os_time_t timer = os_time(0);
+    struct tm *tblock = os_localtime(&timer);
     sha256_hash((unsigned char *)tblock, sizeof(*tblock), &s);
 
     /* add the system timer to the hash */

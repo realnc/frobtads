@@ -49,7 +49,10 @@ Modified
 #include "vmimport.h"
 #include "vmpredef.h"
 #include "vmlookup.h"
+#include "vmfilobj.h"
 #include "vmnetfil.h"
+#include "vmbytarr.h"
+#include "vmcrc.h"
 
 
 /* ------------------------------------------------------------------------ */
@@ -71,7 +74,9 @@ CVmBifTADSGlobals::CVmBifTADSGlobals(VMG0_)
      */
     last_rex_str = G_obj_table->create_global_var();
 
-#ifdef VMBIFTADS_RNG_LCG
+    /* ISAAC is the default RNG */
+    rng_id = VMBT_RNGID_ISAAC;
+
     /* 
      *   Set the random number seed to a fixed starting value (this value
      *   is arbitrary; we chose it by throwing dice).  If the program
@@ -81,16 +86,16 @@ CVmBifTADSGlobals::CVmBifTADSGlobals(VMG0_)
      *   the system's real-time clock, to ensure that each run will use a
      *   different starting value).  
      */
-    rand_seed = 024136543305;
-#endif
+    lcg_rand_seed = 024136543305;
 
-#ifdef VMBIFTADS_RNG_ISAAC
     /* create the ISAAC context structure */
     isaac_ctx = (struct isaacctx *)t3malloc(sizeof(struct isaacctx));
 
     /* initialize with a fixed seed vector */
     isaac_init(isaac_ctx, FALSE);
-#endif
+
+    /* create the Mersenne Twister object */
+    mt_ctx = new CVmMT19937();
 }
 
 /*
@@ -109,10 +114,11 @@ CVmBifTADSGlobals::~CVmBifTADSGlobals()
      *   deleting the variable for us when the object table itself is deleted
      */
 
-#ifdef VMBIFTADS_RNG_ISAAC
     /* delete the ISAAC context */
     t3free(isaac_ctx);
-#endif
+
+    /* delete the Mersenne Twister context */
+    delete mt_ctx;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -153,7 +159,7 @@ void CVmBifTADS::getarg(VMG_ uint argc)
     if (idx < 1 || idx > G_interpreter->get_cur_argc(vmg0_))
         err_throw(VMERR_BAD_VAL_BIF);
 
-    /* push the parameter value */
+    /* return the parameter value */
     *G_interpreter->get_r0() = *G_interpreter->get_param(vmg_ idx - 1);
 }
 
@@ -319,12 +325,175 @@ void CVmBifTADS::enum_objects(VMG_ uint argc, vm_obj_id_t start_obj)
 
 /* ------------------------------------------------------------------------ */
 /*
- *   Random number generators.  Define one of the following configuration
- *   variables to select a random number generation algorithm:
- *   
- *   VMBIFTADS_RNG_LCG - linear congruential generator
- *.  VMBIFTADS_RNG_ISAAC - ISAAC (cryptographic hash generator) 
+ *   Abstract RNG algorithm interface
  */
+class IVmBifTadsRNG
+{
+public:
+    virtual ~IVmBifTadsRNG() { }
+
+    /* get the next random number */
+    virtual uint32_t rand() = 0;
+
+    /* seed the generator from random data */
+    virtual void seed_random() = 0;
+
+    /* seed from an int */
+    virtual void seed_int(int32_t i)
+    {
+        /* by default, turn this into a string and seed with the string */
+        char buf[40];
+        oswp4(buf, i);
+        t3sprintf(buf+4, sizeof(buf)-4, "%ld", (long)i);
+        seed_str(buf, 4 + strlen(buf+4));
+    }
+
+    /* seed from a string */
+    virtual void seed_str(const char *str, size_t len)
+    {
+        /* by default, hash the string to an int and seed with the int */
+        CVmCRC32 crc;
+        crc.scan_bytes(str, len);
+        seed_int((int32_t)crc.get_crc_val());
+    }
+
+    /* get the state into a ByteArray object */
+    void get_state(VMG_ vm_val_t *val)
+    {
+        size_t len = get_state_size();
+        if (len == 0)
+        {
+            /* simple int32_t state */
+            val->set_int(get_state_int());
+        }
+        else
+        {
+            /* allocate a buffer */
+            char *buf = new char[len];
+
+            /* make sure we delete the allocated buffer */
+            err_try
+            {
+                /* get the state into our buffer */
+                get_state_buf(buf);
+
+                /* create a ByteArray from the state vector */
+                val->set_obj(CVmObjByteArray::create_from_bytes(
+                    vmg_ FALSE, buf, len));
+            }
+            err_finally
+            {
+                /* done with the buffer */
+                delete [] buf;
+            }
+            err_end;
+        }
+    }
+
+    /* put the state from a ByteArray object */
+    void put_state(VMG_ vm_val_t *val)
+    {
+        /* determine what to do based on the state length */
+        size_t len = get_state_size();
+        if (len == 0)
+        {
+            /* simple int32_t state */
+            put_state_int(val->num_to_int(vmg0_));
+        }
+        else
+        {
+            /* retrieve the ByteArray object */
+            CVmObjByteArray *barr = vm_val_cast(CVmObjByteArray, val);
+
+            /* check that it matches the expected state buffer size */
+            unsigned long cnt = barr->get_element_count();
+            if (cnt != len)
+                err_throw(VMERR_BAD_VAL_BIF);
+
+            /* retrieve the bytes and restore the state */
+            char *buf = new char[len];
+            err_try
+            {
+                /* retrieve the bytes */
+                barr->copy_to_buf((unsigned char *)buf, 1, len);
+
+                /* restore the state */
+                put_state_buf(buf);
+            }
+            err_finally
+            {
+                delete [] buf;
+            }
+            err_end;
+        }
+    }
+
+protected:
+    /* 
+     *   Get the size of the state vector, in bytes.  Return 0 if we can
+     *   store the state in an int32_t. 
+     */
+    virtual size_t get_state_size() = 0;
+
+    /* get/put state as an int32_t */
+    virtual int32_t get_state_int() = 0;
+    virtual void put_state_int(int32_t i) = 0;
+
+    /* save/restore current state vector to/from a buffer */
+    virtual void get_state_buf(char *buf) = 0;
+    virtual void put_state_buf(const char *buf) = 0;
+};
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   ISAAC random number generator 
+ */
+class vmbt_isaac_ifc: public IVmBifTadsRNG
+{
+public:
+    vmbt_isaac_ifc(VMG0_) { ctx = G_bif_tads_globals->isaac_ctx; }
+    isaacctx *ctx;
+
+    virtual uint32_t rand() { return isaac_rand(ctx); }
+
+    /* seed from random data */
+    virtual void seed_random()
+    {
+        /* generate random bytes into the ISAAC rsl array */
+        os_gen_rand_bytes((unsigned char *)ctx->rsl, sizeof(ctx->rsl));
+
+        /* initialize from the rsl array */
+        isaac_init(ctx, TRUE);
+    }
+
+    /* seed from a string value */
+    virtual void seed_str(const char *str, size_t len)
+    {
+        /* 
+         *   Copy the string value into the rsl array; copy as much as will
+         *   fit, and zero the rest.  (The point here is to be deterministic,
+         *   so we want this to be the same every time with a given seed - we
+         *   don't want to include random data left behind from previous
+         *   iterations.)
+         */
+        if (len > sizeof(ctx->rsl))
+            len = sizeof(ctx->rsl);
+
+        memset(ctx->rsl, 0, sizeof(ctx->rsl));
+        memcpy(ctx->rsl, str, len);
+
+        /* initialize with the rsl data */
+        isaac_init(ctx, TRUE);
+    }
+
+    virtual int32_t get_state_int() { return 0; }
+    virtual void put_state_int(int32_t) { }
+
+    virtual size_t get_state_size() { return isaac_get_state(ctx, 0); }
+    virtual void get_state_buf(char *buf) { isaac_get_state(ctx, buf); }
+    virtual void put_state_buf(const char *buf) { isaac_set_state(ctx, buf); }
+};
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -333,95 +502,335 @@ void CVmBifTADS::enum_objects(VMG_ uint argc, vm_obj_id_t start_obj)
  *   170, with parameters chosen from the same book for their good
  *   statistical properties and efficiency on 32-bit hardware.  
  */
-#ifdef VMBIFTADS_RNG_LCG
-/*
- *   randomize - seed the random-number generator 
- */
-void CVmBifTADS::randomize(VMG_ uint argc)
+class vmbt_lcg_ifc: public IVmBifTadsRNG
 {
-    /* check arguments */
-    check_argc(vmg_ argc, 0);
+public:
+    vmbt_lcg_ifc(VMG0_) { seedp = &G_bif_tads_globals->lcg_rand_seed; }
 
-    /* seed the generator */
-    os_rand(&G_bif_tads_globals->rand_seed);
-}
+    virtual uint32_t rand()
+    {
+        const uint32_t a = 1664525L;
+        const uint32_t c = 1;
 
-/*
- *   generate the next random number - linear congruential generator 
- */
-static ulong rng_next(VMG0_)
-{
-    const ulong a = 1664525L;
-    const ulong c = 1;
+        /* 
+         *   Generate the next random value using the linear congruential
+         *   method described in Knuth, The Art of Computer Programming,
+         *   volume 2, p170.
+         *   
+         *   Use 2^32 as m, hence (n mod m) == (n & 0xFFFFFFFF).  This is
+         *   efficient and is well-suited to 32-bit machines, works fine on
+         *   larger machines, and will even work on 16-bit machines as long
+         *   as the compiler can provide us with 32-bit arithmetic (which we
+         *   assume extensively elsewhere anyway).
+         *   
+         *   We use a = 1664525, a multiplier which has very good results
+         *   with the Spectral Test (see Knuth p102) with our choice of m.
+         *   
+         *   Use c = 1, since this trivially satisfies Knuth's requirements
+         *   about common factors.
+         *   
+         *   Note that the result of the multiplication might overflow a
+         *   32-bit ulong for values of lcg_rand_seed that are not small.
+         *   This doesn't matter, since if it does, the machine will
+         *   naturally truncate high-order bits to yield the result mod 2^32.
+         *   So, on a 32-bit machine, the (&0xFFFFFFFF) part is superfluous,
+         *   but it's harmless and is needed for machines with a larger word
+         *   size.  
+         */
+        *seedp = (int32_t)(((a * (uint32_t)*seedp) + 1) & 0xFFFFFFFF);
+        return (uint32_t)*seedp;
+    }
 
-    /* 
-     *   Generate the next random value using the linear congruential
-     *   method described in Knuth, The Art of Computer Programming,
-     *   volume 2, p170.
-     *   
-     *   Use 2^32 as m, hence (n mod m) == (n & 0xFFFFFFFF).  This is
-     *   efficient and is well-suited to 32-bit machines, works fine on
-     *   larger machines, and will even work on 16-bit machines as long as
-     *   the compiler can provide us with 32-bit arithmetic (which we
-     *   assume extensively elsewhere anyway).
-     *   
-     *   We use a = 1664525, a multiplier which has very good results with
-     *   the Spectral Test (see Knuth p102) with our choice of m.
-     *   
-     *   Use c = 1, since this trivially satisfies Knuth's requirements
-     *   about common factors.
-     *   
-     *   Note that the result of the multiplication might overflow a
-     *   32-bit ulong for values of rand_seed that are not small.  This
-     *   doesn't matter, since if it does, the machine will naturally
-     *   truncate high-order bits to yield the result mod 2^32.  So, on a
-     *   32-bit machine, the (&0xFFFFFFFF) part is superfluous, but it's
-     *   harmless and is needed for machines with a larger word size.  
-     */
-    G_bif_tads_globals->rand_seed =
-        (long)(((a * (ulong)G_bif_tads_globals->rand_seed) + 1) & 0xFFFFFFFF);
-    return (ulong)G_bif_tads_globals->rand_seed;
-}
-#endif /* VMBIFTADS_RNG_LCG */
+    virtual void seed_random()
+    {
+        long l;
+        os_rand(&l);
+        *seedp = (int32_t)l;
+    }
+    
+    virtual void seed_int(int32_t i)
+    {
+        *seedp = i;
+    }
+    
+    virtual int32_t get_state_int() { return *seedp; }
+    virtual void put_state_int(int32_t i) { *seedp = i; }
+    
+    virtual size_t get_state_size() { return 0; }
+    virtual void get_state_buf(char *) { }
+    virtual void put_state_buf(const char *) { }
+    
+    int32_t *seedp;
+};
+
 
 /* ------------------------------------------------------------------------ */
 /*
- *   ISAAC random number generator. 
+ *   Bit-shift generator.  This is from Knuth, The Art of Computer
+ *   Programming, volume 2.  This generator is designed to produce random
+ *   strings of bits and isn't suitable for use as a general-purpose RNG.
+ *   
+ *   Linear congruential generators aren't ideal for generating random bits;
+ *   their statistical properties are better suited for generating values
+ *   over a full integer range.  This generator is specially designed to
+ *   produce random bits, so it could be a useful complement to an LCG RNG.
+ *   
+ *   Since this isn't a good general RNG, we don't currently enable it.
+ *   We're keeping the code here, ifdef'd out, in case we decide to enable it
+ *   in the future - which seems really unlikely, since ISAAC seems to be
+ *   good at generating both full-range integers and random bits, leaving
+ *   little reason to have a dedicated random bit generator.
  */
 
-#ifdef VMBIFTADS_RNG_ISAAC
+#ifdef VMBIFTADS_RNG_BITSHIFT
+static uint32_t bits_rng_next(VMG0_)
+{
+    int top_bit = (G_bif_tads_globals->bits_rand_seed & 0x8000000);
+    G_bif_tads_globals->bits_rand_seed <<= 1;
+    if (top_bit)
+        G_bif_tads_globals->bits_rand_seed ^= 035604231625;
+
+    return G_bif_tads_globals->bits_rand_seed & 1;
+}
+#endif /* VMBIFTADS_RNG_BITSHIFT */
 
 
+/* ------------------------------------------------------------------------ */
 /*
- *   seed the rng 
+ *   Mersenne Twister MT19937 RNG algorithm 
+ */
+class vmbt_mt_ifc: public IVmBifTadsRNG
+{
+public:
+    vmbt_mt_ifc(VMG0_) { mt = G_bif_tads_globals->mt_ctx; }
+    CVmMT19937 *mt;
+
+    virtual uint32_t rand() { return mt->rand(); }
+
+    virtual void seed_random() { mt->seed_random(); }
+    virtual void seed_int(int32_t i) { mt->seed(i); }
+    virtual void seed_str(const char *str, size_t len) { mt->seed(str, len); }
+
+    virtual int32_t get_state_int() { return 0; }
+    virtual void put_state_int(int32_t i) { }
+
+    virtual size_t get_state_size() { return mt->get_state_size(); }
+    virtual void get_state_buf(char *buf) { mt->get_state(buf); }
+    virtual void put_state_buf(const char *buf) { mt->put_state(buf); }
+};
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   RNG interface selector.  This sets up each type of RNG interface, and
+ *   returns the one for the given ID.  This object can be constructed on the
+ *   stack for minimal memory management hassle.
+ */
+class CVmRNGSelector
+{
+public:
+    CVmRNGSelector(VMG0_)
+        : isaac(vmg0_), lcg(vmg0_), mt(vmg0_) { }
+
+    IVmBifTadsRNG *get(int id)
+    {
+        switch (id)
+        {
+        case VMBT_RNGID_ISAAC:
+            return &isaac;
+            
+        case VMBT_RNGID_LCG:
+            return &lcg;
+            
+        case VMBT_RNGID_MT19937:
+            return &mt;
+
+        default:
+            err_throw(VMERR_BAD_VAL_BIF);
+            AFTER_ERR_THROW(return 0;)
+        }
+    }
+
+    vmbt_isaac_ifc isaac;
+    vmbt_lcg_ifc lcg;
+    vmbt_mt_ifc mt;
+};
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   randomize - seed the random number generator.  This has several formats:
+ *   
+ *.    randomize() - select the default RNG (ISAAC) and initialize it
+ *.                  with random seed data.
+ *   
+ *.    randomize(nil) - retrieve the current state of the random number
+ *.                  generator.  Returns a list: [id, state], where 'id'
+ *.                  is the generator ID, and 'state' is an opaque value
+ *.                  representing the generator's internal state.
+ *   
+ *.    randomize([state]) - restores the generator and internal state
+ *.                  returned from a previous call to randomize(nil).
+ *   
+ *.    randomize(id) - select the RNG identified by 'id'.
+ *   
+ *.    randomize(id, nil) - select the given RNG, and initialize it with
+ *.                  random seed data.
+ *   
+ *.    randomize(id, val) - select the given RNG, and initialize it with
+ *.                  the given fixed seed data.  The seed can be provided
+ *.                  as an integer or string value.
  */
 void CVmBifTADS::randomize(VMG_ uint argc)
 {
     /* check arguments */
-    check_argc(vmg_ argc, 0);
+    check_argc_range(vmg_ argc, 0, 2);
+    if (argc == 0)
+    {
+        /*
+         *   No arguments - select the default random number generator
+         *   (ISAAC) and initialize it with random seed data.
+         *   
+         *   Load the ISAAC initialization vector with some truly random data
+         *   from the operating system.
+         */
+        G_bif_tads_globals->rng_id = VMBT_RNGID_ISAAC;
+        vmbt_isaac_ifc s Pvmg0_P;
+        s.seed_random();
 
-    /* 
-     *   load the ISAAC initialization vector with some truly random data
-     *   from the operating system 
-     */
-    os_gen_rand_bytes((unsigned char *)G_bif_tads_globals->isaac_ctx->rsl,
-                      sizeof(G_bif_tads_globals->isaac_ctx->rsl));
+        /* no return value */
+        retval_nil(vmg0_);
+    }
+    else if (argc == 1 && G_stk->get(0)->typ == VM_NIL)
+    {
+        /* 
+         *   randomize(nil) - retrieve the current RNG state.  This returns a
+         *   list with two elements: [id, state].  Set up the return list.
+         */
+        vm_obj_id_t lstid = CVmObjList::create(vmg_ FALSE, 2);
+        CVmObjList *lst = (CVmObjList *)vm_objp(vmg_ lstid);
+        lst->cons_clear();
+        G_stk->push()->set_obj(lstid);
 
-    /* initialize with this rsl[] array */
-    isaac_init(G_bif_tads_globals->isaac_ctx, TRUE);
+        /* retval[1] = the active RNG ID */
+        vm_val_t ele;
+        ele.set_int(G_bif_tads_globals->rng_id);
+        lst->cons_set_element(0, &ele);
+
+        /* retval[2] = the active RNG's saved state vector */
+        CVmRNGSelector sel Pvmg0_P;
+        sel.get(G_bif_tads_globals->rng_id)->get_state(vmg_ &ele);
+        lst->cons_set_element(1, &ele);
+
+        /* discard gc protection and return the new list */
+        G_stk->discard(1);
+        retval_obj(vmg_ lstid);
+    }
+    else if (argc == 1 && G_stk->get(0)->is_listlike(vmg0_))
+    {
+        /* 
+         *   Randomize([state]) - restores a previous RNG state.  The first
+         *   list element is the RNG ID; the second is the saved state data,
+         *   in an RNG-specific format.
+         */
+        vm_val_t idele, state;
+        G_stk->get(0)->ll_index(vmg_ &idele, 1);
+        G_stk->get(0)->ll_index(vmg_ &state, 2);
+        int id = idele.num_to_int(vmg0_);
+
+        /* set the state for the selected generator */
+        CVmRNGSelector sel Pvmg0_P;
+        sel.get(id)->put_state(vmg_ &state);
+
+        /* valid ID - select the generator */
+        G_bif_tads_globals->rng_id = id;
+
+        /* no return value */
+        retval_nil(vmg0_);
+    }
+    else if ((argc == 1 || argc == 2)
+             && G_stk->get(0)->is_numeric(vmg0_))
+    {
+        /*
+         *   randomize(id) - select the RNG identified by 'id'
+         *.  randomize(id, nil) - select and seed with random data
+         *.  randomize(id, val) - select and seed with fixed data
+         */
+        
+        /* get the ID, and get the generator interface for it */
+        int id = G_stk->get(0)->num_to_int(vmg0_);
+        CVmRNGSelector sel Pvmg0_P;
+        IVmBifTadsRNG *rng = sel.get(id);
+
+        /* 
+         *   Determine whether and how we're seeding the RNG.  If there's
+         *   only the one argument, we're not seeding it.  If there's a
+         *   second argument, and it's nil, we're seeding with OS random
+         *   data.  Otherwise we're seeding with the fixed data in the second
+         *   argument, which must be an integer or string value.
+         */
+        if (argc == 2)
+        {
+            /* get the seed, and sense its type */
+            vm_val_t *seed = G_stk->get(1);
+            const char *str;
+            if (seed->typ == VM_NIL)
+            {
+                /* nil - use random data from the OS */
+                rng->seed_random();
+            }
+            else if (seed->is_numeric(vmg0_))
+            {
+                /* fixed integer seed value */
+                rng->seed_int(seed->num_to_int(vmg0_));
+            }
+            else if ((str = seed->get_as_string(vmg0_)) != 0)
+            {
+                /* string seed value */
+                rng->seed_str(str + VMB_LEN, vmb_get_len(str));
+            }
+            else
+            {
+                /* other types are invalid */
+                err_throw(VMERR_BAD_TYPE_BIF);
+            }
+        }
+
+        /* if we got this far, the ID was valid, so select the RNG */
+        G_bif_tads_globals->rng_id = id;
+
+        /* no return value */
+        retval_nil(vmg0_);
+    }
+    else
+    {
+        /* invalid arguments */
+        err_throw(VMERR_WRONG_NUM_OF_ARGS);
+    }
 }
-
 
 /*
- *   generate the next random number - ISAAC (by Bob Jenkins,
- *   http://ourworld.compuserve.com/homepages/bob_jenkins/isaacafa.htm) 
+ *   LCG randomize - seed the random-number generator 
  */
-static ulong rng_next(VMG0_)
+//void CVmBifTADS::randomize(VMG_ uint argc)
+//{
+//    /* check arguments */
+//    check_argc(vmg_ argc, 0);
+//
+//    /* seed the generator */
+//    os_rand(&G_bif_tads_globals->lcg_rand_seed);
+//}
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   Get the next random number from the selected RNG 
+ */
+static uint32_t rng_next(VMG0_)
 {
-    /* return the next number */
-    return isaac_rand(G_bif_tads_globals->isaac_ctx);
+    CVmRNGSelector sel Pvmg0_P;
+    return sel.get(G_bif_tads_globals->rng_id)->rand();
 }
-#endif /* VMBIFTADS_RNG_ISAAC */
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -1595,42 +2004,6 @@ void CVmBifTADS::rand(VMG_ uint argc)
 
 /* ------------------------------------------------------------------------ */
 /*
- *   Bit-shift generator.  This is from Knuth, The Art of Computer
- *   Programming, volume 2.  This generator is designed to produce random
- *   strings of bits and is not suitable for use as a general-purpose RNG.
- *   
- *   Linear congruential generators are not ideal for generating random
- *   bits; their statistical properties seem better suited for generating
- *   values over a wider range.  This generator is specially designed to
- *   produce random bits, so it could be a useful complement to an LCG RNG.
- *   
- *   This code should not be enabled in its present state; it's retained
- *   in case we want in the future to implement a generator exclusively
- *   for random bits.  The ISAAC generator seems to be a good source of
- *   random bits as well as random numbers, so it seems unlikely that
- *   we'll need a separate random bit generator.  
- */
-
-#ifdef VMBIFTADS_RNG_BITSHIFT
-void CVmBifTADS::randbit(VMG_ uint argc)
-{
-    int top_bit;
-    
-    /* check arguments */
-    check_argc(vmg_ argc, 0);
-
-    top_bit = (G_bif_tads_globals->rand_seed & 0x8000000);
-    G_bif_tads_globals->rand_seed <<= 1;
-    if (top_bit)
-        G_bif_tads_globals->rand_seed ^= 035604231625;
-
-    retval_int(vmg_ (long)(G_bif_tads_globals->rand_seed & 1));
-}
-#endif /* VMBIFTADS_RNG_BITSHIFT */
-
-
-/* ------------------------------------------------------------------------ */
-/*
  *   toString - convert to string 
  */
 void CVmBifTADS::toString(VMG_ uint argc)
@@ -1778,7 +2151,7 @@ void CVmBifTADS::toIntOrNum(VMG_ uint argc, int int_only)
     if (argc >= 2)
     {
         /* get the radix from the stack */
-        radix = G_stk->get(1)->num_to_int();
+        radix = G_stk->get(1)->num_to_int(vmg0_);
 
         /* make sure it's in the valid range */
         if (radix < 2 || radix > 36)
@@ -1825,9 +2198,8 @@ void CVmBifTADS::toIntOrNum(VMG_ uint argc, int int_only)
  */
 static void put_list_int(char **dstp, long intval)
 {
-    vm_val_t val;
-
     /* set up the integer value */
+    vm_val_t val;
     val.set_int(intval);
 
     /* write it to the list */
@@ -1857,20 +2229,89 @@ static void put_list_obj(char **dstp, vm_obj_id_t objval)
 
 
 /*
+ *   Given a time_t value, create a list of components giving the local time
+ *   corresponding to the time_t, using the getTime(GetDateAndTime) format.
+ *   Returns the object ID of the new list.
+ *   
+ *   The list format is [year, month, day, day-of-week, day-of-year, hour,
+ *   minute, second, seconds-since-1970].
+ */
+vm_obj_id_t CVmBifTADS::format_datetime_list(VMG_ os_time_t timer)
+{
+    /* note the starting stack pointer, so we can discard gc protection */
+    vm_val_t *gsp = G_stk->get_sp();
+    
+    /* convert the time_t to the local time */
+    struct tm *tblock = os_localtime(&timer);
+
+    /* start the list buffer - set the length (9 elements) */
+    char buf[80];
+    vmb_put_len(buf, 9);
+    char *dst = buf + VMB_LEN;
+    
+    /* add the time elements to the list */
+    put_list_int(&dst, tblock->tm_year + 1900);
+    put_list_int(&dst, tblock->tm_mon + 1);
+    put_list_int(&dst, tblock->tm_mday);
+    put_list_int(&dst, tblock->tm_wday + 1);
+    put_list_int(&dst, tblock->tm_yday + 1);
+    put_list_int(&dst, tblock->tm_hour);
+    put_list_int(&dst, tblock->tm_min);
+    put_list_int(&dst, tblock->tm_sec);
+
+    /* 
+     *   if the timer is over 0x7fffffff, we can't represent it as an
+     *   int32_t, so store it as a BigNumber value
+     */
+    if (timer <= 0x7fffffffU)
+    {
+        /* it'll fit in an ordinary 32-bit signed int */
+        put_list_int(&dst, (uint32_t)timer);
+    }
+    else
+    {
+        /* it won't fit an int32, so convert to BigNumber */
+        vm_obj_id_t bn;
+        if (sizeof(timer) <= 4)
+        {
+            /* os_time_t must be a uint32 */
+            bn = CVmObjBigNum::createu(vmg_ FALSE, (ulong)timer, 10);
+        }
+        else
+        {
+            /* os_time_t must be 64 bits (or larger) */
+            bn = CVmObjBigNum::create_int64(
+                vmg_ FALSE, (uint32_t)(timer >> 32),
+                (uint32_t)(timer & 0xFFFFFFFF));
+        }
+
+        /* save it on the stack for gc protection */
+        G_stk->push()->set_obj(bn);
+        
+        /* add it to the list */
+        put_list_obj(&dst, bn);
+    }
+
+    /* create a list from the formatted buffer, and return its object ID */
+    vm_obj_id_t lst = CVmObjList::create(vmg_ FALSE, buf);
+
+    /* discard gc protection */
+    G_stk->set_sp(gsp);
+
+    /* return the list */
+    return lst;
+}
+
+/*
  *   get the current time 
  */
 void CVmBifTADS::gettime(VMG_ uint argc)
 {
-    int typ;
-    time_t timer;
-    struct tm *tblock;
-    char buf[80];
-    char *dst;
-    
     /* check arguments */
     check_argc_range(vmg_ argc, 0, 1);
 
     /* if there's an argument, get the type of time value to return */
+    int typ;
     if (argc == 1)
     {
         /* get the time type code */
@@ -1887,42 +2328,12 @@ void CVmBifTADS::gettime(VMG_ uint argc)
     {
     case 1:
         /* 
-         *   default information - return the current time and date 
+         *   GetTimeDateAndTime - return the current time and date as a list
+         *   of time elements
          */
 
-        /* make sure the time zone is set up properly */
-        os_tzset();
-
-        /* get the local time information */
-        timer = time(NULL);
-        tblock = localtime(&timer);
-
-        /* adjust values for return format */
-        tblock->tm_year += 1900;
-        tblock->tm_mon++;
-        tblock->tm_wday++;
-        tblock->tm_yday++;
-
-        /*   
-         *   build the return list: [year, month, day, day-of-week,
-         *   day-of-year, hour, minute, second, seconds-since-1970] 
-         */
-        vmb_put_len(buf, 9);
-        dst = buf + VMB_LEN;
-
-        /* build return list value */
-        put_list_int(&dst, tblock->tm_year);
-        put_list_int(&dst, tblock->tm_mon);
-        put_list_int(&dst, tblock->tm_mday);
-        put_list_int(&dst, tblock->tm_wday);
-        put_list_int(&dst, tblock->tm_yday);
-        put_list_int(&dst, tblock->tm_hour);
-        put_list_int(&dst, tblock->tm_min);
-        put_list_int(&dst, tblock->tm_sec);
-        put_list_int(&dst, (long)timer);
-
-        /* allocate and return the list value */
-        retval_obj(vmg_ CVmObjList::create(vmg_ FALSE, buf));
+        /* get the current system time and format it into our list */
+        retval_obj(vmg_ format_datetime_list(vmg_ os_time(NULL)));
 
         /* done */
         break;
@@ -2534,7 +2945,6 @@ struct re_replace_arg
 void CVmBifTADS::re_replace(VMG_ uint argc)
 {
     vm_val_t patval, rplval;
-    int fargc;
     const char *str;
     const char *rpl;
     ulong flags;
@@ -2866,7 +3276,6 @@ void CVmBifTADS::re_replace(VMG_ uint argc)
             match_len = pats[best_pat].match_len;
             rpl = pats[best_pat].rpl_str;
             rplval = pats[best_pat].rpl_func;
-            fargc = pats[best_pat].rpl_argc;
 
             /* 
              *   if we have the 'follow case' flag, note the capitalization
@@ -3063,6 +3472,7 @@ void CVmBifTADS::re_replace(VMG_ uint argc)
                          *   of lower-case literal letters in the replacement
                          *   text 
                          */
+                        const wchar_t *u = 0;
                         if ((flags & VMBIFTADS_REPLACE_FOLLOW_CASE) != 0
                             && t3_is_lower(ch))
                         {
@@ -3075,23 +3485,33 @@ void CVmBifTADS::re_replace(VMG_ uint argc)
                              */
                             if (match_has_upper && !match_has_lower)
                             {
-                                /* all upper-case - convert to upper */
-                                ch = t3_to_upper(ch);
+                                /* all upper case -> convert to upper case */
+                                u = t3_to_upper(ch);
                             }
-                            else if (match_has_lower && !match_has_upper)
+                            else if (match_has_upper && match_has_lower
+                                     && alpha_rpl_cnt++ == 0)
                             {
-                                /* all lower-case - leave it as-is */
-                            }
-                            else
-                            {
-                                /* mixed case - capitalize the first leter */
-                                if (alpha_rpl_cnt++ == 0)
-                                    ch = t3_to_upper(ch);
+                                /* mixed case -> first alpha to title case */
+                                u = t3_to_title(ch);
                             }
                         }
-                        
-                        /* copy this character literally */
-                        dstp.setch(ch);
+
+                        /* if we found a case conversion, apply it */
+                        if (u != 0)
+                        {
+                            /* ensure we have room for the conversion */
+                            size_t need = utf8_ptr::s_wstr_size(u);
+                            dstp.set(ret_str->cons_ensure_space(
+                                vmg_ dstp.getptr(), need, 512));
+                            
+                            /* store the converted characters */
+                            dstp.setwcharsz(u, need);
+                        }
+                        else
+                        {
+                            /* no case conversion - copy it as-is */
+                            dstp.setch(ch);
+                        }
                     }
                 }
             }
@@ -3105,7 +3525,7 @@ void CVmBifTADS::re_replace(VMG_ uint argc)
                 G_interpreter->push_obj(vmg_ CVmObjString::create(
                     vmg_ FALSE, last_str + match_idx, match_len));
 
-                    /* adjust argc for what the callback actually wants */
+                /* adjust argc for what the callback actually wants */
                 int fargc = pats[best_pat].rpl_argc;
                 if (fargc < 0 || fargc > pushed_argc)
                     fargc = pushed_argc;
@@ -3311,6 +3731,9 @@ void CVmBifTADS::save(VMG_ uint argc)
     CVmFile *file = 0;
     err_try
     {
+        /* validate file safety */
+        CVmObjFile::check_safety_for_open(vmg_ netfile, VMOBJFILE_ACCESS_WRITE);
+
         /* open the file */
         osfildef *fp = osfoprwtb(netfile->lclfname, OSFTT3SAV);
         if (fp == 0)
@@ -3373,6 +3796,9 @@ void CVmBifTADS::restore(VMG_ uint argc)
     int err = 0;
     err_try
     {
+        /* validate file safety */
+        CVmObjFile::check_safety_for_open(vmg_ netfile, VMOBJFILE_ACCESS_READ);
+
         /* open the file */
         osfildef *fp = osfoprb(netfile->lclfname, OSFTT3SAV);
         if (fp == 0)
@@ -3381,34 +3807,21 @@ void CVmBifTADS::restore(VMG_ uint argc)
         /* set up the file reader */
         file = new CVmFile(fp, 0);
 
-        /* restore the state */
-        err = CVmSaveFile::restore(vmg_ file);
-
-        /* close our local file */
-        delete file;
-        file = 0;
+        /* restore the state; throw an exception on error */
+        if ((err = CVmSaveFile::restore(vmg_ file)) != 0)
+            err_throw(err);
     }
-    err_catch(exc)
+    err_finally
     {
-        /* close the file if it's still open */
+        /* close our local file */
         if (file != 0)
             delete file;
 
-        /* abandon the network file if we didn't close it out */
+        /* close the network file */
         if (netfile != 0)
-            netfile->abandon(vmg0_);
-
-        /* rethrow the error */
-        err_rethrow();
+            netfile->close(vmg0_);
     }
     err_end;
-
-    /* if an error occurred, throw an exception */
-    if (err != 0)
-        err_throw(err);
-
-    /* close out the network file */
-    netfile->close(vmg0_);
 
     /* discard arguments */
     G_stk->discard(argc);
@@ -3718,19 +4131,54 @@ void CVmBifTADS::make_string(VMG_ uint argc)
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   makeList - construct a list by repeating a given value a given number of
+ *   times
+ */
+void CVmBifTADS::make_list(VMG_ uint argc)
+{
+    /* check arguments */
+    check_argc_range(vmg_ argc, 1, 2);
+
+    /* get the value to use for each list element */
+    vm_val_t val;
+    G_stk->pop(&val);
+
+    /* if there's a repeat count, get it */
+    long rpt = (argc >= 2 ? pop_long_val(vmg0_) : 1);
+
+    /* if the repeat count is less than zero, it's an error */
+    if (rpt < 0)
+        err_throw(VMERR_BAD_VAL_BIF);
+
+    /* leave the original value on the stack to protect it from GC */
+    G_stk->push(&val);
+
+    /* allocate our return list */
+    vm_obj_id_t lst_obj = CVmObjList::create(vmg_ FALSE, rpt);
+    CVmObjList *lst = (CVmObjList *)vm_objp(vmg_ lst_obj);
+
+    /* fill in the list with the repeated value */
+    for (int i = 0 ; i < rpt ; ++i)
+        lst->cons_set_element(i, &val);
+
+    /* return the new list */
+    retval_obj(vmg_ lst_obj);
+
+    /* discard the GC protection */
+    G_stk->discard();
+}
+
+/* ------------------------------------------------------------------------ */
+/*
  *   getFuncParams 
  */
 void CVmBifTADS::get_func_params(VMG_ uint argc)
 {
-    vm_val_t val;
-    CVmFuncPtr hdr;
-    vm_obj_id_t lst_obj;
-    CVmObjList *lst;
-
     /* check arguments */
     check_argc(vmg_ argc, 1);
 
     /* set up a method header pointer for the function pointer argument */
+    CVmFuncPtr hdr;
     if (!hdr.set(vmg_ G_stk->get(0)))
         err_throw(VMERR_FUNCPTR_VAL_REQD);
 
@@ -3738,12 +4186,13 @@ void CVmBifTADS::get_func_params(VMG_ uint argc)
      *   Allocate our return list.  We need three elements: [minArgs,
      *   optionalArgs, isVarargs].  
      */
-    lst_obj = CVmObjList::create(vmg_ FALSE, 3);
+    vm_obj_id_t lst_obj = CVmObjList::create(vmg_ FALSE, 3);
 
     /* get the list object, properly cast */
-    lst = (CVmObjList *)vm_objp(vmg_ lst_obj);
+    CVmObjList *lst = (CVmObjList *)vm_objp(vmg_ lst_obj);
 
     /* set the minimum argument count */
+    vm_val_t val;
     val.set_int(hdr.get_min_argc());
     lst->cons_set_element(0, &val);
 
@@ -4245,6 +4694,78 @@ struct bpwriter
             putwch(opts.pad, padcnt);
     }
 
+    /* format a Roman numeral */
+    void format_roman(VMG_ const vm_val_t *val, const fmtopts &opts, int flags)
+    {
+        char buf[40];
+
+        /* get the integer value */
+        int32_t i = val->cast_to_int(vmg0_);
+
+        /* 
+         *   use Roman numerals if it's in the range 1-4999, otherwise just
+         *   treat it like '%d' 
+         */
+        if (i >= 1 && i <= 4999)
+        {
+            /* Roman numeral conversion chart */
+            static const struct
+            {
+                const char *numeral;
+                int val;
+            } r[] =
+            {
+                { "m", 1000 },
+                { "cm", 900 },
+                { "d", 500 },
+                { "cd", 400 },
+                { "c", 100 },
+                { "xc", 90 },
+                { "l", 50 },
+                { "x", 10 },
+                { "ix", 9 },
+                { "v", 5 },
+                { "iv", 4 },
+                { "i", 1 }
+            };
+
+            /* 
+             *   convert by repeatedly appending the highest-value Roman
+             *   numeral less than or equal to the number, deducting each
+             *   Roman numeral value from the remaining number balance until
+             *   we reach zero
+             */
+            for (int ri = 0 ; i != 0 && ri < countof(r) ; )
+            {
+                /* if this one fits, append this Roman numeral */
+                if (r[ri].val <= i)
+                {
+                    /* append this numeral, converting case if needed */
+                    for (const char *p = r[ri].numeral ; *p != 0 ; ++p)
+                    {
+                        if ((flags & FI_CAPS) != 0)
+                            putch((char)toupper(*p));
+                        else
+                            putch(*p);
+                    }
+                    
+                    /* deduct its value from the remaining balance */
+                    i -= r[ri].val;
+                }
+                else
+                {
+                    /* this numeral is too large - move on to the next one */
+                    ++ri;
+                }
+            }
+        }
+        else
+        {
+            t3sprintf(buf, sizeof(buf), "%ld", (long)i);
+            format_int(vmg_ buf, strlen(buf), 0, opts, 0);
+        }
+    }
+
     /* format a floating-point value */
     void format_float(VMG_ const vm_val_t *val, char type_spec,
                       const fmtopts &opts)
@@ -4523,6 +5044,16 @@ static void tsprintf(VMG_ vm_val_t *retval, const char *fmtp, size_t fmtl,
             case 'd':
                 /* number -> decimal integer */
                 dst.format_int(vmg_ val, 10, 0, opts);
+                break;
+
+            case 'r':
+                /* number -> roman numeral (lowercase) */
+                dst.format_roman(vmg_ val, opts, 0);
+                break;
+
+            case 'R':
+                /* number -> roman numeral (uppercase) */
+                dst.format_roman(vmg_ val, opts, FI_CAPS);
                 break;
 
             case 'u':

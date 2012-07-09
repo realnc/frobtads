@@ -65,6 +65,30 @@ os_instbrk( int )
 }
 
 
+/* Initialize.
+ */
+int
+os_init( int*, char**, const char*, char*, int )
+{
+    return 0;
+}
+
+
+/* Uninitialize.
+ */
+void
+os_uninit( void )
+{
+}
+
+
+// ---------------------------------------------------------------------------
+//
+// The os_find_xxx family of functions has been deprecated (they've been
+// replaced by the much simpler os_open_dir() et al - see osportable.cc).
+//
+#if 0
+
 /* We implement the file searching routines using <glob.h>.  It's not
  * available on all systems though, so we provide dummy fallbacks that
  * do nothing if <glob.h> doesn't exist.
@@ -213,6 +237,13 @@ os_find_first_file( const char* dir, const char* pattern, char* outbuf, size_t o
     char* ptr = &ctx->pglob->gl_pathv[0][path_len];
     l = strlen(ptr);
 
+    // If the path ends in '/', it's a directory; set the 'isdir' flag
+    // accordingly, but remove the '/' from the result so that the
+    // caller gets the directory as a filename in the standard format.
+    if ((*isdir = (l != 0 && ptr[l-1] == '/')) != false)
+        ptr[--l] = '\0';
+
+    // return the filename portion
     if (l > outbufsiz - 1) {
         l = outbufsiz - 1;
     }
@@ -221,9 +252,6 @@ os_find_first_file( const char* dir, const char* pattern, char* outbuf, size_t o
 
     // Build the full path, if desired.
     oss_build_outpathbuf(outpathbuf, outpathbufsiz, ctx->path, ptr);
-
-    // Return the directory indication.
-    *isdir = (ptr[l-1] == '/') ? true : false;
 
     free(escaped_realpat);
     return ctx;
@@ -257,14 +285,16 @@ os_find_next_file( void* ctx0, char* outbuf, size_t outbufsiz, int* isdir, char*
 
     l = strlen(ptr);
 
+    // Return the directory indication.
+    if ((*isdir = (l != 0 && ptr[l-1] == '/')) != false)
+        ptr[--l] = '\0';
+
+    // return the filename portion
     if (l > outbufsiz - 1) {
         l = outbufsiz - 1;
     }
     memcpy(outbuf, ptr, l);
     outbuf[l] = '\0';
-
-    // Return the directory indication.
-    *isdir = (ptr[l-1] == '/') ? true : false;
 
     // Build the full path, if desired.
     oss_build_outpathbuf(outpathbuf, outpathbufsiz, ctx->path, ptr);
@@ -320,41 +350,7 @@ os_find_close( void* /*ctx*/ )
 }
 #endif // HAVE_GLOB
 
-
-/* Determine if the given filename refers to a special file.
- *
- * tads2/osnoui.c defines its own version when MSDOS is defined.
- */
-#ifndef MSDOS
-os_specfile_t
-os_is_special_file( const char* fname )
-{
-    // We also check for "./" and "../" instead of just "." and
-    // "..".  (We use OSPATHCHAR instead of '/' though.)
-    const char selfWithSep[3] = {'.', OSPATHCHAR, '\0'};
-    const char parentWithSep[4] = {'.', '.', OSPATHCHAR, '\0'};
-    if ((strcmp(fname, ".") == 0) or (strcmp(fname, selfWithSep) == 0)) return OS_SPECFILE_SELF;
-    if ((strcmp(fname, "..") == 0) or (strcmp(fname, parentWithSep) == 0)) return OS_SPECFILE_PARENT;
-    return OS_SPECFILE_NONE;
-}
-#endif
-
-
-/* Initialize.
- */
-int
-os_init( int*, char**, const char*, char*, int )
-{
-    return 0;
-}
-
-
-/* Uninitialize.
- */
-void
-os_uninit( void )
-{
-}
+#endif // DEPRECATED
 
 
 /* =====================================================================

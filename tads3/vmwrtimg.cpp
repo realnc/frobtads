@@ -64,10 +64,6 @@ long CVmImageWriter::get_pos() const
  */
 void CVmImageWriter::prepare(uint vsn, const char tool_data[4])
 {
-    char buf[32];
-    time_t timer;
-    struct tm *tblock;
-    
     /* write the signature */
     fp_->write_bytes(VMIMAGE_SIG, sizeof(VMIMAGE_SIG)-1);
 
@@ -75,6 +71,7 @@ void CVmImageWriter::prepare(uint vsn, const char tool_data[4])
     fp_->write_uint2(vsn);
 
     /* write the 28 reserved bytes, setting all to zero */
+    char buf[32];
     memset(buf, 0, 28);
     fp_->write_bytes(buf, 28);
 
@@ -82,8 +79,8 @@ void CVmImageWriter::prepare(uint vsn, const char tool_data[4])
     fp_->write_bytes(tool_data, 4);
 
     /* write the compilation timestamp */
-    timer = time(NULL);
-    tblock = localtime(&timer);
+    os_time_t timer = os_time(NULL);
+    struct tm *tblock = os_localtime(&timer);
     fp_->write_bytes(asctime(tblock), 24);
 }
 

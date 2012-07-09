@@ -2150,21 +2150,40 @@ void CCharmapToUni::load_table(osfildef *fp)
 size_t CCharmapToUni::map_str(char *outbuf, size_t outbuflen,
                               const char *input_str)
 {
-    size_t input_len;
-    size_t output_len;
-    
-    /* get the length of the input string */
-    input_len = strlen(input_str);
-
     /* map the string to the output buffer */
-    output_len = map(&outbuf, &outbuflen, input_str, input_len);
+    size_t output_len = map(&outbuf, &outbuflen, input_str, strlen(input_str));
 
-    /* if there's space remaining in the output buffer, add the null byte */
+    /* if there's space remaining in the output buffer, add a null byte */
     if (outbuflen != 0)
         *outbuf = '\0';
 
     /* return the number of bytes needed for the conversion */
     return output_len;
+}
+
+/*
+ *   Map a counted-length string into a buffer 
+ */
+size_t CCharmapToUni::map_str(char *outbuf, size_t outbuflen,
+                              const char *input_str, size_t input_len)
+{
+    /* map the string to the output buffer and return the result */
+    return map(&outbuf, &outbuflen, input_str, input_len);
+}
+
+/*
+ *   Map a null-terminated string, allocating space for the result 
+ */
+size_t CCharmapToUni::map_str_alo(char **outbuf, const char *input_str)
+{
+    /* figure the space needed */
+    size_t outlen = map_str(0, 0, input_str);
+
+    /* allocate the buffer */
+    *outbuf = (char *)t3malloc(outlen + 1);
+
+    /* map the sring */
+    return map_str(*outbuf, outlen, input_str);
 }
 
 /*

@@ -1005,6 +1005,9 @@ Modified
 /* invalid defined() syntax */
 #define TCERR_DEFINED_SYNTAX           11233
 
+/* invalid __objref() syntax */
+#define TCERR___OBJREF_SYNTAX          11234
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -1209,6 +1212,8 @@ Modified
 /* metaclass %.*s is not defined in this module */
 #define TCERR_EXT_METACLASS        11565
 
+/* cannot call extern function without an argument list prototype */
+#define TCERR_FUNC_CALL_NO_PROTO   11566
 
 
 /* ------------------------------------------------------------------------ */

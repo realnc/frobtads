@@ -293,7 +293,7 @@ CTcSymbol *CTcSymFuncBase::read_from_sym_file(CVmFile *fp)
     /* create and return the new symbol */
     return new CTcSymFunc(sym, strlen(sym), FALSE, argc, opt_argc,
                           varargs, has_retval,
-                          is_multimethod, is_multimethod_base, TRUE);
+                          is_multimethod, is_multimethod_base, TRUE, TRUE);
 }
 
 /*

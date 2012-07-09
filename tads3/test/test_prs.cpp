@@ -292,7 +292,7 @@ int main(int argc, char **argv)
                 entry = new CTcSymFunc(G_tok->getcur()->get_text(),
                                        G_tok->getcur()->get_text_len(),
                                        FALSE, 0, 0, FALSE, TRUE,
-                                       FALSE, FALSE, FALSE);
+                                       FALSE, FALSE, FALSE, TRUE);
                 G_prs->get_global_symtab()->add_entry(entry);
 
                 /* skip the function name */

@@ -2981,7 +2981,8 @@ public:
     /*
      *   Set/get the compile-time constant flag.  A compile-time constant is
      *   a value that's constant at compile-time, but which can vary from one
-     *   compilation to the next.  The defined() operator has this property.
+     *   compilation to the next.  The defined() and __objref() operators
+     *   have this property.
      */
     void set_ctc(int f) { ctc_ = f; }
     int is_ctc() const { return ctc_; }

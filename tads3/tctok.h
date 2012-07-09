@@ -283,6 +283,7 @@ enum tc_toktyp_t
     TOKT_FLOAT,                                    /* floating-point number */
     TOKT_AT,                                                     /* at-sign */
     TOKT_DOTDOT,                                       /* range marker '..' */
+    TOKT_FMTSPEC,                  /* sprintf format spec for <<%fmt expr>> */
 
     /* keywords */
     TOKT_SELF,
@@ -725,6 +726,9 @@ struct tok_embed_ctx
 class CTcToken
 {
 public:
+    CTcToken() { }
+    CTcToken(tc_toktyp_t typ) : typ_(typ) { }
+    
     /* get/set the token type */
     tc_toktyp_t gettyp() const { return typ_; }
     void settyp(tc_toktyp_t typ) { typ_ = typ; }
@@ -1015,6 +1019,12 @@ public:
      */
     void unget();
     void unget(const CTcToken *prv);
+
+    /* 
+     *   Push a token into the token stream.  The given token becomes the
+     *   next token to be retrieved.  This doesn't affect the current token.
+     */
+    void push(const CTcToken *tok);
 
     /* get the current token */
     const class CTcToken *getcur() const { return &curtok_; }
@@ -1449,6 +1459,19 @@ private:
 
     /* splice lines for a string that runs across multiple lines */
     void splice_string();
+
+    /* scan a sprintf format spec */
+    void scan_sprintf_spec(utf8_ptr *p);
+
+    /* translate a \ escape sequence */
+    void xlat_escape(utf8_ptr *dst, utf8_ptr *p, wchar_t qu, int triple);
+
+    /* skip an ordinary character or \ escape sequence */
+    void skip_escape(utf8_ptr *p);
+
+    /* translate escape sequences in a string segment */
+    void xlat_escapes(utf8_ptr *dstp, const utf8_ptr *srcp,
+                      const utf8_ptr *endp);
 
     /* expand macros in the current line */
     int expand_macros_curline(int read_more, int allow_defined,

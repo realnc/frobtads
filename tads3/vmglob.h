@@ -213,7 +213,7 @@ int func_called_from_external_interface(my_context_def *ctx, int x, int y)
  *   class) type.  The global variable will be a pointer to this type.
  *   
  *   Use VM_GLOBAL_PREOBJDEF to define the entry for an object type that's to
- *   be defined as pre-allocated static objects in the VARS configuration.
+ *   be defined as a pre-allocated static object in the VARS configuration.
  *   This can be used for objects that (1) have very frequent access and thus
  *   should have their fields reachable directly as statics rather than via
  *   static pointers, and (2) need no constructor parameters and thus can be
@@ -469,9 +469,7 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 #define G_bif_table   VMGLOB_ACCESS(bif_table)
 #define G_varheap     VMGLOB_ACCESS(varheap)
 #define G_preinit_mode VMGLOB_ACCESS(preinit_mode)
-#define G_rand_seed   VMGLOB_ACCESS(rand_seed)
 #define G_bif_tads_globals VMGLOB_ACCESS(bif_tads_globals)
-#define G_res_loader  VMGLOB_ACCESS(res_loader)
 #define G_host_ifc    VMGLOB_ACCESS(host_ifc)
 #define G_image_loader VMGLOB_ACCESS(image_loader)
 #define G_disp_cset_name  VMGLOB_ACCESS(disp_cset_name)
@@ -483,7 +481,6 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 #define G_cmap_to_file VMGLOB_ACCESS(cmap_to_file)
 #define G_cmap_to_log VMGLOB_ACCESS(cmap_to_log)
 #define G_console     VMGLOB_ACCESS(console)
-#define G_debugger    VMGLOB_ACCESS(debugger)
 #define G_exc_entry_size VMGLOB_ACCESS(exc_entry_size)
 #define G_line_entry_size VMGLOB_ACCESS(line_entry_size)
 #define G_dbg_hdr_size VMGLOB_ACCESS(dbg_hdr_size)
@@ -505,7 +502,10 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 #define G_code_pool   VMGLOB_PREACCESS(code_pool)
 #define G_obj_table   VMGLOB_PREACCESS(obj_table)
 #define G_syslogfile  VMGLOB_ACCESS(syslogfile)
-
+#define G_file_path   VMGLOB_ACCESS(file_path)
+#define G_sandbox_path VMGLOB_ACCESS(sandbox_path)
+#define G_tzcache     VMGLOB_ACCESS(tzcache)
+#define G_debugger    VMGLOB_ACCESS(debugger)
 
 #endif /* VMGLOB_H */
 

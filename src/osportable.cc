@@ -6,6 +6,7 @@
  * functions that depend upon curses/ncurses are defined in oscurses.cc.
  */
 #include "common.h"
+#include "osstzprs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,6 +17,9 @@
 #include <fcntl.h>
 #ifdef HAVE_LANGINFO_CODESET
 #include <langinfo.h>
+#endif
+#ifdef HAVE_GLOB_H
+#include <glob.h>
 #endif
 
 
@@ -29,6 +33,42 @@
 // options.
 #include "frobtadsapp.h"
 #endif // RUNTIME
+
+
+/* Safe strcpy.
+ * (Copied from tads2/msdos/osdos.c)
+ */
+static void
+safe_strcpy(char *dst, size_t dstlen, const char *src)
+{
+    size_t copylen;
+
+    /* do nothing if there's no output buffer */
+    if (dst == 0 || dstlen == 0)
+        return;
+
+    /* do nothing if the source and destination buffers are the same */
+    if (dst == src)
+        return;
+
+    /* use an empty string if given a null string */
+    if (src == 0)
+        src = "";
+
+    /* 
+     *   figure the copy length - use the smaller of the actual string size
+     *   or the available buffer size, minus one for the null terminator 
+     */
+    copylen = strlen(src);
+    if (copylen > dstlen - 1)
+        copylen = dstlen - 1;
+
+    /* copy the string (or as much as we can) */
+    memcpy(dst, src, copylen);
+
+    /* null-terminate it */
+    dst[copylen] = '\0';
+}
 
 
 /* Service routine.
@@ -244,6 +284,39 @@ osfoprwb( const char* fname, os_filetype_t )
     return fp;
 }
 
+/* Duplicate a file hand.e
+ */
+osfildef*
+osfdup(osfildef *orig, const char *mode)
+{
+    char realmode[5];
+    char *p = realmode;
+    const char *m;
+
+    /* verify that there aren't any unrecognized mode flags */
+    for (m = mode ; *m != '\0' ; ++m)
+    {
+        if (strchr("rw+bst", *m) == 0)
+            return 0;
+    }
+
+    /* figure the read/write mode - translate r+ and w+ to r+ */
+    if ((mode[0] == 'r' || mode[0] == 'w') && mode[1] == '+')
+        *p++ = 'r', *p++ = '+';
+    else if (mode[0] == 'r')
+        *p++ = 'r';
+    else if (mode[0] == 'w')
+        *p++ = 'w';
+    else
+        return 0;
+
+    /* end the mode string */
+    *p = '\0';
+
+    /* duplicate the handle in the given mode */
+    return fdopen(dup(fileno(orig)), mode);
+}
+
 
 /* Convert string to all-lowercase.
  */
@@ -381,6 +454,123 @@ os_get_tmp_path( char* buf )
 #endif // not MSDOS
 
 
+/* Create a directory.
+ */
+int
+os_mkdir( const char* dir, int create_parents )
+{
+    //assert(dir != 0);
+
+    if (dir[0] == '\0')
+        return true;
+
+    // Copy the directory name to a new string so we can strip any trailing
+    // path seperators.
+    size_t len = strlen(dir);
+    char* tmp = new char[len + 1];
+    strncpy(tmp, dir, len);
+    while (tmp[len - 1] == OSPATHCHAR)
+        --len;
+    tmp[len] = '\0';
+
+    // If we're creating intermediate diretories, and the path contains
+    // multiple elements, recursively create the parent directories first.
+    if (create_parents and strchr(tmp, OSPATHCHAR) != 0) {
+        char par[OSFNMAX];
+
+        // Extract the parent path.
+        os_get_path_name(par, sizeof(par), tmp);
+
+        // If the parent doesn't already exist, create it recursively.
+        if (osfacc(par) != 0 and not os_mkdir(par, true)) {
+            delete[] tmp;
+            return false;
+        }
+    }
+
+    // Create the directory.
+    int ret =
+#if HAVE_MKDIR
+#   if MKDIR_TAKES_ONE_ARG
+             mkdir(tmp);
+#   else
+             mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO);
+#   endif
+#elif HAVE__MKDIR
+             _mkdir(tmp);
+#else
+#   error "Neither mkdir() nor _mkdir() is available on this system."
+#endif
+    delete[] tmp;
+    return ret == 0;
+}
+
+/* Remove a directory.
+ */
+int
+os_rmdir( const char *dir )
+{
+    return rmdir(dir) == 0;
+}
+
+/* Get a file's mode/type.  This returns the same information as
+ * the 'mode' member of os_file_stat_t from os_file_stat(), so we
+ * simply call that routine and return the value.
+ */
+int
+osfmode( const char *fname, int follow_links, unsigned long *mode )
+{
+    os_file_stat_t s;
+    int ok;
+    if ((ok = os_file_stat(fname, follow_links, &s)) != false)
+        *mode = s.mode;
+    return ok;
+}
+
+/* Get full stat() information on a file.
+ */
+int
+os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
+{
+    struct stat buf;
+    int err = (follow_links ? stat(fname, &buf) : lstat(fname, &buf));
+    if (err == 0) {
+        s->sizelo = (uint32_t)(buf.st_size & 0xFFFFFFFF);
+        s->sizehi = sizeof(buf.st_size) > 4
+                    ? (uint32_t)((buf.st_size >> 32) & 0xFFFFFFFF)
+                    : 0;
+        s->cre_time = buf.st_ctime;
+        s->mod_time = buf.st_mtime;
+        s->acc_time = buf.st_atime;
+        s->mode = buf.st_mode;
+    }
+    return err == 0;
+}
+
+/* Manually resolve a symbolic link.
+ */
+int
+os_resolve_symlink( const char *fname, char *target, size_t target_size )
+{
+    // get the stat() information for the *undereferenced* link; if
+    // it's not actually a link, there's nothing to resolve
+    struct stat buf;
+    if (lstat(fname, &buf) != 0 or (buf.st_mode & S_IFLNK) == 0)
+        return false;
+
+    // read the link contents (maxing out at the buffer size)
+    size_t copylen = (size_t)buf.st_size;
+    if (copylen > target_size - 1)
+        copylen = target_size - 1;
+    if (readlink(fname, target, copylen) < 0)
+        return false;
+
+    // null-terminate the result and return success
+    target[copylen] = '\0';
+    return true;
+}
+
+
 /* Get a suitable seed for a random number generator.
  *
  * We don't just use the system-clock, but build a number as random as
@@ -476,6 +666,21 @@ os_get_sys_clock_ms( void )
     return (currTime.tv_sec - zeroPoint.tv_sec) * 1000
          + (currTime.tv_nsec - zeroPoint.tv_nsec) / 1000000;
 }
+
+/* Get the time since the Unix Epoch in seconds and nanoseconds.
+ */
+void
+os_time_ns( os_time_t *seconds, long *nanoseconds )
+{
+    // Get the current time.
+    static const clockid_t clockType = CLOCK_REALTIME;
+    struct timespec currTime;
+    clock_gettime(clockType, &currTime);
+
+    // return the data
+    *seconds = currTime.tv_sec;
+    *nanoseconds = currTime.tv_nsec;
+}
 #endif // HAVE_CLOCK_GETTIME
 
 #ifdef HAVE_GETTIMEOFDAY
@@ -502,6 +707,21 @@ os_get_sys_clock_ms( void )
     // millisec is 1.000 microsecs.
     return (currTime.tv_sec - zeroPoint.tv_sec) * 1000 + (currTime.tv_usec - zeroPoint.tv_usec) / 1000;
 }
+
+/* Get the time since the Unix Epoch in seconds and nanoseconds.
+ */
+void
+os_time_ns( os_time_t *seconds, long *nanoseconds )
+{
+    // get the time
+    struct timezone bogus = {0, 0};
+    struct timeval currTime;
+    gettimeofday(&currTime, &bogus);
+
+    // return the data, converting milliseconds to nanoseconds
+    *seconds = currTime.tv_sec;
+    *nanoseconds = currTime.tv_usec * 1000;
+}
 #endif // HAVE_GETTIMEOFDAY
 
 
@@ -523,6 +743,20 @@ os_get_sys_clock_ms( void )
     ftime(&currTime);
     return (currTime.time - zeroPoint.time) * 1000 + (currTime.millitm - zeroPoint.millitm);
 }
+
+/* Get the time since the Unix Epoch in seconds and nanoseconds.
+ */
+void
+os_time_ns( os_time_t *seconds, long *nanoseconds )
+{
+    // get the time
+    struct timeb currTime;
+    ftime(&currTime);
+
+    // return the data, converting milliseconds to nanoseconds
+    *seconds = currTime.time;
+    *nanoseconds = (long)currTime.millitm * 1000000;
+}
 #endif // HAVE_FTIME
 
 
@@ -537,9 +771,308 @@ os_get_sys_clock_ms( void )
     static time_t zeroPoint = time(0);
     return (time(0) - zeroPoint) * 1000;
 }
+
+void
+os_time_ns( os_time_t *seconds, long *nanoseconds )
+{
+    // get the regular time() value in seconds; we have no
+    // higher precision element to return, so return zero
+    *seconds = time();
+    *nanoseconds = 0;
+}
 #endif
 #endif
 #endif
+
+/* Get the local time zone name, as a zoneinfo database key.  Many
+ * modern Unix systems use zoneinfo keys as they native timezone
+ * setting, but there are several different ways of storing this on a
+ * per-process and system-wide basis.  We'll try looking for the common
+ * mechanisms.
+ */
+int
+os_get_zoneinfo_key( char *buf, size_t buflen )
+{
+    // First, try the TZ environment variable.  This is used on nearly
+    // all Unix-alikes for a per-process timezone setting, although
+    // it will only contain a zoneinfo key in newer versions.  There
+    // are several possible formats for specifying a zoneinfo key:
+    //
+    //  TZ=/usr/share/zoneinfo/America/Los_Angeles
+    //    - A full absolute path name to a tzinfo file.  We'll sense
+    //      this by looking for "/zoneinfo/" in the string, and if we
+    //      find it, we'll return the portion after /zoneinfo/.
+    //
+    //  TZ=America/Los_Angeles
+    //    - Just the zoneinfo key, without a path.  If we find a string
+    //      that contains all alphabetics, undersores, and slashes, and
+    //      has at least one internal slash but doesn't start with a
+    //      slash, we probably have a zoneinfo key.  We'll see if we
+    //      can find a matching file in the usual zoneinfo database
+    //      locations: /etc/zoneinfo, /usr/share/zoneinfo; if we can,
+    //      we'll return the key name, otherwise we'll assume this
+    //      isn't actually a zoneinfo key but just happens to look like
+    //      one in terms of format.
+    //
+    //  TZ=:America/Los_Angeles
+    //  TZ=:/etc/zoneinfo/America/Los_Angeles
+    //    - POSIX systems generally use the ":" prefix to signify that
+    //      this is a zoneinfo path rather than the old-style "EST5EDT"
+    //      type of self-contained zone description.  If we see a colon
+    //      prefix with a relative path (properly formed in terms of
+    //      its character content), we'll simply assume this is a
+    //      zoneinfo key without even checking for an existing file,
+    //      since there's not much else it could be.  If we see an
+    //      absolute path, we'll search it for /zoneinfo/ and return
+    //      the portion after this, again without checking for an
+    //      existing file.
+    const char *tz = getenv("TZ");
+    if (tz != 0 && tz[0] != '\0')
+    {
+        // check that the string is formatted like a zoneinfo key
+#define tzcharok(c) (isalpha(c) != 0 or (c) == '/' or (c) == '_')
+        int fmt_ok = true;
+        fmt_ok &= (tz[0] == ':' or tzcharok(tz[0]));
+        for (const char *p = tz + 1 ; *p != '\0' ; ++p)
+            fmt_ok &= tzcharok(*p);
+
+        // proceed only if it has the right format
+        if (fmt_ok)
+        {
+            // check for a leading ':', per POSIX
+            if (tz[0] == ':')
+            {
+                // yes, we have a leading ':', so it's almost certainly
+                // a zoneinfo key; if it's an absolute path, find the
+                // part after /zoneinfo/
+                if (tz[1] == '/')
+                {
+                    // absolute form - look for /zoneinfo/
+                    const char *z = strstr(tz, "/zoneinfo/");
+                    if (z != 0)
+                    {
+                        // found it - return the part after /zoneinfo/
+                        safe_strcpy(buf, buflen, z + 10);
+                        return true;
+                    }
+                }
+                else
+                {
+                    // relative path - return as-is minus the colon
+                    safe_strcpy(buf, buflen, tz + 1);
+                    return true;
+                }
+            }
+            else
+            {
+                // There's no colon, so it *might* be a zoneinfo key.
+                // If it's an absolute path containing /zoneinfo/, it's
+                // a solid bet.  If it's a relative path, look to see
+                // if we can find a file in one of the usual zoneinfo
+                // database locations.
+                if (tz[0] == '/')
+                {
+                    // absolute path - check for /zoneinfo/
+                    const char *z = strstr(tz, "/zoneinfo/");
+                    if (z != 0)
+                    {
+                        // found it - return the part after /zoneinfo/
+                        safe_strcpy(buf, buflen, z + 10);
+                        return true;
+                    }
+                }
+                else
+                {
+                    // relative path - look for a tzinfo file in the
+                    // usual locations
+                    static const char *dirs[] = {
+                        "/etc/zoneinfo",
+                        "/usr/share/zoneinfo",
+                        0
+                    };
+                    for (const char **dir = dirs ; *dir != 0 ; ++dir)
+                    {
+                        // build this full path
+                        char fbuf[OSFNMAX];
+                        os_build_full_path(fbuf, sizeof(fbuf), *dir, tz);
+
+                        // check for a file at this location
+                        if (!osfacc(fbuf))
+                        {
+                            // got it - looks like a good zoneinfo key
+                            safe_strcpy(buf, buflen, tz);
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // No luck with TZ, so try the system-wide settings next.
+    //
+    // If a file called /etc/timezone exists, it's usually a one-line
+    // text file containing the zoneinfo key.  Read and return its
+    // contents.
+    FILE *fp;
+    if ((fp = fopen("/etc/timezone", "r")) != 0)
+    {
+        // read the one-liner
+        char lbuf[256];
+        int ok = false;
+        if (fgets(lbuf, sizeof(lbuf), fp) != 0)
+        {
+            // strip any trailing newline
+            size_t l = strlen(lbuf);
+            if (l != 0 && lbuf[l-1] == '\n')
+                lbuf[l-1] = '\0';
+
+            // if it's in absolute format, return the part after
+            // /zoneinfo/; otherwise just return the string
+            if (lbuf[0] == '/')
+            {
+                // absoltue path - find /zoneinfo/
+                const char *z = strstr(lbuf, "/zoneinfo/");
+                if (z != 0)
+                {
+                    safe_strcpy(buf, buflen, z + 10);
+                    ok = true;
+                }
+            }
+            else
+            {
+                // relative notation - return it as-is
+                safe_strcpy(buf, buflen, lbuf);
+                ok = true;
+            }
+        }
+
+        // we're done with the file
+        fclose(fp);
+
+        // if we got our result, return success
+        if (ok)
+            return true;
+    }
+    
+    // If /etc/sysconfig/clock exists, read it and look for a line
+    // starting with ZONE=.  This contains the zoneinfo key.
+    if ((fp = fopen("/etc/sysconfig/clock", "r")) != 0)
+    {
+        // scan the file for ZONE=...
+        int ok = false;
+        for (;;)
+        {
+            // read the next line
+            char lbuf[256];
+            if (fgets(lbuf, sizeof(lbuf), fp) == 0)
+                break;
+
+            // skip leading spaces
+            const char *p;
+            for (p = lbuf ; isspace(*p) ; ++p) ;
+
+            // check for ZONE */
+            if (memicmp(p, "zone", 4) != 0)
+                continue;
+
+            // skip spaces after ZONE
+            for (p += 4 ; isspace(*p) ; ++p) ;
+
+            // check for '='
+            if (*p != '=')
+                continue;
+
+            // skip spaces after the '='
+            for (++p ; isspace(*p) ; ++p) ;
+
+            // if it's in absolute form, look for /zoneinfo/
+            if (*p == '/')
+            {
+                const char *z = strstr(p, "/zoneinfo/");
+                if (z != 0)
+                {
+                    safe_strcpy(buf, buflen, z + 10);
+                    ok = true;
+                }
+            }
+            else
+            {
+                // relative notation - it's the zoneinfo key
+                safe_strcpy(buf, buflen, p);
+                ok = true;
+            }
+
+            // that's our ZONE line, so we're done scanning the file
+            break;
+        }
+        
+        // done with the file
+        fclose(fp);
+
+        // if we got our result, return success
+        if (ok)
+            return true;
+    }
+
+    // If /etc/localtime is a symbolic link, the linked file is the
+    // actual zoneinfo file.  Resolve the link and return the portion
+    // of the path after "/zoneinfo/".
+    static const char *elt = "/etc/localtime";
+    unsigned long mode;
+    char linkbuf[OSFNMAX];
+    const char *zi;
+    if (osfmode(elt, false, &mode)
+        and (mode & OSFMODE_LINK) != 0
+        and os_resolve_symlink(elt, linkbuf, sizeof(linkbuf))
+        and (zi = strstr(linkbuf, "/zoneinfo/")) != 0)
+    {
+        // it's a link containing /zoneinfo/, so return the portion
+        // after /zoneinfo/
+        safe_strcpy(buf, buflen, zi + 10);
+        return true;
+    }
+
+    // well, we're out of ideas - return failure
+    return false;
+}
+
+/* Get timezone information. This can be used as a fallback if the a
+ * zoneinfo key isn't available, or if the caller doesn't use zoneinfo
+ * data.
+ */
+int
+os_get_timezone_info( struct os_tzinfo_t *info )
+{
+    // try parsing environment variable TZ as a POSIX timezone string
+    const char *tz = getenv("TZ");
+    if (tz != 0 and oss_parse_posix_tz(info, tz, strlen(tz), true))
+        return true;
+
+    // fall back on localtime() - that'll at least give us the current
+    // timezone name and GMT offset in most cases
+    time_t timer = time(0);
+    const struct tm *tm = localtime(&timer);
+    if (tm != 0)
+    {
+        memset(info, 0, sizeof(*info));
+        info->is_dst = tm->tm_isdst;
+        if (tm->tm_isdst)
+        {
+            info->dst_ofs = tm->tm_gmtoff;
+            safe_strcpy(info->dst_abbr, sizeof(info->dst_abbr), tm->tm_zone);
+        }
+        else
+        {
+            info->std_ofs = tm->tm_gmtoff;
+            safe_strcpy(info->std_abbr, sizeof(info->std_abbr), tm->tm_zone);
+        }
+        return true;
+    }
+
+    // no information is available
+    return false;
+}
 
 
 /* Get filename from startup parameter, if possible.
@@ -553,6 +1086,58 @@ os_paramfile( char* )
 }
 
 
+/* Open a directory search.
+ */
+int os_open_dir(const char *dirname, osdirhdl_t *hdl)
+{
+    return (*hdl = opendir(dirname)) != NULL;
+}
+
+/* Read the next result in a directory search.
+ */
+int os_read_dir(osdirhdl_t hdl, char *buf, size_t buflen)
+{
+    // Read the next directory entry - if we've exhausted the search,
+    // return failure.
+    struct dirent *d = readdir(hdl);
+    if (d == 0)
+        return false;
+
+    // return this entry
+    safe_strcpy(buf, buflen, d->d_name);
+    return true;
+}
+
+/* Close a directory search.
+ */
+void os_close_dir(osdirhdl_t hdl)
+{
+    closedir(hdl);
+}
+
+
+/* Determine if the given filename refers to a special file.
+ *
+ * tads2/osnoui.c defines its own version when MSDOS is defined.
+ */
+#ifndef MSDOS
+os_specfile_t
+os_is_special_file( const char* fname )
+{
+    // We also check for "./" and "../" instead of just "." and
+    // "..".  (We use OSPATHCHAR instead of '/' though.)
+    const char selfWithSep[3] = {'.', OSPATHCHAR, '\0'};
+    const char parentWithSep[4] = {'.', '.', OSPATHCHAR, '\0'};
+    if ((strcmp(fname, ".") == 0) or (strcmp(fname, selfWithSep) == 0)) return OS_SPECFILE_SELF;
+    if ((strcmp(fname, "..") == 0) or (strcmp(fname, parentWithSep) == 0)) return OS_SPECFILE_PARENT;
+    return OS_SPECFILE_NONE;
+}
+#endif
+
+
+#if 1
+extern "C" void canonicalize_path(char *path);
+#else
 /* Canonicalize a path: remove ".." and "." relative elements.
  * (Copied from tads2/osnoui.c)
  */
@@ -619,48 +1204,101 @@ canonicalize_path(char *path)
             break;
     }
 }
+#endif
 
 
-/* Safe strcpy.
- * (Copied from tads2/msdos/osdos.c)
+/* Resolve symbolic links in a path.  It's okay for 'buf' and 'path'
+ * to point to the same buffer if you wish to resolve a path in place.
  */
 static void
-safe_strcpy(char *dst, size_t dstlen, const char *src)
+resolve_path( char *buf, size_t buflen, const char *path )
 {
-    size_t copylen;
+    // Starting with the full path string, try resolving the path with
+    // realpath().  The tricky bit is that realpath() will fail if any
+    // component of the path doesn't exist, but we need to resolve paths
+    // for prospective filenames, such as files or directories we're
+    // about to create.  So if realpath() fails, remove the last path
+    // component and try again with the remainder.  Repeat until we
+    // can resolve a real path, or run out of components to remove.
+    // The point of this algorithm is that it will resolve as much of
+    // the path as actually exists in the file system, ensuring that
+    // we resolve any links that affect the path.  Any portion of the
+    // path that doesn't exist obviously can't refer to a link, so it
+    // will be taken literally.  Once we've resolved the longest prefix,
+    // tack the stripped portion back on to form the fully resolved
+    // path.
 
-    /* do nothing if there's no output buffer */
-    if (dst == 0 || dstlen == 0)
-        return;
+    // make a writable copy of the path to work with
+    size_t pathl = strlen(path);
+    char *mypath = new char[pathl + 1];
+    memcpy(mypath, path, pathl + 1);
 
-    /* do nothing if the source and destination buffers are the same */
-    if (dst == src)
-        return;
+    // start at the very end of the path, with no stripped suffix yet
+    char *suffix = mypath + pathl;
+    char sl = '\0';
 
-    /* use an empty string if given a null string */
-    if (src == 0)
-        src = "";
+    // keep going until we resolve something or run out of path
+    for (;;)
+    {
+        // resolve the current prefix, allocating the result
+        char *rpath = realpath(mypath, 0);
 
-    /* 
-     *   figure the copy length - use the smaller of the actual string size
-     *   or the available buffer size, minus one for the null terminator 
-     */
-    copylen = strlen(src);
-    if (copylen > dstlen - 1)
-        copylen = dstlen - 1;
+        // un-split the path
+        *suffix = sl;
 
-    /* copy the string (or as much as we can) */
-    memcpy(dst, src, copylen);
+        // if we resolved the prefix, return the result
+        if (rpath != 0)
+        {
+            // success - if we separated a suffix, reattach it
+            if (*suffix != '\0')
+            {
+                // reattach the suffix (the part after the '/')
+                for ( ; *suffix == '/' ; ++suffix) ;
+                os_build_full_path(buf, buflen, rpath, suffix);
+            }
+            else
+            {
+                // no suffix, so we resolved the entire path
+                safe_strcpy(buf, buflen, rpath);
+            }
 
-    /* null-terminate it */
-    dst[copylen] = '\0';
+            // done with the resolved path
+            free(rpath);
+
+            // ...and done searching
+            break;
+        }
+
+        // no luck with realpath(); search for the '/' at the end of the
+        // previous component in the path 
+        for ( ; suffix > mypath && *(suffix-1) != '/' ; --suffix) ;
+
+        // skip any redundant slashes
+        for ( ; suffix > mypath && *(suffix-1) == '/' ; --suffix) ;
+
+        // if we're at the root element, we're out of path elements
+        if (suffix == mypath)
+        {
+            // we can't resolve any part of the path, so just return the
+            // original path unchanged
+            safe_strcpy(buf, buflen, mypath);
+            break;
+        }
+
+        // split the path here into prefix and suffix, and try again
+        sl = *suffix;
+        *suffix = '\0';
+    }
+
+    // done with our writable copy of the path
+    delete [] mypath;
 }
-
 
 /* Is the given file in the given directory?
  */
 int
-os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
+os_is_file_in_dir( const char* filename, const char* path,
+                   int allow_subdirs, int match_self )
 {
     char filename_buf[OSFNMAX], path_buf[OSFNMAX];
     size_t flen, plen;
@@ -678,13 +1316,17 @@ os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
     }
 
     // Canonicalize the paths, to remove .. and . elements - this will make
-    // it possible to directly compare the path strings.
+    // it possible to directly compare the path strings.  Also resolve it
+    // to the extent possible, to make sure we're not fooled by symbolic
+    // links.
     safe_strcpy(filename_buf, sizeof(filename_buf), filename);
     canonicalize_path(filename_buf);
+    resolve_path(filename_buf, sizeof(filename_buf), filename_buf);
     filename = filename_buf;
 
     safe_strcpy(path_buf, sizeof(path_buf), path);
     canonicalize_path(path_buf);
+    resolve_path(path_buf, sizeof(path_buf), path_buf);
     path = path_buf;
 
     // Get the length of the filename and the length of the path.
@@ -692,15 +1334,20 @@ os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
     plen = strlen(path);
 
     // If the path ends in a separator character, ignore that.
-    if (plen > 0 and (path[plen-1] == '\\' or path[plen-1] == '/'))
+    if (plen > 0 and path[plen-1] == '/')
         --plen;
+
+    // if the names match, return true if and only if we're matching the
+    // directory to itself
+    if (plen == flen && memcmp(filename, path, flen) == 0)
+        return match_self;
 
     // Check that the filename has 'path' as its path prefix.  First, check
     // that the leading substring of the filename matches 'path', ignoring
     // case.  Note that we need the filename to be at least two characters
     // longer than the path: it must have a path separator after the path
     // name, and at least one character for a filename past that.
-    if (flen < plen + 2 or memicmp(filename, path, plen) != 0)
+    if (flen < plen + 2 or memcmp(filename, path, plen) != 0)
         return false;
 
     // Okay, 'path' is the leading substring of 'filename'; next make sure
@@ -709,7 +1356,7 @@ os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
     // as matching "c:\abc\d.txt" - if we only matched the "c:\a" prefix,
     // we'd miss the fact that the file is actually in directory "c:\abc",
     // not "c:\a".)
-    if (filename[plen] != '\\' and filename[plen] != '/')
+    if (filename[plen] != '/')
         return false;
 
     // We're good on the path prefix - we definitely have a file that's
@@ -727,14 +1374,13 @@ os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
         return true;
     }
 
-    const char* p;
-
     // We're not allowed to match subdirectories, so scan the rest of
     // the filename for path separators.  If we find any, the file is
     // in a subdirectory of 'path' rather than directly in 'path'
     // itself, so it's not a match.  If we don't find any separators,
     // we have a file directly in 'path', so it's a match.
-    for (p = filename; *p != '\0' and *p != '/' and *p != '\\'; ++p)
+    const char* p;
+    for (p = filename; *p != '\0' and *p != '/' ; ++p)
         ;
 
     // If we reached the end of the string without finding a path
@@ -748,18 +1394,62 @@ os_is_file_in_dir( const char* filename, const char* path, int allow_subdirs )
 int
 os_get_abs_filename( char* buf, size_t buflen, const char* filename )
 {
-    // Get the canonical path from the OS (allocating the result buffer).
-    char* newpath = realpath(filename, 0);
+    // If the filename is already absolute, copy it; otherwise combine
+    // it with the working directory.
+    if (os_is_file_absolute(filename))
+    {
+        // absolute - copy it as-is
+        safe_strcpy(buf, buflen, filename);
+    }
+    else
+    {
+        // combine it with the working directory to get the path
+        char pwd[OSFNMAX];
+        if (getcwd(pwd, sizeof(pwd)) != 0)
+            os_build_full_path(buf, buflen, pwd, filename);
+        else
+            safe_strcpy(buf, buflen, filename);
+    }
 
+    // canonicalize the result
+    canonicalize_path(buf);
+
+    // Try getting the canonical path from the OS (allocating the
+    // result buffer).
+    char* newpath = realpath(filename, 0);
     if (newpath != 0) {
         // Copy the output (truncating if it's too long).
         safe_strcpy(buf, buflen, newpath);
         free(newpath);
         return true;
     }
-    // Failed - copy the original filename unchanged.
-    safe_strcpy(buf, buflen, filename);
-    return false;
+
+    // realpath() failed, but that's okay - realpath() only works if the
+    // path refers to an existing file, but it's valid for callers to
+    // pass non-existent filenames, such as names of files they're about
+    // to create, or hypothetical paths being used for comparison
+    // purposes or for future use.  Simply return the canonical path
+    // name we generated above.
+    return true;
+}
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ * Get the file system roots.  Unix has the lovely unified namespace with
+ * just the one root, /, so this is quite simple.
+ */
+size_t os_get_root_dirs(char *buf, size_t buflen)
+{
+    static const char ret[] = { '/', 0, 0 };
+    
+    // if there's room, copy the root string "/" and an extra null
+    // terminator for the overall list
+    if (buflen >= sizeof(ret))
+        memcpy(buf, ret, sizeof(ret));
+
+    // return the required size
+    return sizeof(ret);
 }
 
 
@@ -996,56 +1686,6 @@ os_xlat_html4( unsigned int html4_char, char* result, size_t result_buf_len )
  * plain stdio).
  */
 #ifndef RUNTIME
-
-int
-os_mkdir( const char* dir )
-{
-    //assert(dir != 0);
-
-    if (dir[0] == '\0')
-        return true;
-
-    // Copy the directory name to a new string so we can strip any trailing
-    // path seperators.
-    size_t len = strlen(dir);
-    char* tmp = new char[len + 1];
-    strncpy(tmp, dir, len);
-    while (tmp[len - 1] == OSPATHCHAR)
-        --len;
-    tmp[len] = '\0';
-
-    // If the path contains multiple elements, recursively create the
-    // parent directories first.
-    if (strchr(tmp, OSPATHCHAR) != 0) {
-        char par[OSFNMAX];
-
-        // Extract the parent path.
-        os_get_path_name(par, sizeof(par), tmp);
-
-        // If the parent doesn't already exist, create it recursively.
-        if (osfacc(par) != 0 and not os_mkdir(par)) {
-            delete[] tmp;
-            return false;
-        }
-    }
-
-    // Create the directory.
-    int ret =
-#if HAVE_MKDIR
-#   if MKDIR_TAKES_ONE_ARG
-        mkdir(tmp);
-#   else
-        mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO);
-#   endif
-#elif HAVE__MKDIR
-    _mkdir(tmp);
-#else
-#   error "Neither mkdir() nor _mkdir() is available on this system."
-#endif
-    delete[] tmp;
-    return ret == 0;
-}
-
 
 /* Wait for a character to become available from the keyboard.
  */

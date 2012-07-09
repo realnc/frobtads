@@ -117,11 +117,22 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
     // Set the network safety level.
     hostifc->set_net_safety(this->options.netSafetyLevelC, this->options.netSafetyLevelS);
 
-    // Run the Tads 3 VM.
-    int vmRet = vm_run_image(&clientifc, filename, hostifc, argv, argc,
-                             this->options.replayFile, false, 0, 0, false, false,
-                             this->options.seedRand, 0, 0, savedState, 0, netconfig);
+    // Set up the VM/program parameters.
+    vm_run_image_params params(&clientifc, hostifc, filename);
+    params.prog_argv = argv;
+    params.prog_argc = argc;
+    params.script_file = this->options.replayFile;
+    params.seed_rand = this->options.seedRand;
+    params.saved_state = savedState;
+    params.netconfig = netconfig;
+
+    // Invoke the VM to run the program.
+    int vmRet = vm_run_image(&params);
+
+    // Done with the host interface object.
     delete hostifc;
+
+    // Return the result from the VM ivocation.
     return vmRet;
 }
 

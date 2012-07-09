@@ -44,6 +44,12 @@ AUTOMAKE_OPTIONS = subdir-objects
 ##
 AM_CPPFLAGS = -DFROBTADS -DTC_TARGET_T3 -DTADSNET
 
+if NO_TLS
+AM_CPPFLAGS += -DOS_PTHREAD_TLS
+else
+AM_CPPFLAGS += -DOS_DECLARATIVE_TLS
+endif
+
 if T3_DEBUG_BUILD
 AM_CPPFLAGS += -DT3_DEBUG -DVMGLOB_PARAM
 else
@@ -186,6 +192,7 @@ COMMONSOURCES = \
     src/wchar/wchar.h \
     tads2/osifc.c \
     tads2/osnoui.c \
+    tads2/osstzprs.c \
     tads2/osrestad.c
 
 ## TADS 2 headers.
@@ -328,6 +335,10 @@ T3HEADERS = \
     tads3/vmerrnum.h \
     tads3/vmfile.h \
     tads3/vmfilobj.h \
+    tads3/vmfilnam.h \
+    tads3/vmdate.h \
+    tads3/vmtz.h \
+    tads3/vmtzobj.h \
     tads3/vmfref.h \
     tads3/vmfunc.h \
     tads3/vmglob.h \
@@ -354,6 +365,7 @@ T3HEADERS = \
     tads3/vmmccore.h \
     tads3/vmmcnet.h \
     tads3/vmmcreg.h \
+    tads3/vmmersenne.h \
     tads3/vmmeta.h \
     tads3/vmnetfil.h \
     tads3/vmnet.h \
@@ -440,6 +452,11 @@ T3RCSOURCES = \
     tads3/vmerrmsg.cpp \
     tads3/vmfile.cpp \
     tads3/vmfilobj.cpp \
+    tads3/vmfilnam.cpp \
+    tads3/vmdate.cpp \
+    tads3/vmtzobj.cpp \
+    tads3/vmtz.cpp \
+    tads3/vmop.cpp \
     tads3/vmfref.cpp \
     tads3/vmfunc.cpp \
     tads3/vmglob.cpp \

@@ -70,11 +70,12 @@ div.entry {
 
 <h1>Recent Changes to the TADS 3 Library</h1>
 
-<p>This is a list of changes to adv3, the TADS 3 library.
-Changes are listed in reverse chronological order (the most recent
-changes are first).
+<p>This is a list of changes to Adv3, the TADS 3 adventure game
+library.  Changes are listed in reverse chronological order (the most
+recent changes are first).
 
 <ul class=toc>
+<li><a href='#311'>3.1.1</a>
 <li><a href='#310'>3.1.0</a>
 <li><a href='#3018a'>3.0.18.1</a>
 <li><a href='#3018'>3.0.18</a>
@@ -109,6 +110,127 @@ changes are first).
 <li><a href='#305'>3.0.5</a>
 <li><a href='#304'>3.0.4 and earlier</a>
 </ul>
+
+<!------------------------------- 3.1.1 --------------------------------->
+<div class="sepbar"><a name='311'></a>3.1.1</div>
+<p><b><i>Released TBD</i></b>
+<p>
+
+<!------------------->
+<div class=firstentry>
+
+The "inventory tall" lister incorrectly listed the contents of
+contentsListedSeparately containers both in-line and separately.
+This has been fixed, so that only the separate contents list is shown.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000116">bugdb.tads.org #0000116</a>)
+
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+The Thing methods for LOOK and EXAMINE that generate listings of contents
+now pass an additional named parameter, "examinee:", to the list methods.
+This is occasionally useful when one of the listing-related methods on
+one of the contents objects needs to know exactly what the context of
+the listing is.
+
+<p>The specific situation that motivated this change was a problem
+involving MultiLoc items with special descriptions, as described in
+the next item.
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+In the past, a MultiLoc with a special description was incorrectly
+included in the miscellaneous object list portion of a LOOK
+description for its room, or an EXAMINE description of its container.
+A special description is supposed to supersede inclusion in the
+ordinary list, since it provides the same information.  This
+now works correctly.
+
+<p>The reason for the double listing was that the method that decides
+whether or not to include an object in the ordinary list,
+isListedInContents, didn't deal properly with MultiLoc objects.  In
+fact, it couldn't deal with them properly, because it didn't have
+enough information, namely the identity of the object being
+examined.
+
+<p>For an ordinary Thing, the examinee is implicit in the call to
+isListedInContents, because this method is called only on direct
+children of the examinee; a Thing has only one direct container, so
+the examinee is implicitly the Thing's location.  This logic doesn't
+work for a MultiLoc, though, because a MultiLoc can have multiple
+direct containers.  So, to work properly, this method needed to know
+the examinee.  This information is now available to the method via
+the new "examinee:" named parameter that the various Thing methods
+for LOOK and EXAMINE now supply.  A new BaseMultiLoc.isListedInContents
+method uses the "examinee:" parameter to get the correct listing
+information.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000119">bugdb.tads.org #0000119</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+openableContentsLister has been renamed to openableDescContentsLister,
+because the original name was inconsistent with the corresponding
+listers for other classes.  xxxContentsLister is supposed to be the
+lister assigned to the 'contentsLister' property for class xxx, and
+xxxDescContentsLister is the one for 'descContentsLister'.
+('contentsLister' is the lister used for descriptions of objects
+<i>containing</i> the xxx, such as the enclosing room description;
+'descContentsLister' is for EXAMINE descriptions of the xxx itself.)
+There isn't (and never was) a separate 'contentsLister' for Openable;
+the former openableContentsLister was always its 'descContentsLister',
+but unfortunately wasn't named accordingly.
+
+<p>To minimize the impact on existing code, adv3.h provides a #define
+that maps the old name to the new name.  In the case of Openable,
+there's no need for a specialized 'contentsLister' at all, so there's
+no practical need to distinguish the two names, allowing us to create
+the mapping for the sake of compatibility.  Existing code shouldn't
+notice the difference unless it defined an openableDescContentsLister
+object of its own, which seems unlikely given that
+openableContentsLister already filled the role implied by that name.
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+The dobjFor() and iobjFor() macros in adv3.h now have some special
+code that catches handler definitions for non-existent Actions.  If
+the Action named in the dobjFor() or iobjFor() doesn't exist, the
+compiler will report an "undefined symbol" error naming the Action
+object.  This only happens in debug builds (e.g., using the "-d"
+option for the command-line compiler), since it generates some extra
+code to create a reference to the action object.  The warning can be
+helpful for catching typos (misspelled action names) or references to
+actions you intended to define but never got around to.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000135">bugdb.tads.org #0000135</a>)
+
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+In the past, the library incorrectly called breakTopicTie() on each
+matching topic with the topic object as the first argument, instead of
+passing the whole list of matching topics as advertised.  This has
+been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000138">bugdb.tads.org #0000138</a>)
+
+</div>
 
 <!------------------------------- 3.1.0 --------------------------------->
 <div class="sepbar"><a name='310'></a>3.1.0</div>

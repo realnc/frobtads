@@ -418,11 +418,18 @@ enum vmobjbn_meta_fnset
 
 /* ------------------------------------------------------------------------ */
 /*
+ *   we have to forward-declare bignum_t, since it uses templates
+ */
+template <int prec> class bignum_t;
+
+/* ------------------------------------------------------------------------ */
+/*
  *   Big Number metaclass 
  */
 class CVmObjBigNum: public CVmObject
 {
     friend class CVmMetaclassBigNum;
+    template <int> friend class bignum_t;
 
 public:
     /* metaclass registration object */
@@ -487,6 +494,28 @@ public:
     /* create from a double, with a given precision */
     static vm_obj_id_t create(VMG_ int in_root_set, double val, size_t digits);
 
+    /* create from a bignum_t */
+    template <int prec> static vm_obj_id_t create(
+        VMG_ int in_root_set, const bignum_t<prec> *b)
+    {
+        vm_obj_id_t id = vm_new_id(vmg_ in_root_set, FALSE, FALSE);
+        new (vmg_ id) CVmObjBigNum(vmg_ prec);
+        CVmObjBigNum *n = (CVmObjBigNum *)vm_objp(vmg_ id);
+        copy_val(n->ext_, b->ext, FALSE);
+        return id;
+    }
+
+    /* create from a bignum_t */
+    template <int prec> static vm_obj_id_t create(
+        VMG_ int in_root_set, const bignum_t<prec> &b)
+    {
+        vm_obj_id_t id = vm_new_id(vmg_ in_root_set, FALSE, FALSE);
+        new (vmg_ id) CVmObjBigNum(vmg_ prec);
+        CVmObjBigNum *n = (CVmObjBigNum *)vm_objp(vmg_ id);
+        copy_val(n->ext_, b.ext, FALSE);
+        return id;
+    }
+
     /* 
      *   Create from a 64-bit integer in portable little-endian notation.
      *   This is the 64-bit int equivalent of osrp2(), osrp4(), etc - the
@@ -497,6 +526,21 @@ public:
      */
     static vm_obj_id_t create_rp8(VMG_ int in_root_set, const char *buf);
     static vm_obj_id_t create_rp8s(VMG_ int in_root_set, const char *buf);
+
+    /* 
+     *   Create from a 64-bit integer expressed as two 32-bit portions.  We
+     *   currently only provide an unsigned version, because (a) we don't
+     *   have an immediate need for signed, and (b) breaking a signed 64-bit
+     *   value into two 32-bit partitions requires making assumptions about
+     *   the native integer representation (2's complement, 1s' complement,
+     *   etc) that we'll probably have to farm out to os_xxx code.  Until we
+     *   encounter a need we'll avoid the signed version.  The unsigned
+     *   version will work with any binary integer representation, which
+     *   makes it all but universal (it won't work on a BCD machine, for
+     *   example... but would anyone ever notice, or care?).
+     */
+    static vm_obj_id_t create_int64(VMG_ int in_root_set,
+                                    uint32_t hi, uint32_t lo);
 
     /* create from a BER-encoded compressed unsigned integer buffer */
     static vm_obj_id_t create_from_ber(VMG_ int in_root_set,
@@ -531,6 +575,9 @@ public:
      *   BigNumber (in which case bnval is just a copy of srcval).  
      */
     static void cast_to_bignum(VMG_ vm_val_t *bnval, const vm_val_t *srcval);
+
+    /* parse a string value into an extension buffer */
+    static void parse_str_into(char *ext, const char *str, size_t len);
 
     /* 
      *   get the precision required to hold the number with the given string
@@ -680,6 +727,12 @@ public:
         VMG_ char *buf, size_t buflen, int max_digits,
         int whole_places, int frac_digits, int exp_digits, ulong flags);
 
+    /* format BigNumber data (without a 'self') into the given buffer */
+    static const char *cvt_to_string_buf(
+        VMG_ char *buf, size_t buflen, const char *ext,
+        int max_digits, int whole_places, int frac_digits, int exp_digits,
+        ulong flags, vm_val_t *lead_fill);
+
     /* 
      *   format the value into the given buffer, or into a new String if the
      *   value overflows the buffer 
@@ -778,6 +831,9 @@ public:
     /* get my data pointer */
     char *get_ext() const { return ext_; }
 
+    /* BigNumber is a numeric type */
+    virtual int is_numeric() const { return TRUE; }
+
     /* cast to integer */
     virtual long cast_to_int(VMG0_) const
     {
@@ -793,12 +849,24 @@ public:
         return TRUE;
     }
 
+    /* get my double value */
+    virtual int get_as_double(VMG_ double *val) const
+    {
+        *val = convert_to_double(vmg0_);
+        return TRUE;
+    }
+
+    /* promote an integer to a BigNumber */
+    virtual void promote_int(VMG_ vm_val_t *val) const;
+
     /* 
      *   Convert to an integer value (signed or unsigned).  We set 'ov' to
      *   true if the value overflows the integer type. 
      */
-    int32_t convert_to_int(int &ov) const;
+    int32_t convert_to_int(int &ov) const { return ext_to_int(ext_, ov); }
     uint32_t convert_to_uint(int &ov) const;
+
+    static int32_t ext_to_int(const char *ext, int &ov);
 
     /* convert to integer, throwing an error on overflow */
     int32_t convert_to_int() const
@@ -826,7 +894,8 @@ public:
     }
 
     /* convert to double */
-    double convert_to_double(VMG0_) const;
+    double convert_to_double(VMG0_) const { return ext_to_double(vmg_ ext_); }
+    static double ext_to_double(VMG_ const char *ext);
 
     /* 
      *   Convert to the IEEE 754-2008 binary interchange format with the
@@ -1077,7 +1146,7 @@ protected:
     static void compute_sqrt_into(VMG_ char *new_ext, const char *ext);
 
     /* compute the sum of two operands into the given buffer */
-    static void compute_sum_into(char *new_next,
+    static void compute_sum_into(char *new_ext,
                                  const char *ext1, const char *ext2);
 
     /* 
@@ -1088,6 +1157,10 @@ protected:
      */
     static void compute_abs_sum_into(char *new_ext,
                                      const char *ext1, const char *ext2);
+
+    /* compute the difference of two operands into the given buffer */
+    static void compute_diff_into(char *new_ext,
+                                  const char *ext1, const char *ext2);
 
     /*
      *   Compute the difference of the absolute values of the operands
@@ -1108,7 +1181,7 @@ protected:
                                   const char *ext1, const char *ext2);
 
     /*
-     *   Compute the quotient of th etwo values into the given buffer If
+     *   Compute the quotient of the two values into the given buffer.  If
      *   new_rem_ext is not null, we'll store the remainder there.  
      */
     static void compute_quotient_into(VMG_ char *new_ext,
@@ -1167,10 +1240,8 @@ protected:
     /* get a digit at a particular index (0 = most significant) */
     static unsigned int get_dig(const char *ext, size_t i)
     {
-        unsigned int pair;
-        
         /* get the digit pair containing our digit */
-        pair = ext[VMBN_MANT + i/2];
+        unsigned int pair = ext[VMBN_MANT + i/2];
 
         /* 
          *   If it's an even index, we need the high half.  Otherwise, we
@@ -1367,7 +1438,7 @@ protected:
                          char *ext6, char *ext7);
 
     /* 
-     *   given an object number known to refer to a CVmBigNum object, get
+     *   given an object number known to refer to a CVmObjBigNum object, get
      *   the object's extension 
      */
     static char *get_objid_ext(VMG_ vm_obj_id_t obj_id)
@@ -1377,7 +1448,7 @@ protected:
     }
 
     /* 
-     *   given an object number known to refer to a CVmBigNum object, get
+     *   given an object number known to refer to a CVmObjBigNum object, get
      *   the object pointer
      */
     static CVmObjBigNum *get_objid_obj(VMG_ vm_obj_id_t obj_id)
@@ -1474,6 +1545,249 @@ public:
     }
 };
 
+/* ------------------------------------------------------------------------ */
+/*
+ *   A C++ template class for doing BigNumber arithmetic on the stack with
+ *   fixed-precision buffers.  This can be used for high-precision arithmetic
+ *   in C++ without creating any garbage-collected BigNumber objects.  It's
+ *   not quite as flexible as the BigNumber class itself, but it allows C++
+ *   code to perform decimal arithmetic with higher precision than doubles
+ *   when needed.
+ */
+template <int prec> class bignum_t
+{
+    friend class CVmObjBigNum;
+    
+public:
+    bignum_t(VMG0_) { init(vmg0_); }
+    bignum_t(VMG_ long i) { init(vmg0_); set(i); }
+    bignum_t(VMG_ double d) { init(vmg0_); set(d); }
+    bignum_t(VMG_ const vm_val_t *val) { init(vmg0_); set(val); }
+    template <int precb> bignum_t(VMG_ const bignum_t<precb> b)
+        { init(vmg0_); set(b); }
+    template <int precb> bignum_t(VMG_ const bignum_t<precb> *b)
+        { init(vmg0_); set(*b); }
+    
+        
+    void set(long i) { CVmObjBigNum::set_int_val(ext, i); }
+    void set(double d) { CVmObjBigNum::set_double_val(ext, d); }
+    template <int bprec> void set(const bignum_t<bprec> &b)
+        { CVmObjBigNum::copy_val(ext, b.ext, TRUE); }
+    
+    void set(const vm_val_t *val)
+    {
+        VMGLOB_PTR(vmg);
+        CVmObjBigNum *b;
+        if (val->typ == VM_INT)
+            CVmObjBigNum::set_int_val(ext, val->val.intval);
+        else if ((b = vm_val_cast(CVmObjBigNum, val)) != 0)
+            CVmObjBigNum::copy_val(ext, b->get_ext(), TRUE);
+        else if (val->is_numeric(vmg0_))
+            CVmObjBigNum::set_double_val(ext, val->num_to_double(vmg0_));
+        else
+            err_throw(VMERR_NUM_VAL_REQD);
+    }
+
+    /* cast to int/double */
+    operator int32_t()
+    {
+        int ov;
+        CVmObjBigNum::ext_to_int(ext, ov);
+        if (ov)
+            err_throw(VMERR_NUM_OVERFLOW);
+    }
+    operator double()
+    {
+        VMGLOB_PTR(vmg);
+        return CVmObjBigNum::ext_to_double(vmg_ ext);
+    }
+
+    /* 
+     *   addition operators
+     */
+    bignum_t operator +(long l) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bl(vmg_ l);
+        return *this + bl;
+    }
+    bignum_t operator +(double d) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bd(vmg_ d);
+        return *this + bd;
+    }
+    template <int precb> bignum_t operator +(const bignum_t<precb> &b) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<(precb > prec ? precb : prec)> result Pvmg0_P;
+        CVmObjBigNum::compute_sum_into(result.ext, ext, b.ext);
+        return result;
+    }
+
+    bignum_t &operator +=(long l) { set(*this + l); return *this; }
+    bignum_t &operator +=(double d) { set(*this + d); return *this; }
+    template <int precb> bignum_t &operator +=(bignum_t<precb> &b)
+        { set(*this + b); return *this; }
+    template <int precb> bignum_t &operator +=(bignum_t<precb> b)
+        { set(*this + b); return *this; }
+
+    /* 
+     *   subtraction operators
+     */
+    bignum_t operator -(long l) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bl(vmg_ l);
+        return *this - bl;
+    }
+    bignum_t operator -(double d) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bd(vmg_ d);
+        return *this - bd;
+    }
+    template <int precb> bignum_t operator -(bignum_t<precb> &b) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<(precb > prec ? precb : prec)> result Pvmg0_P;
+        CVmObjBigNum::compute_diff_into(result.ext, ext, b.ext);
+        return result;
+    }
+
+    bignum_t &operator -=(long l) { set(*this - l); return *this; }
+    bignum_t &operator -=(double d) { set(*this - d); return *this; }
+    template <int precb> bignum_t &operator -=(bignum_t<precb> &b)
+        { set(*this - b); return *this; }
+    template <int precb> bignum_t &operator -=(bignum_t<precb> b)
+        { set(*this - b); return *this; }
+
+    /*
+     *   Negation 
+     */
+    bignum_t<prec> operator -()
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> result(vmg_ this);
+        CVmObjBigNum::negate(result.ext);
+        return result;
+    }
+
+    /* 
+     *   multiplication operators
+     */
+    bignum_t operator *(long l) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bl(vmg_ l);
+        return *this * bl;
+    }
+    bignum_t operator *(double d) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bd(vmg_ d);
+        return *this * bd;
+    }
+    template <int precb> bignum_t operator *(bignum_t<precb> &b) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<(precb > prec ? precb : prec)> result Pvmg0_P;
+        CVmObjBigNum::compute_prod_into(result.ext, ext, b.ext);
+        return result;
+    }
+
+    bignum_t &operator *=(long l) { set(*this * l); return *this; }
+    bignum_t &operator *=(double d) { set(*this * d); return *this; }
+    template <int precb> bignum_t &operator *=(bignum_t<precb> &b)
+        { set(*this * b); return *this; }
+    template <int precb> bignum_t &operator *=(bignum_t<precb> b)
+        { set(*this * b); return *this; }
+
+    /* 
+     *   division operators
+     */
+    bignum_t operator /(long l) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bl(vmg_ l);
+        return *this / bl;
+    }
+    bignum_t operator /(double d) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bd(vmg_ d);
+        return *this / bd;
+    }
+    template <int precb> bignum_t operator /(bignum_t<precb> &b) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<(precb > prec ? precb : prec)> result Pvmg0_P;
+        CVmObjBigNum::compute_quotient_into(vmg_ result.ext, 0, ext, b.ext);
+        return result;
+    }
+
+    bignum_t &operator /=(long l) { set(*this / l); return *this; }
+    bignum_t &operator /=(double d) { set(*this / d); return *this; }
+    template <int precb> bignum_t &operator /=(bignum_t<precb> &b)
+        { set(*this / b); return *this; }
+    template <int precb> bignum_t &operator /=(bignum_t<precb> b)
+        { set(*this / b); return *this; }
+
+    /* 
+     *   modulo operators
+     */
+    bignum_t operator %(long l) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bl(vmg_ l);
+        return *this % bl;
+    }
+    bignum_t operator %(double d) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<prec> bd(vmg_ d);
+        return *this % bd;
+    }
+    template <int precb> bignum_t operator %(bignum_t<precb> &b) const
+    {
+        VMGLOB_PTR(vmg);
+        bignum_t<(precb > prec ? precb : prec)> quo Pvmg0_P, rem Pvmg0_P;
+        CVmObjBigNum::compute_quotient_into(vmg_ quo.ext, rem.ext, ext, b.ext);
+        return rem;
+    }
+    template <int precb> bignum_t &operator %=(bignum_t<precb> &b)
+        { set(*this % b); return *this; }
+    template <int precb> bignum_t &operator %=(bignum_t<precb> b)
+        { set(*this % b); return *this; }
+
+    /*
+     *   formatting 
+     */
+    void format(char *buf, size_t buflen)
+    {
+        VMGLOB_PTR(vmg);
+        CVmObjBigNum::cvt_to_string_buf(
+            vmg_ buf, buflen, ext, -1, -1, -1, -1,
+            VMBN_FORMAT_POINT, 0);
+    }
+    void format(char *buf, size_t buflen, int maxdigits, int fracdigits)
+    {
+        VMGLOB_PTR(vmg);
+        CVmObjBigNum::cvt_to_string_buf(
+            vmg_ buf, buflen, ext, maxdigits, -1, fracdigits, -1,
+            VMBN_FORMAT_POINT, 0);
+    }
+                                        
+protected:
+    void init(VMG0_)
+    {
+        vmg = VMGLOB_ADDR;
+        oswp2(ext, prec);
+        ext[VMBN_FLAGS] = 0;
+    }
+    vm_globals *vmg;
+    char ext[VMBN_MANT + (prec+1)/2];
+};
 
 #endif /* VMBIGNUM_H */
 

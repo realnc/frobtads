@@ -82,8 +82,14 @@ enum re_recog_type
     /* invalid/uninitialized */
     RE_INVALID,
 
-    /* literal character recognizer */
+    /* literal (single) character recognizer */
     RE_LITERAL,
+
+    /* literal string recognizer */
+    RE_LITSTR,
+
+    /* aliased literal string (points to string allocated in another state) */
+    RE_LITSTRA,
 
     /* "epsilon" recognizer - match without consuming anything */
     RE_EPSILON,
@@ -133,6 +139,7 @@ enum re_recog_type
 
     /* any digit */
     RE_DIGIT,
+    RE_NON_DIGIT,
 
     /* any upper-case alphabetic */
     RE_UPPER,
@@ -145,6 +152,7 @@ enum re_recog_type
 
     /* space character */
     RE_SPACE,
+    RE_NON_SPACE,
 
     /* punctuation character */
     RE_PUNCT,
@@ -174,7 +182,8 @@ enum re_recog_type
     RE_LOOP_BRANCH,
 
     /* vertical whitespace */
-    RE_VSPACE
+    RE_VSPACE,
+    RE_NON_VSPACE
 };
 
 
@@ -201,6 +210,18 @@ struct re_tuple
          *   RE_GROUP_MATCH and in RE_EPSILON nodes with the group flag set) 
          */
         wchar_t ch;
+
+        /* 
+         *   If this is a character string transition, this is the string;
+         *   it's stored as a null-terminated string of wchar_t's, allocated
+         *   with new wchar_t[].  'src' is the original state number for an
+         *   aliased string that points to another state's original.
+         */
+        struct
+        {
+            wchar_t *str;
+            re_state_id src;
+        } str;
 
         /* 
          *   if this has a sub-machine, this is the start and end info (used
@@ -478,11 +499,11 @@ protected:
                         re_compiled_pattern_base *pat);
 
     /* compile a character class or class range expression */
-    int compile_char_class_expr(utf8_ptr *expr, size_t *exprlen,
+    int compile_char_class_expr(utf8_ptr *expr, size_t *exprchars,
                                 re_machine *result_machine);
 
     /* parse an integer value */
-    int parse_int(utf8_ptr *p, size_t *rem);
+    int parse_int(utf8_ptr *p, size_t *chars_rem);
 
     /* add a character to our range buffer */
     void add_range_char(wchar_t ch) { add_range_char(ch, ch); }
@@ -509,6 +530,9 @@ protected:
     /* optimize away meaningless branch-to-branch transitions */
     void remove_branch_to_branch(re_machine *machine);
     void optimize_transition(const re_machine *machine, re_state_id *trans);
+
+    /* consolidate runs of characters into strings */
+    void consolidate_strings(re_machine *machine);
 
     /* next available state ID */
     re_state_id next_state_;

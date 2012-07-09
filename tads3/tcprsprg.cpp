@@ -2304,6 +2304,7 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
     CTcToken tok;
     CTcSymFunc *func_sym;
     CTPNCodeBody *code_body;
+    int has_proto = TRUE;
     int argc;
     int opt_argc;
     int varargs;
@@ -2359,7 +2360,8 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
          */
         if (is_extern)
         {
-            /* no arguments */
+            /* no prototype and no arguments */
+            has_proto = FALSE;
             argc = 0;
             opt_argc = 0;
             varargs = FALSE;
@@ -2542,7 +2544,7 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
                  */
                 func_sym = new CTcSymFunc(tok.get_text(), tok.get_text_len(),
                                           FALSE, 0, 0, TRUE, TRUE,
-                                          TRUE, TRUE, TRUE);
+                                          TRUE, TRUE, TRUE, TRUE);
 
                 /* 
                  *   Mark the function symbol as defined in this file.  This
@@ -2579,19 +2581,23 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
         /* 
          *   If the symbol was already defined, the previous definition must
          *   be external, or this new definition must be external, or the new
-         *   definition must be a 'replace' definition; and the two
-         *   definitions must exactly match the new parameters and the
-         *   multi-method status.  Ignore differences in the return value,
-         *   since we have no way to specify in 'extern' definitions whether
-         *   a function has a return value or not.  
+         *   definition must be a 'replace' definition.
          */
         redef = (func_sym != 0
                  && (func_sym->get_type() != TC_SYM_FUNC
                      || (!func_sym->is_extern()
-                         && !is_extern && !replace && !modify)
-                     || func_sym->get_argc() != argc
-                     || func_sym->is_varargs() != varargs
-                     || func_sym->is_multimethod() != (type_list != 0)));
+                         && !is_extern && !replace && !modify)));
+
+        /* 
+         *   In addition, if both function definitions have prototypes, the
+         *   prototypes must match. 
+         */
+        if (has_proto && func_sym != 0 && func_sym->has_proto())
+        {
+            redef |= (func_sym->get_argc() != argc
+                      || func_sym->is_varargs() != varargs
+                      || func_sym->is_multimethod() != (type_list != 0));
+        }
 
         /* 
          *   If the symbol was already defined, log an error, then ignore
@@ -2647,7 +2653,7 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
             func_sym = new CTcSymFunc(tok.get_text(), tok.get_text_len(),
                                       FALSE, argc, opt_argc, varargs,
                                       has_retval, type_list != 0,
-                                      FALSE, is_extern);
+                                      FALSE, is_extern, has_proto);
 
             /* add the entry to the global symbol table */
             global_symtab_->add_entry(func_sym);
@@ -2762,7 +2768,8 @@ CTPNStmTop *CTcParser::parse_function(int *err, int is_extern,
                                          argc, opt_argc, varargs, has_retval,
                                          func_sym->is_multimethod(),
                                          func_sym->is_multimethod_base(),
-                                         func_sym->is_extern());
+                                         func_sym->is_extern(),
+                                         func_sym->has_proto());
 
                 /* 
                  *   remember the original global function in the modified
@@ -4196,7 +4203,7 @@ CTPNStmTop *CTcParser::parse_string_template_def(int *err)
          */
         funcsym = new CTcSymFunc(
             functok->get_text(), functok->get_text_len(), FALSE,
-            tpl->star ? 1 : 0, 0, FALSE, TRUE, FALSE, FALSE, TRUE);
+            tpl->star ? 1 : 0, 0, FALSE, TRUE, FALSE, FALSE, TRUE, TRUE);
 
         /* add it to the symbol table */
         global_symtab_->add_entry(funcsym);

@@ -280,8 +280,6 @@ static char *make_opt_file_relative(char *buf, size_t buflen,
                                     const char *opt_file_path,
                                     char *fname)
 {
-    char lcl[OSFNMAX];
-    
     /* 
      *   if we haven't read an option file, we don't have an option file path
      *   to use as the relative root, so use the original filename unchanged 
@@ -290,8 +288,8 @@ static char *make_opt_file_relative(char *buf, size_t buflen,
         return fname;
 
     /* convert the name to local conventions */
-    os_cvt_url_dir(buf, buflen < sizeof(lcl) ? buflen : sizeof(lcl),
-                   fname, FALSE);
+    char lcl[OSFNMAX];
+    os_cvt_url_dir(buf, buflen < sizeof(lcl) ? buflen : sizeof(lcl), fname);
 
     /* if the filename is absolute, use it as given */
     if (os_is_file_absolute(buf))
@@ -302,7 +300,7 @@ static char *make_opt_file_relative(char *buf, size_t buflen,
      *   name relative to the option file path, using the version that we
      *   converted to local conventions 
      */
-    strcpy(lcl, buf);
+    lib_strcpy(lcl, sizeof(lcl), buf);
     os_build_full_path(buf, buflen, opt_file_path, lcl);
 
     /* return the caller's buffer where we built the full path */
@@ -1150,7 +1148,7 @@ parse_options:
         /* show the banner */
         /* copyright-date-string */
         printf("TADS Compiler %d.%d.%d%s  "
-               "Copyright 1999, 2010 Michael J. Roberts\n",
+               "Copyright 1999, 2012 Michael J. Roberts\n",
                TC_VSN_MAJOR, TC_VSN_MINOR, TC_VSN_REV, patch_id);
     }
 
@@ -1169,7 +1167,7 @@ parse_options:
             printf("It's better not to use absolute paths in the "
                    "options file, because this\n"
                    "ties the options file to the particular "
-                   "directory layout of your machine.  \n"
+                   "directory layout of your machine.\n"
                    "If possible, refer only to subfolders of the "
                    "folder containing the options\n"
                    "file, and refer to the subfolders using "
@@ -1194,6 +1192,8 @@ parse_options:
                "  -errnum - show numeric error codes with error messages\n"
                "  -f file - read command line options from 'file'\n"
                "  -I dir  - add 'dir' to #include search path\n"
+               "  -FC     - create output directories (for -Fy, -Fo) if they "
+               "don't exist\n"
                "  -Fs dir - add 'dir' to source file search path\n"
                "  -Fy dir - put symbol files in directory 'dir'\n"
                "  -Fo dir - put object files in directory 'dir'\n"
@@ -1371,13 +1371,22 @@ parse_options:
         /* process the file according to its type */
         if (is_source)
         {
-            CTcMakeModule *mod;
-
             /* add this file to the module list */
-            mod = mk->add_module(p, 0, 0);
+            CTcMakeModule *mod = mk->add_module(p, 0, 0);
 
             /* set the module's original name to the name as given */
             mod->set_orig_name(argv[curarg]);
+
+            /* 
+             *   Also use the original name (with a default .t suffix) as the
+             *   search name, in case it's a file we're going to search for
+             *   using the source search path.  When searching, we want to
+             *   search for the original name, not the project-relative name.
+             */
+            char sbuf[OSFNMAX];
+            lib_strcpy(sbuf, sizeof(sbuf), argv[curarg]);
+            os_defext(sbuf, "t");
+            mod->set_search_source_name(sbuf);
 
             /* 
              *   if no image has been specified yet already, use this
@@ -1639,20 +1648,18 @@ parse_options:
     }
 
     /* 
-     *   Add the default object modules, if appropriate.  Do not add the
+     *   Add the default object modules, if appropriate.  Don't add the
      *   default modules unless we're linking. 
      */
     if (add_def_mod && !compile_only && !pp_only)
     {
-        char srcname[OSFNMAX];
-        CTcMakeModule *mod;
-
         /* build the full path to the "_main" library module */
+        char srcname[OSFNMAX];
         os_build_full_path(srcname, sizeof(srcname),
                            sys_lib_entry->get_path(), "_main");
 
         /* add this as the first module of our compilation */
-        mod = mk->add_module_first(srcname, 0, 0);
+        CTcMakeModule *mod = mk->add_module_first(srcname, 0, 0);
 
         /* set its original name, and note it's from the system library */
         mod->set_orig_name("_main");

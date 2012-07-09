@@ -67,6 +67,14 @@ upper('This is a TEST of UPPER and lower. 123;!@#$') = 'THIS IS A TEST OF UPPER
 AND LOWER. 123;!@#$'
 lower('This is a TEST of UPPER and lower. 123;!@#$') = 'this is a test of upper
 and lower. 123;!@#$'
+title('This is a TEST of UPPER and lower. 123;!@#$') = 'THIS IS A TEST OF UPPER
+AND LOWER. 123;!@#$'
+caseFold('This is a TEST of UPPER and lower. 123;!@#$') = 'this is a test of
+upper and lower. 123;!@#$'
+upper('We\u0130ßsträße O\ufb03ceplätz') = 'WE\u0130SSSTRÄSSE OFFICEPLÄTZ'
+lower('We\u0130ßsträße O\ufb03ceplätz') = 'wei\u0307ßsträße o\ufb03ceplätz'
+title('We\u0130ßsträße O\ufb03ceplätz') = 'WE\u0130SsSTRÄSsE OFfiCEPLÄTZ'
+caseFold('We\u0130ßsträße O\ufb03ceplätz') = 'wei\u0307sssträsse officeplätz'
 
 toString test
 toString(123) = 123
@@ -146,6 +154,52 @@ find() test
 'abcdefghijklmnopqrstuvwxyz1234567890'.find('xyz') = 24
 'abcdefghijklmnopqrstuvwxyz1234567890'.find('1234567890') = 27
 'abcdefghijklmnopqrstuvwxyz1234567890'.find('xxx') =
+'abcdefghijklmnopqrstuvwxyz1234567890'.find(re '%d+') = 27
+'abcdefghijklmnopqrstuvwxyz1234567890'.find('cde', 1) = 3
+'abcdefghijklmnopqrstuvwxyz1234567890'.find('cde', 2) = 3
+'abcdefghijklmnopqrstuvwxyz1234567890'.find('cde', 3) = 3
+'abcdefghijklmnopqrstuvwxyz1234567890'.find('cde', 4) =
+'abcdefghijklmnopqrstuvwxyz1234567890'.find('cde', 5) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 1) = 1
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 2) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 3) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 4) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 5) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 6) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 7) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 8) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 9) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', 10) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -1) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -2) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -3) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -4) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -5) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -6) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -7) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -8) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -9) = 43
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find('abc', -10) = 43
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 1) = 1
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 2) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 3) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 4) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 5) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 6) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 7) = 7
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 8) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 9) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', 10) = 13
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -1) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -2) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -3) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -4) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -5) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -6) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -7) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -8) =
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -9) = 43
+'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f'.find(re 'a.*f', -10) = 43
 [ONE, two, three, four, five, six, seven, eight, nine, ten].indexOf('one') =
 [ONE, two, three, four, five, six, seven, eight, nine, ten].indexOf('ONE') = 1
 [ONE, two, three, four, five, six, seven, eight, nine, ten].indexOf('two') = 2

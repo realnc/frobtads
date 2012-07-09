@@ -17,7 +17,7 @@ Modified
 /* system headers */
 #include <pthread.h>
 #include <unistd.h>
-#include <unistd.h>
+#include <linux/unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -54,25 +54,28 @@ Modified
 #ifdef __APPLE__
 #include <libkern/OSAtomic.h>
 typedef OSSpinLock pthread_spinlock_t;
-inline void pthread_spin_init(OSSpinLock* p, int) { *p = OS_SPINLOCK_INIT; }
-inline void pthread_spin_destroy(OSSpinLock*) { }
+inline void pthread_spin_init(OSSpinLock* p, int) { *p=OS_SPINLOCK_INIT; }
+inline void pthread_spin_destroy(OSSpinLock*) {}
 #define pthread_spin_lock OSSpinLockLock
 #define pthread_spin_unlock OSSpinLockUnlock
-#endif /* __APPLE__ */
+#endif
 
-/* Make sure SO_NOSIGPIPE and MSG_NOSIGNAL are both defined if at least
- * one of them already is. They are redundant to each other and it
- * doesn't matter if we define one of them to 0 if it's missing. We
- * avoid doing that if both are missing, as that would allow the build
- * to complete but without a way of suppressing SIGPIPE signals.  */
+/* 
+ *   Most Unix variants have at least one of SO_NOSIGPIPE or MSG_NOSIGNAL,
+ *   and they seem to serve the same purpose everywhere, so if either is
+ *   missing just define it away (i.e., define as 0, as these are bit flags).
+ *   This doesn't handle the case where a system lacks *both*, but that seems
+ *   to be rare, and the code necessary to work around it is messy enough
+ *   that we're going to ignore the possibility.
+ */
 #ifdef SO_NOSIGPIPE
-#  ifndef MSG_NOSIGNAL
-#    define MSG_NOSIGNAL 0
-#  endif
+# ifndef MSG_NOSIGNAL
+#   define MSG_NOSIGNAL 0
+# endif
 #else
-#  ifdef MSG_NOSIGNAL
-#    define SO_NOSIGPIPE 0
-#  endif
+# ifdef MSG_NOSIGNAL
+#   define SO_NOSIGPIPE 0
+# endif
 #endif
 
 /* include the base layer headers */
@@ -1068,7 +1071,7 @@ public:
              *   final response.  
              */
             struct linger ls = { TRUE, 1 };
-            setsockopt(snew, SOL_SOCKET, SO_LINGER, &ls, sizeof(ls));
+            setsockopt(snew, SOL_SOCKET, SO_LINGER, (char *)&ls, sizeof(ls));
 
             /* 
              *   Turn off SIGPIPE signals on this socket - we deal with
@@ -1079,20 +1082,28 @@ public:
              */
 #ifdef SO_NOSIGPIPE
             int nsp = 1;
-            setsockopt(snew, SOL_SOCKET, SO_NOSIGPIPE, &nsp, sizeof(nsp));
+            setsockopt(snew, SOL_SOCKET, SO_NOSIGPIPE,
+                       (char *)&nsp, sizeof(nsp));
 #endif
+
             /*
              *   Disable the Nagle algorithm for this socket to minimize
-             *   transmit latency.  We send a lot of very small packets and
-             *   the client must acknowledge each one in sequence before
-             *   the next one can be sent.  It is normally useful to combine
-             *   many small packets into a few large ones, but here it only
-             *   slows us down.
+             *   transmit latency.  Nagle's algorithm introduces a small,
+             *   intentional delay when a small packet is sent, so that if
+             *   one or more additional small packets quickly follow, the
+             *   packets can be combined into one larger packet.  This is the
+             *   default behavior on most Unix systems because typical
+             *   applications benefit from the reduction in overhead from
+             *   sending fewer packets.  However, it's detrimental to TADS
+             *   game servers, because they tend to send small packets that
+             *   must be acknowledged in series, which prevents them from
+             *   being coalesced.  The Nagel algorithm's intentional delay in
+             *   this case shows up as latency, without the usual benefits.
              */
             int tcpflag = 1;
             setsockopt(snew, IPPROTO_TCP, TCP_NODELAY,
-                       (char*)&tcpflag, sizeof(tcpflag));
-
+                       (char *)&tcpflag, sizeof(tcpflag));
+ 
             /* wrap the socket in an OS_Socket and return the object */
             return new OS_Socket(snew);
         }

@@ -594,7 +594,7 @@ int CTcSymFuncBase::load_from_obj_file(CVmFile *fp,
          */
         sym = new CTcSymFunc(txt, len, FALSE, argc, opt_argc, varargs,
                              has_retval, is_multimethod, is_multimethod_base,
-                             is_extern);
+                             is_extern, TRUE);
         G_prs->get_global_symtab()->add_entry(sym);
 
         /* it's an error if we're replacing a previously undefined function */
@@ -623,7 +623,7 @@ int CTcSymFuncBase::load_from_obj_file(CVmFile *fp,
          */
         sym = new CTcSymFunc(txt, len, FALSE, argc, opt_argc, varargs,
                              has_retval, is_multimethod, is_multimethod_base,
-                             is_extern);
+                             is_extern, TRUE);
     }
     else if (sym->get_argc() != argc
              || sym->is_varargs() != varargs

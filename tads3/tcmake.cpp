@@ -344,10 +344,8 @@ CTcMakeModule *CTcMake::add_module(const char *src_name,
                                    const char *obj_name,
                                    int first)
 {
-    CTcMakeModule *mod;
-
     /* create a module object */
-    mod = new CTcMakeModule();
+    CTcMakeModule *mod = new CTcMakeModule();
 
     /* set the module name */
     mod->set_module_name(src_name);
@@ -642,7 +640,7 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
     CResLoader *res_loader;
     int fatal_error_count = 0;
     CTcMakeModule *mod;
-    os_file_time_t imgmod;
+    os_file_stat_t imgstat;
     int build_image;
     int run_preinit;
     char exe_path[OSFNMAX];
@@ -813,9 +811,7 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
             textchar_t srcfile[OSFNMAX];
             textchar_t symfile[OSFNMAX];
             textchar_t objfile[OSFNMAX];
-            os_file_time_t srcmod;
-            os_file_time_t symmod;
-            os_file_time_t objmod;
+            os_file_stat_t srcstat, symstat, objstat;
             int sym_recomp;
             int obj_recomp;
 
@@ -849,9 +845,9 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
              *   we'll need to build the symbol file.  
              */
             if (force_build
-                || os_get_file_mod_time(&srcmod, srcfile)
-                || os_get_file_mod_time(&symmod, symfile)
-                || os_cmp_file_times(&srcmod, &symmod) > 0)
+                || !os_file_stat(srcfile, TRUE, &srcstat)
+                || !os_file_stat(symfile, TRUE, &symstat)
+                || srcstat.mod_time > symstat.mod_time)
             {
                 /* this symbol file requires recompilation */
                 sym_recomp = TRUE;
@@ -958,11 +954,11 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
              */
             if (force_build
                 || sym_recomp
-                || os_get_file_mod_time(&srcmod, srcfile)
-                || os_get_file_mod_time(&objmod, objfile)
-                || os_get_file_mod_time(&symmod, symfile)
-                || os_cmp_file_times(&srcmod, &objmod) > 0
-                || os_cmp_file_times(&symmod, &objmod) > 0)
+                || !os_file_stat(srcfile, TRUE, &srcstat)
+                || !os_file_stat(objfile, TRUE, &objstat)
+                || !os_file_stat(symfile, TRUE, &symstat)
+                || srcstat.mod_time > objstat.mod_time
+                || symstat.mod_time > objstat.mod_time)
             {
                 /* we do have to rebuild the object file */
                 obj_recomp = TRUE;
@@ -1014,7 +1010,7 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
             build_image = FALSE;
         }
         else if (force_build || force_link
-                 || os_get_file_mod_time(&imgmod, image_fname_.get()))
+                 || !os_file_stat(image_fname_.get(), TRUE, &imgstat))
         {
             /* we definitely need to build the image file */
             build_image = TRUE;
@@ -1064,7 +1060,7 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
                 for (mod = mod_head_ ; mod != 0 ; mod = mod->get_next())
                 {
                     textchar_t objfile[OSFNMAX];
-                    os_file_time_t objmod;
+                    os_file_stat_t objstat;
                     
                     /* if this module is excluded, skip it */
                     if (mod->is_excluded())
@@ -1088,8 +1084,8 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
                     get_objfile(objfile, mod);
                     
                     /* if it's more recent, we need to build the image */
-                    if (os_get_file_mod_time(&objmod, objfile)
-                        || os_cmp_file_times(&objmod, &imgmod) > 0)
+                    if (!os_file_stat(objfile, TRUE, &objstat)
+                        || objstat.mod_time > imgstat.mod_time)
                     {
                         /* we need to build the image */
                         build_image = TRUE;
@@ -1112,9 +1108,9 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
                      r = r->get_next())
                 {
                     /* check this timestamp */
-                    os_file_time_t resmod;
-                    if (os_get_file_mod_time(&resmod, r->get_fname())
-                        || os_cmp_file_times(&resmod, &imgmod) > 0)
+                    os_file_stat_t resstat;
+                    if (!os_file_stat(r->get_fname(), TRUE, &resstat)
+                        || resstat.mod_time > imgstat.mod_time)
                     {
                         /* we need to rebuild the image */
                         build_image = TRUE;
@@ -1457,7 +1453,7 @@ void CTcMake::create_dir(CTcHostIfc *hostifc,
         hostifc->print_step("creating output directory %s\n", path);
         
         /* try creating the folder */
-        if (!os_mkdir(path))
+        if (!os_mkdir(path, TRUE))
         {
             /* failed - log the error */
             G_tcmain->log_error(0, 0, TC_SEV_ERROR,
@@ -1902,7 +1898,7 @@ int CTcMake::compare_build_config_from_sym_file(const char *sym_fname,
     CTcMakePath *path;
     size_t cnt;
     char buf[OSFNMAX + 1];
-    os_file_time_t sym_time;
+    os_file_stat_t sym_stat;
 
     /* check the compiler version */
     fp->read_bytes(buf, 5);
@@ -1971,14 +1967,14 @@ int CTcMake::compare_build_config_from_sym_file(const char *sym_fname,
      *   mismatch, because we won't be able to compare the include file
      *   timestamps to the symbol file timestamp 
      */
-    if (os_get_file_mod_time(&sym_time, sym_fname))
+    if (!os_file_stat(sym_fname, TRUE, &sym_stat))
         return FALSE;
 
     /* read the #include file list */
     for (cnt = fp->read_int2() ; cnt != 0 ; --cnt)
     {
         size_t len;
-        os_file_time_t inc_time;
+        os_file_stat_t inc_stat;
         
         /* 
          *   read the next name's length - if it's longer than our buffer,
@@ -1997,14 +1993,14 @@ int CTcMake::compare_build_config_from_sym_file(const char *sym_fname,
          *   include file doesn't even seem to be accessible to us any
          *   more, so we have to try a recompile 
          */
-        if (os_get_file_mod_time(&inc_time, buf))
+        if (!os_file_stat(buf, TRUE, &inc_stat))
             return FALSE;
 
         /* 
          *   if the include file has been modified more recently than the
          *   symbol file, we must recompile the source 
          */
-        if (os_cmp_file_times(&inc_time, &sym_time) > 0)
+        if (inc_stat.mod_time > sym_stat.mod_time)
             return FALSE;
     }
 

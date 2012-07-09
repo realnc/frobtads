@@ -179,6 +179,32 @@ public:
     /* get the number of tokens remaining */
     int getcnt() const { return cnt; }
 
+    /* get the head elemenet */
+    const CTcToken *get_head() const { return head; }
+
+    /* remove the head element */
+    void unlink_head(CTcToken *tok)
+    {
+        if (head != 0)
+        {
+            /* copy the token to the caller's buffer */
+            G_tok->copytok(tok, head);
+
+            /* unlink it */
+            CTcTokenEle *h = head;
+            head = head->getnxt();
+            --cnt;
+
+            /* delete it */
+            delete h;
+        }
+        else
+        {
+            /* no token available - return EOF */
+            tok->settyp(TOKT_EOF);
+        }
+    }
+
     /* add a token to the list */
     void add_tok(const CTcToken *tok)
     {
@@ -1034,9 +1060,8 @@ CTcPrsNode *CTcParser::create_sym_node(const textchar_t *sym, size_t sym_len)
     /* if there's a debugger local scope, look it up there */
     if (debug_symtab_ != 0)
     {
-        tcprsdbg_sym_info info;
-
         /* look it up in the debug symbol table */
+        tcprsdbg_sym_info info;
         if (debug_symtab_->find_symbol(sym, sym_len, &info))
         {
             /* found it - return a debugger local variable */
@@ -3303,7 +3328,7 @@ struct CTcEmbedBuilderDbl: CTcEmbedBuilder
     {
         /* wrap the expresion in a "say()" embedding node */
         sub = new CTPNDstrEmbed(sub);
-            
+        
         /*
          *   Build a node representing everything so far: do this by
          *   combining the sub-expression with everything preceding, using a
@@ -3325,12 +3350,13 @@ struct CTcEmbedBuilderDbl: CTcEmbedBuilder
          *   comma operator.  If the next string segment is empty, there's no
          *   need to add anything for it.  
          */
-        if (G_tok->getcur()->get_text_len() != 0)
+        size_t len = G_tok->getcur()->get_text_len();
+        if (len != 0)
         {
             /* create a node for the new string segment */
             CTcPrsNode *newstr = new CTPNDstr(
-                G_tok->getcur()->get_text(), G_tok->getcur()->get_text_len());
-
+                G_tok->getcur()->get_text(), len);
+            
             /* combine it into the part so far with a comma operator */
             cur = new CTPNComma(cur, newstr);
         }
@@ -3577,13 +3603,41 @@ CTcPrsNode *CTcPrsOpUnary::parse_embedding_list(
         }
         else
         {
-            /* no special syntax, so treat it as an expression */
+            /* 
+             *   No special syntax, so treat it as an expression.  First,
+             *   check for a sprintf format spec - e.g., <<%2d x>>
+             */
+            CTcToken fmttok(TOKT_INVALID);
+            if (tl->get_head()->gettyp() == TOKT_FMTSPEC)
+                tl->unlink_head(&fmttok);
+
+            /* parse the embedded expression */
             sub = parse_embedded_expr(b, tl);
             if (sub == 0)
                 return 0;
             
             /* we can't have an end token immediately after an expression */
             check_end = FALSE;
+
+            /* 
+             *   if we have a format spec, wrap the expression in a
+             *   sprintf node as sprintf(fmtspec, sub) 
+             */
+            if (fmttok.gettyp() == TOKT_FMTSPEC)
+            {
+                /* 
+                 *   set up the argument list - fmtspec string, sub (note
+                 *   that arg lists are built in reverse order) 
+                 */
+                CTcConstVal fmtcv;
+                fmtcv.set_sstr(&fmttok);
+                CTPNArg *args = new CTPNArg(sub);
+                args->set_next_arg(new CTPNArg(new CTPNConst(&fmtcv)));
+
+                /* set up the sprintf call */
+                sub = new CTPNCall(new CTPNSym("sprintf", 7),
+                                   new CTPNArglist(2, args));
+            }
         }
 
         /* if we have an embedding, add it */
@@ -4874,6 +4928,97 @@ CTcPrsNode *CTcPrsOpUnary::parse_call(CTcPrsNode *lhs)
         }
     }
 
+    /* check for the special "__objref" syntax */
+    if (lhs != 0 && lhs->sym_text_matches("__objref", 8))
+    {
+        /* assume we won't generate an error or warning if it's undefined */
+        int errhandling = 0;
+
+        /* get the rightmost argument */
+        CTPNArg *curarg = arglist->get_arg_list_head();
+
+        /* if we have other than two arguments, it's an error */
+        if (arglist->get_argc() > 2)
+        {
+            G_tok->log_error(TCERR___OBJREF_SYNTAX);
+            return lhs;
+        }
+
+        /* if we have two arguments, get the warning/error mode */
+        if (arglist->get_argc() == 2)
+        {
+            /* get the argument, and skip to the next to the left */
+            CTcPrsNode *arg = curarg->get_arg_expr();
+            curarg = curarg->get_next_arg();
+
+            /* it has to be "warn" or "error" */
+            if (arg->sym_text_matches("warn", 4))
+            {
+                errhandling = 1;
+            }
+            else if (arg->sym_text_matches("error", 5))
+            {
+                errhandling = 2;
+            }
+            else
+            {
+                G_tok->log_error(TCERR___OBJREF_SYNTAX);
+                return lhs;
+            }
+        }
+
+        /* the first argument must be a symbol */
+        CTcPrsNode *arg = curarg->get_arg_expr();
+        if (arg->get_sym_text() != 0)
+        {
+            /* look up the symbol */
+            CTcSymbol *sym = G_prs->get_global_symtab()->find(
+                arg->get_sym_text(), arg->get_sym_text_len());
+            
+            /* 
+             *   The result is the object reference value if the symbol is
+             *   defined as an object, or nil if it's undefined or something
+             *   other than an object.
+             */
+            CTcConstVal cval;
+            if (sym != 0 && sym->get_type() == TC_SYM_OBJ)
+            {
+                /* it's an object - the result is the object symbol */
+                return arg;
+            }
+            else
+            {
+                /* log a warning or error, if applicable */
+                if (errhandling != 0 && !G_prs->get_syntax_only())
+                {
+                    /* note whether it's undefined or otherwise defined */
+                    int errcode =
+                        (sym == 0 ? TCERR_UNDEF_SYM : TCERR_SYM_NOT_OBJ);
+
+                    /* log an error or warning, as desired */
+                    if (errhandling == 1)
+                        G_tok->log_warning(
+                            errcode, (int)arg->get_sym_text_len(),
+                            arg->get_sym_text());
+                    else
+                        G_tok->log_error(
+                            errcode, (int)arg->get_sym_text_len(),
+                            arg->get_sym_text());
+                }
+                
+                /* not defined or non-object - the result is nil */
+                cval.set_bool(FALSE);
+                cval.set_ctc(TRUE);
+                return new CTPNConst(&cval);
+            }
+        }
+        else
+        {
+            /* invalid syntax */
+            G_tok->log_error(TCERR___OBJREF_SYNTAX);
+        }
+    }
+
     /* build and return the function call node */
     return new CTPNCall(lhs, arglist);
 }
@@ -4919,49 +5064,66 @@ CTcPrsNode *CTcPrsOpUnary::parse_subscript(CTcPrsNode *lhs)
 /*
  *   Evaluate a constant subscript value 
  */
-CTcPrsNode *CTcPrsOpUnary::eval_const_subscript(CTcPrsNode *lhs,
-                                                CTcPrsNode *subscript)
+CTcPrsNode *CTcPrsOpUnary::eval_const_subscript(
+    CTcPrsNode *lhs, CTcPrsNode *subscript)
 {
+    /* assume we won't be able to evaluate this as a constant */
+    CTcPrsNode *c = 0;
+
     /* 
      *   if we're subscripting a constant list by a constant index value,
      *   we can evaluate a constant result 
      */
     if (lhs->is_const() && subscript->is_const())
     {
-        long idx;
-        CTcPrsNode *ele;
+        /* check the type of value we're indexing */
+        switch (lhs->get_const_val()->get_type())
+        {
+        case TC_CVT_LIST:
+            /* 
+             *   It's a constant list.  Lists can only be indexed by integer
+             *   values. 
+             */
+            if (subscript->get_const_val()->get_type() == TC_CVT_INT)
+            {
+                /* 
+                 *   it's an integer - index the constant list by the
+                 *   constant subscript to get the element value, which
+                 *   replaces the entire list-and-index expression
+                 */
+                c = lhs->get_const_val()->get_val_list()->get_const_ele(
+                    subscript->get_const_val()->get_val_int());
+            }
+            else
+            {
+                /* a list index must be an integer */
+                G_tok->log_error(TCERR_CONST_IDX_NOT_INT);
+            }
+            break;
 
-        /* 
-         *   make sure the index value is an integer and the value being
-         *   indexed is a list; if either type is wrong, the indexing
-         *   expression is invalid 
-         */
-        if (subscript->get_const_val()->get_type() != TC_CVT_INT)
-        {
-            /* we can't use a non-integer expression as a list index */
-            G_tok->log_error(TCERR_CONST_IDX_NOT_INT);
-        }
-        else if (lhs->get_const_val()->get_type() != TC_CVT_LIST)
-        {
-            /* we can't index any constant type other than list */
+        case TC_CVT_SSTR:
+        case TC_CVT_OBJ:
+        case TC_CVT_FUNCPTR:
+        case TC_CVT_ANONFUNCPTR:
+        case TC_CVT_FLOAT:
+            /* 
+             *   these types don't define indexing as a native operator, but
+             *   it's possible for this to be meaningful at run-time via
+             *   operator overloading; simply leave the constant expression
+             *   unevaluated so that we generate code to perform the index
+             *   operation at run-time 
+             */
+            break;
+            
+        default:
+            /* other types definitely cannot be indexed */
             G_tok->log_error(TCERR_CONST_IDX_INV_TYPE);
-        }
-        else
-        {
-            /* get the index value */
-            idx = subscript->get_const_val()->get_val_int();
-
-            /* ask the list to look up the item by index */
-            ele = lhs->get_const_val()->get_val_list()->get_const_ele(idx);
-
-            /* if we got a valid result, return it */
-            if (ele != 0)
-                return ele;
+            break;
         }
     }
-
-    /* we couldn't fold it to a constant expression */
-    return 0;
+    
+    /* return the constant result, if any */
+    return c;
 }
 
 /*
@@ -5460,7 +5622,7 @@ CTcPrsNode *CTcPrsOpUnary::parse_primary()
                         /* generate a fake symbol for the function */
                         CTcSymFunc *sym = new CTcSymFunc(
                             ".anon", 5, FALSE, 0, 0, FALSE, FALSE,
-                            FALSE, FALSE, FALSE);
+                            FALSE, FALSE, FALSE, TRUE);
 
                         /* set the absolute address */
                         sym->set_abs_addr(i);

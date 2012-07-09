@@ -416,7 +416,29 @@ vm_obj_id_t CVmObjBigNum::createu(VMG_ int in_root_set,
     return id;
 }
 
-/* create from a 64-bit unsigned int */
+/* create from a 64-bit unsigned int expressed as two 32-bit segments */
+vm_obj_id_t CVmObjBigNum::create_int64(VMG_ int in_root_set,
+                                       uint32_t hi, uint32_t lo)
+{
+    /* 
+     *   Store into our portable 8-byte format: the portable format is
+     *   little-endian, so simply store the low part in the first four bytes,
+     *   and the high part in the second four bytes.
+     */
+    char buf[8];
+    oswp4(buf, lo);
+    oswp4(buf+4, hi);
+
+    /* 
+     *   Now create the value from the buffer.  (This could be implemented a
+     *   little more efficiently by working directly from the integers, but
+     *   this is certainly not on any critical paths, and the create_rp8 code
+     *   already exists and works.)
+     */
+    return create_rp8(vmg_ in_root_set, buf);
+}
+
+/* create from a 64-bit unsigned int expressed in portable 8-byte format */
 vm_obj_id_t CVmObjBigNum::create_rp8(VMG_ int in_root_set,
                                      const char *buf)
 {
@@ -836,6 +858,15 @@ void CVmObjBigNum::cast_to_bignum(VMG_ vm_val_t *bnval,
 }
 
 
+/*
+ *   Promote an integer value to BigNumber 
+ */
+void CVmObjBigNum::promote_int(VMG_ vm_val_t *val) const
+{
+    val->set_obj(create(vmg_ FALSE, (long)val->val.intval, (size_t)10));
+}
+
+
 /* ------------------------------------------------------------------------ */
 /*
  *   Constructors.  These are called indirectly through our static
@@ -1069,14 +1100,23 @@ void CVmObjBigNum::set_uint_val(char *ext, ulong val)
  */
 void CVmObjBigNum::set_str_val(const char *str, size_t len)
 {
+    /* parse the string into my extension */
+    parse_str_into(ext_, str, len);
+}
+
+/*
+ *   Parse a string value into an extension 
+ */
+void CVmObjBigNum::parse_str_into(char *ext, const char *str, size_t len)
+{
     /* get the precision */
-    size_t prec = get_prec(ext_);
+    size_t prec = get_prec(ext);
 
     /* set the type to number */
-    set_type(ext_, VMBN_T_NUM);
+    set_type(ext, VMBN_T_NUM);
 
     /* initially zero the mantissa */
-    memset(ext_ + VMBN_MANT, 0, (prec + 1)/2);
+    memset(ext + VMBN_MANT, 0, (prec + 1)/2);
 
     /* set up to scan the string */
     utf8_ptr p((char *)str);
@@ -1105,7 +1145,7 @@ void CVmObjBigNum::set_str_val(const char *str, size_t len)
     }
 
     /* set the sign */
-    set_neg(ext_, neg);
+    set_neg(ext, neg);
 
     /* skip spaces after the sign */
     for ( ; rem != 0 && is_space(p.getch()) ; p.inc(&rem)) ;
@@ -1142,7 +1182,7 @@ void CVmObjBigNum::set_str_val(const char *str, size_t len)
                 if (idx < prec)
                 {
                     /* set the next digit */
-                    set_dig(ext_, idx, value_of_digit(ch));
+                    set_dig(ext, idx, value_of_digit(ch));
                     
                     /* move on to the next digit position */
                     ++idx;
@@ -1234,10 +1274,10 @@ void CVmObjBigNum::set_str_val(const char *str, size_t len)
     }
 
     /* set the exponent */
-    set_exp(ext_, exp);
+    set_exp(ext, exp);
 
     /* normalize the number */
-    normalize(ext_);
+    normalize(ext);
 }
 
 /*
@@ -1403,7 +1443,7 @@ void CVmObjBigNum::set_double_val(char *ext, double val)
         set_dig(ext, i, dig);
 
         /* get the remainder */
-        val = fmod(val, base);
+        val -= dig*base;
     }
 
     /* normalize the number */
@@ -1415,14 +1455,14 @@ void CVmObjBigNum::set_double_val(char *ext, double val)
 /*
  *   Convert to an integer value 
  */
-int32_t CVmObjBigNum::convert_to_int(int &ov) const
-{
+int32_t CVmObjBigNum::ext_to_int(const char *ext, int &ov)
+{        
     /* get the magnitude */
     ov = FALSE;
-    uint32_t m = convert_to_int_base(ext_, ov);
+    uint32_t m = convert_to_int_base(ext, ov);
 
     /* apply the sign and check limits */
-    if (get_neg(ext_))
+    if (get_neg(ext))
     {
         /* 
          *   a T3 VM int is a 32-bit signed value (irrespective of the local
@@ -1474,6 +1514,14 @@ uint32_t CVmObjBigNum::convert_to_int_base(const char *ext, int &ov)
     
     /* start the accumulator at zero */
     uint32_t acc = 0;
+
+    /* 
+     *   if the exponent is negative, it means that the first non-zero digit
+     *   is in the second position after the decimal point, so even after
+     *   rounding, the result will always be zero 
+     */
+    if (exp < 0)
+        return 0;
 
     /* get the rounding direction for truncating at the decimal point */
     round_inc = get_round_dir(ext, exp);
@@ -1681,21 +1729,21 @@ void CVmObjBigNum::twos_complement_p8(unsigned char *p)
 /*
  *   Convert to double 
  */
-double CVmObjBigNum::convert_to_double(VMG0_) const
+double CVmObjBigNum::ext_to_double(VMG_ const char *ext)
 {
     /* note the precision and sign */
-    size_t prec = get_prec(ext_);
-    int is_neg = get_neg(ext_);
+    size_t prec = get_prec(ext);
+    int is_neg = get_neg(ext);
 
     /* if we're not a number (INF, NAN), it's an error */
-    if (get_type(ext_) != VMBN_T_NUM)
+    if (get_type(ext) != VMBN_T_NUM)
         err_throw(VMERR_NO_DOUBLE_CONV);
 
     /* 
      *   if our absolute value is too large to store in a double, throw an
      *   overflow error 
      */
-    if (compare_abs(ext_, cache_dbl_max(vmg0_)) > 1)
+    if (compare_abs(ext, cache_dbl_max(vmg0_)) > 1)
         err_throw(VMERR_NUM_OVERFLOW);
 
     /* 
@@ -1705,8 +1753,8 @@ double CVmObjBigNum::convert_to_double(VMG0_) const
      *   digit is a*10^(exp-1) - one less than the exponent, because of the
      *   implied decimal point at the start of the mantissa.  
      */
-    double base = pow(10.0, get_exp(ext_) - 1);
-    double acc = get_dig(ext_, 0) * base;
+    double base = pow(10.0, get_exp(ext) - 1);
+    double acc = get_dig(ext, 0) * base;
 
     /* 
      *   Now add in the remaining digits, starting from the second most
@@ -1726,7 +1774,7 @@ double CVmObjBigNum::convert_to_double(VMG0_) const
     for (size_t idx = 1 ; idx < max_digits ; ++idx)
     {
         /* get this digit */
-        int dig = get_dig(ext_, idx);
+        int dig = get_dig(ext, idx);
 
         /* adjust the exponent base for this digit */
         base /= 10.0;
@@ -2606,6 +2654,20 @@ const char *CVmObjBigNum::cvt_to_string_buf(
 {
     /* convert to a string into our buffer */
     return cvt_to_string_gen(vmg_ 0, ext_, max_digits, whole_places,
+                             frac_digits, exp_digits, flags, 0,
+                             buf, buflen);
+}
+
+/*
+ *   Convert to a string, storign the result in the given buffer
+ */
+const char *CVmObjBigNum::cvt_to_string_buf(
+    VMG_ char *buf, size_t buflen, const char *ext,
+    int max_digits, int whole_places, int frac_digits, int exp_digits,
+    ulong flags, vm_val_t *lead_fill)
+{
+    /* convert to a string into our buffer */
+    return cvt_to_string_gen(vmg_ 0, ext, max_digits, whole_places,
                              frac_digits, exp_digits, flags, 0,
                              buf, buflen);
 }
@@ -3957,7 +4019,7 @@ void CVmObjBigNum::mul_by_long(char *ext, unsigned long val)
 }
 
 /*
- *   Divide the magnitude of the number by 2^23.  This is a special case
+ *   Divide the magnitude of the number by 2^32.  This is a special case
  *   of div_by_long() for splitting a number into 32-bit chunks.  Returns
  *   with the quotient in 'ext', and the remainder in 'remp'.  
  */
@@ -4530,9 +4592,8 @@ int CVmObjBigNum::s_getp_e(VMG_ vm_val_t *val, uint *argc)
 int CVmObjBigNum::setup_getp_0(VMG_ vm_obj_id_t self, vm_val_t *retval,
                                uint *argc, char **new_ext)
 {
-    static CVmNativeCodeDesc desc(0);
-
     /* check arguments */
+    static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
@@ -4562,10 +4623,8 @@ int CVmObjBigNum::setup_getp_1(VMG_ vm_obj_id_t self,
                                vm_val_t *val2, const char **ext2,
                                int use_self_prec)
 {
-    size_t prec = get_prec(ext_);
-    static CVmNativeCodeDesc desc(1);
-    
     /* check arguments */
+    static CVmNativeCodeDesc desc(1);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
@@ -4593,6 +4652,7 @@ int CVmObjBigNum::setup_getp_1(VMG_ vm_obj_id_t self,
      *   if val2's precision is higher than ours, use it, unless we've
      *   been specifically told to use our own precision for the result 
      */
+    size_t prec = get_prec(ext_);
     if (!use_self_prec && get_prec(*ext2) > prec)
         prec = get_prec(*ext2);
 
@@ -8313,15 +8373,23 @@ void CVmObjBigNum::compute_sum_into(char *new_ext,
 void CVmObjBigNum::compute_diff(VMG_ vm_val_t *result,
                                 const char *ext1, const char *ext2)
 {
-    char *new_ext;
-
     /* allocate our result value */
-    new_ext = compute_init_2op(vmg_ result, ext1, ext2);
+    char *new_ext = compute_init_2op(vmg_ result, ext1, ext2);
 
     /* we're done if we had a non-number operand */
     if (new_ext == 0)
         return;
 
+    /* compute the difference into the result object */
+    compute_diff_into(new_ext, ext1, ext2);
+}
+
+/*
+ *   Compute a difference into a buffer 
+ */
+void CVmObjBigNum::compute_diff_into(char *result,
+                                     const char *ext1, const char *ext2)
+{
     /* check to see if the numbers have the same sign */
     if (get_neg(ext1) == get_neg(ext2))
     {
@@ -8336,7 +8404,7 @@ void CVmObjBigNum::compute_diff(VMG_ vm_val_t *result,
          */
 
         /* compute the difference in magnitudes */
-        compute_abs_diff_into(new_ext, ext1, ext2);
+        compute_abs_diff_into(result, ext1, ext2);
 
         /* 
          *   if the original values were negative, then the sign of the
@@ -8345,7 +8413,7 @@ void CVmObjBigNum::compute_diff(VMG_ vm_val_t *result,
          *   difference of the absolute values 
          */
         if (get_neg(ext1))
-            negate(new_ext);
+            negate(result);
     }
     else
     {
@@ -8356,11 +8424,11 @@ void CVmObjBigNum::compute_diff(VMG_ vm_val_t *result,
          */
         
         /* compute the sum of the absolute values */
-        compute_abs_sum_into(new_ext, ext1, ext2);
+        compute_abs_sum_into(result, ext1, ext2);
 
         /* set the sign of the result to that of the first operand */
-        if (!is_zero(new_ext))
-            set_neg(new_ext, get_neg(ext1));
+        if (!is_zero(result))
+            set_neg(result, get_neg(ext1));
     }
 }
 
@@ -8612,10 +8680,8 @@ void CVmObjBigNum::compute_abs_sum_into(char *new_ext,
     /* add the digits */
     for (int pos = lo3 ; pos <= hi3 ; ++pos)
     {
-        int acc;
-
         /* start with the carry */
-        acc = carry;
+        int acc = carry;
 
         /* add the first value digit if it's in range */
         if (pos >= lo1 && pos <= hi1)
@@ -9112,8 +9178,8 @@ void CVmObjBigNum::compute_quotient_into(VMG_ char *new_ext,
     zero_remainder = FALSE;
 
     /* 
-     *   if the quotient is going to be entirely fractional, the dividend
-     *   is the remainder, and the quotient is zero 
+     *   if the result of the floating point division is entirely fractional,
+     *   the dividend is the remainder, and the quotient is zero 
      */
     if (new_rem_ext != 0 && quo_exp <= 0)
     {
@@ -9613,10 +9679,14 @@ int CVmObjBigNum::get_ORdigs(const char *ext, int d)
  */
 int CVmObjBigNum::get_round_dir(const char *ext, int digits)
 {
-    /* if the dropped digit is beyond the precision, there's no roundig */
+    /* if the dropped digit is beyond the precision, there's no rounding */
     int prec = get_prec(ext);
     if (digits >= prec)
         return 0;
+
+    /* we can't round to negative digits */
+    if (digits < 0)
+        digits = 0;
 
     /* 
      *   if the first dropped digit is greater than 5, round up; if it's less
@@ -10067,3 +10137,10 @@ void CVmBigNumCache::release_all()
     for (i = 0 ; i < max_regs_ ; ++i)
         release_reg(i);
 }
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   bignum_t implementation 
+ */
+

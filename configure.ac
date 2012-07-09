@@ -37,6 +37,7 @@ AC_DEFINE([PACKAGE_MAINTAINER], ["Nikos Chantziaras"], [The person who currently
 # Include custom macros we ship ourselves.
 #
 m4_include([m4/ax_func_mkdir.m4])
+m4_include([m4/ax_tls.m4])
 
 
 #
@@ -199,6 +200,11 @@ fi
 AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([int])
 AC_CHECK_SIZEOF([short])
+
+# Check how the compiler handles TLS.
+#
+#AX_TLS([], [])
+AX_TLS
 
 # Some systems have the wchar functions (wcslen, wcscpy, etc) in the C
 # library, but <wchar.h> doesn't declare them.
@@ -620,6 +626,10 @@ AM_CONDITIONAL([BUILD_T3_COMPILER], [test x$buildt3compiler = xtrue])
 # If the system lacks the <wchar.h> header, let Automake know.
 #
 AM_CONDITIONAL([WCHAR_HEADER_MISSING], [test x$wcharheaderfound = xfalse])
+
+# Tell Automake when the compiler doesn't supports TLS.
+#
+AM_CONDITIONAL([NO_TLS], [test x$ac_cv_tls = xnone])
 
 
 #

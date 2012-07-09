@@ -91,7 +91,11 @@ int (*CVmObjString::func_table_[])(VMG_ vm_val_t *retval,
     &CVmObjString::getp_sha256,                                       /* 18 */
     &CVmObjString::getp_md5,                                          /* 19 */
     &CVmObjString::getp_packBytes,                                    /* 20 */
-    &CVmObjString::getp_unpackBytes                                   /* 21 */
+    &CVmObjString::getp_unpackBytes,                                  /* 21 */
+    &CVmObjString::getp_toTitleCase,                                  /* 22 */
+    &CVmObjString::getp_toFoldedCase,                                 /* 23 */
+    &CVmObjString::getp_compareTo,                                    /* 24 */
+    &CVmObjString::getp_compareIgnoreCase                             /* 25 */
 };
 
 /* static property indices */
@@ -160,6 +164,25 @@ vm_obj_id_t CVmObjString::create(VMG_ int in_root_set,
 
     /* return the new string object ID */
     return id;
+}
+
+/* create from the given character set */
+vm_obj_id_t CVmObjString::create(VMG_ int in_root_set,
+                                 const char *src, size_t srclen,
+                                 CCharmapToUni *cmap)
+{
+    /* figure the size needed for the conversion */
+    size_t ulen = cmap->map_str(0, 0, src, srclen);
+
+    /* create a string of the mapped length */
+    vm_obj_id_t ret = create(vmg_ in_root_set, ulen);
+    CVmObjString *retstr = (CVmObjString *)vm_objp(vmg_ ret);
+
+    /* map into the string buffer */
+    cmap->map_str(retstr->cons_get_buf(), ulen, src, srclen);
+
+    /* return the new string */
+    return ret;
 }
 
 /* create from a byte stream, interpreting the bytes as Latin-1 characters */
@@ -442,10 +465,8 @@ void CVmObjString::set_prop(VMG_ CVmUndo *, vm_obj_id_t,
  */
 void CVmObjString::save_to_file(VMG_ CVmFile *fp)
 {
-    size_t len;
-    
     /* get our length */
-    len = vmb_get_len(ext_);
+    size_t len = vmb_get_len(ext_);
 
     /* write the length prefix and the string */
     fp->write_bytes(ext_, len + VMB_LEN);
@@ -457,10 +478,8 @@ void CVmObjString::save_to_file(VMG_ CVmFile *fp)
 void CVmObjString::restore_from_file(VMG_ vm_obj_id_t,
                                      CVmFile *fp, CVmObjFixup *)
 {
-    size_t len;
-    
     /* read the length prefix */
-    len = fp->read_uint2();
+    size_t len = fp->read_uint2();
 
     /* free any existing extension */
     if (ext_ != 0)
@@ -1110,30 +1129,25 @@ int CVmObjString::const_compare(VMG_ const char *str1, const vm_val_t *val)
 /*
  *   Find a substring within a string 
  */
-const char *CVmObjString::find_substr(VMG_ const char *str, int start_idx,
+const char *CVmObjString::find_substr(VMG_ const char *str, int32_t start_idx,
                                       const char *substr, size_t *idxp)
 {
-    utf8_ptr p;
-    size_t rem;
-    size_t sublen;
-    size_t char_ofs;
-    int i;
-    
     /* get the lengths */
-    rem = vmb_get_len(str);
-    sublen = vmb_get_len(substr);
+    size_t rem = vmb_get_len(str);
+    size_t sublen = vmb_get_len(substr);
 
     /* set up utf8 pointer into the string */
-    p.set((char *)str + 2);
+    utf8_ptr p((char *)str + 2);
 
     /* if the index is negative, it's from the end of the string */
     start_idx += (start_idx < 0 ? (int)p.len(rem) : -1);
 
     /* skip to the starting index */
-    for (i = start_idx ; i > 0 && rem >= sublen ; --i, p.inc(&rem)) ;
+    for (int32_t i = start_idx ; i > 0 && rem >= sublen ; --i, p.inc(&rem)) ;
 
     /* scan for the substring */
-    for (char_ofs = 0 ; rem != 0 && rem >= sublen ; ++char_ofs, p.inc(&rem))
+    for (size_t char_ofs = 0 ; rem != 0 && rem >= sublen ;
+         ++char_ofs, p.inc(&rem))
     {
         /* check for a match */
         if (memcmp(p.getptr(), substr + VMB_LEN, sublen) == 0)
@@ -1154,10 +1168,9 @@ const char *CVmObjString::find_substr(VMG_ const char *str, int start_idx,
 /*
  *   Find a substring or pattern 
  */
-const char *CVmObjString::find_substr(VMG_ const char *str, size_t len,
-                                      const char *substr,
-                                      CVmObjPattern *pat,
-                                      int *match_len)
+const char *CVmObjString::find_substr(
+    VMG_ const char *basestr, const char *str, size_t len,
+    const char *substr, CVmObjPattern *pat, int *match_idx, int *match_len)
 {
     /* search for the string or pattern */
     if (substr != 0)
@@ -1167,14 +1180,16 @@ const char *CVmObjString::find_substr(VMG_ const char *str, size_t len,
         substr += VMB_LEN;
 
         /* search for the substring */
-        for ( ; len >= sublen ; ++str, --len)
+        utf8_ptr p((char *)str);
+        for (int i = 0 ; len >= sublen ; p.inc(&len), ++i)
         {
             /* check for a match */
-            if (memcmp(str, substr, sublen) == 0)
+            if (memcmp(p.getptr(), substr, sublen) == 0)
             {
                 /* got it - the match length is simply the substring length */
+                *match_idx = i;
                 *match_len = sublen;
-                return str;
+                return p.getptr();
             }
         }
     }
@@ -1185,14 +1200,19 @@ const char *CVmObjString::find_substr(VMG_ const char *str, size_t len,
 
         /* search for the pattern */
         CRegexSearcherSimple searcher(G_bif_tads_globals->rex_parser);
-        int idx = searcher.search_for_pattern(cpat, str, str, len, match_len);
+        int idx = searcher.search_for_pattern(
+            cpat, basestr, str, len, match_len);
 
         /* if we found the match, return it */
         if (idx >= 0)
+        {
+            *match_idx = utf8_ptr::s_len(str, idx);
             return str + idx;
+        }
     }
 
     /* no match */
+    *match_idx = -1;
     *match_len = 0;
     return 0;
 }
@@ -1416,107 +1436,81 @@ int CVmObjString::getp_substr(VMG_ vm_val_t *retval, const vm_val_t *self_val,
 int CVmObjString::getp_upper(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                              const char *str, uint *argc)
 {
-    size_t srclen;
-    size_t dstlen;
-    size_t rem;
-    utf8_ptr srcp;
-    utf8_ptr dstp;
-    vm_obj_id_t result_obj;
-
-    /* check arguments */
-    static CVmNativeCodeDesc desc(0);
-    if (get_prop_check_argc(retval, argc, &desc))
-        return TRUE;
-
-    /* get my length */
-    srclen = vmb_get_len(str);
-
-    /* leave the string on the stack as GC protection */
-    G_stk->push(self_val);
-
-    /* 
-     *   Scan the string to determine how long the result will be.  The
-     *   result won't necessarily be the same length as the original,
-     *   because a two-byte character in the original could turn into a
-     *   three-byte character in the result, and vice versa.  (We could
-     *   allocate a result buffer three times the length of the original,
-     *   but this seems more wasteful of space than scanning the string
-     *   twice is wasteful of time.  It's a trade-off, though.)  
-     */
-    for (dstlen = 0, srcp.set((char *)str + VMB_LEN), rem = srclen ;
-         rem != 0 ; srcp.inc(&rem))
-    {
-        /* get the size of the mapping for this character */
-        dstlen += utf8_ptr::s_wchar_size(t3_to_upper(srcp.getch()));
-    }
-
-    /* allocate the result string */
-    result_obj = CVmObjString::create(vmg_ FALSE, dstlen);
-
-    /* get a pointer to the result buffer */
-    dstp.set(((CVmObjString *)vm_objp(vmg_ result_obj))->cons_get_buf());
-
-    /* write the string */
-    for (srcp.set((char *)str + VMB_LEN), rem = srclen ;
-         rem != 0 ; srcp.inc(&rem))
-    {
-        /* write the next character */
-        dstp.setch(t3_to_upper(srcp.getch()));
-    }
-
-    /* return the value */
-    retval->set_obj(result_obj);
-
-    /* discard GC protection */
-    G_stk->discard();
-
-    /* handled */
-    return TRUE;
+    return gen_getp_case_conv(vmg_ retval, self_val, str, argc, &t3_to_upper);
 }
 
-/* ------------------------------------------------------------------------ */
 /*
  *   property evaluator - toLower
  */
 int CVmObjString::getp_lower(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                              const char *str, uint *argc)
 {
-    size_t srclen;
-    size_t dstlen;
-    size_t rem;
-    utf8_ptr srcp;
-    utf8_ptr dstp;
-    vm_obj_id_t result_obj;
+    return gen_getp_case_conv(vmg_ retval, self_val, str, argc, &t3_to_lower);
+}
 
+/*
+ *   property evaluator - toTitleCase
+ */
+int CVmObjString::getp_toTitleCase(
+    VMG_ vm_val_t *retval, const vm_val_t *self_val,
+    const char *str, uint *argc)
+{
+    return gen_getp_case_conv(vmg_ retval, self_val, str, argc, &t3_to_title);
+}
+
+/*
+ *   property evaluator - toFoldedCase
+ */
+int CVmObjString::getp_toFoldedCase(
+    VMG_ vm_val_t *retval, const vm_val_t *self_val,
+    const char *str, uint *argc)
+{
+    return gen_getp_case_conv(vmg_ retval, self_val, str, argc, &t3_to_fold);
+}
+
+/*
+ *   General case converter for toUpper, toLower, toTitleCase, toFoldedCase 
+ */
+int CVmObjString::gen_getp_case_conv(
+    VMG_ vm_val_t *retval, const vm_val_t *self_val,
+    const char *str, uint *argc, const wchar_t *(*conv)(wchar_t))
+{
     /* check arguments */
     static CVmNativeCodeDesc desc(0);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
     /* get my length */
-    srclen = vmb_get_len(str);
+    size_t srclen = vmb_get_len(str);
 
     /* leave the string on the stack as GC protection */
     G_stk->push(self_val);
 
     /* 
      *   Scan the string to determine how long the result will be.  The
-     *   result won't necessarily be the same length as the original,
-     *   because a two-byte character in the original could turn into a
-     *   three-byte character in the result, and vice versa.  (We could
-     *   allocate a result buffer three times the length of the original,
-     *   but this seems more wasteful of space than scanning the string
-     *   twice is wasteful of time.  It's a trade-off, though.)  
+     *   result won't necessarily be the same length as the original: some
+     *   case conversions are 1:N characters, and even when they're 1:1, a
+     *   two-byte character in the original could turn into a three-byte
+     *   character in the result, and vice versa.
      */
+    size_t dstlen;
+    utf8_ptr srcp, dstp;
+    size_t rem;
     for (dstlen = 0, srcp.set((char *)str + VMB_LEN), rem = srclen ;
          rem != 0 ; srcp.inc(&rem))
     {
-        /* get the size of the mapping for this character */
-        dstlen += utf8_ptr::s_wchar_size(t3_to_lower(srcp.getch()));
+        /* get the mapping for this character */
+        wchar_t ch = srcp.getch();
+        const wchar_t *u = conv(ch);
+
+        /* add up the byte length of the mapping */
+        dstlen += (u != 0
+                   ? utf8_ptr::s_wstr_size(u)
+                   : utf8_ptr::s_wchar_size(ch));
     }
 
     /* allocate the result string */
-    result_obj = CVmObjString::create(vmg_ FALSE, dstlen);
+    vm_obj_id_t result_obj = CVmObjString::create(vmg_ FALSE, dstlen);
 
     /* get a pointer to the result buffer */
     dstp.set(((CVmObjString *)vm_objp(vmg_ result_obj))->cons_get_buf());
@@ -1525,8 +1519,15 @@ int CVmObjString::getp_lower(VMG_ vm_val_t *retval, const vm_val_t *self_val,
     for (srcp.set((char *)str + VMB_LEN), rem = srclen ;
          rem != 0 ; srcp.inc(&rem))
     {
-        /* write the next character */
-        dstp.setch(t3_to_lower(srcp.getch()));
+        /* get the mapping for this character */
+        wchar_t ch = srcp.getch();
+        const wchar_t *u = conv(ch);
+
+        /* put the character(s) */
+        if (u != 0)
+            dstlen -= dstp.setwcharsz(u, dstlen);
+        else
+            dstp.setch(ch, &dstlen);
     }
 
     /* return the value */
@@ -1546,27 +1547,82 @@ int CVmObjString::getp_lower(VMG_ vm_val_t *retval, const vm_val_t *self_val,
 int CVmObjString::getp_find(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                             const char *str, uint *argc)
 {
-    const char *str2;
-    size_t idx;
-    int start_idx;
-    
+    int match_idx, match_len;
+
     /* check arguments */
     uint orig_argc = (argc != 0 ? *argc : 0);
     static CVmNativeCodeDesc desc(1, 1);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
-    /* retrieve the string to find */
-    str2 = CVmBif::pop_str_val(vmg0_);
+    /* get the string length and buffer pointer */
+    size_t len = vmb_get_len(str);
+    str += VMB_LEN;
 
-    /* if there's a starting index, retrieve it */
-    start_idx = (orig_argc >= 2 ? CVmBif::pop_int_val(vmg0_) : 1);
+    /* remember where the base string strings */
+    const char *basestr = str;
+
+    /* pop the string or regex pattern to find */
+    vm_val_t *val2 = G_stk->get(0);
+    const char *str2 = val2->get_as_string(vmg0_);
+    CVmObjPattern *pat2 = 0;
+    if (str2 != 0)
+    {
+        /* we have a simple string to find */
+    }
+    else if (val2->typ == VM_OBJ
+             && CVmObjPattern::is_pattern_obj(vmg_ val2->val.obj))
+    {
+        /* it's a pattern */
+        pat2 = (CVmObjPattern *)vm_objp(vmg_ val2->val.obj);
+    }
+    else
+    {
+        /* we need a string or a pattern; other values are invalid */
+        err_throw(VMERR_BAD_TYPE_BIF);
+    }
+    
+    /* if there's a starting index, skip that many characters */
+    int32_t start_idx = 0;
+    if (orig_argc >= 2)
+    {
+        /* get the starting index value */
+        start_idx = G_stk->get(1)->num_to_int(vmg0_);
+
+        /* set up a UTF-8 pointer for traversing the string */
+        utf8_ptr strp((char *)str);
+
+        /* a negative index is from the end of the string */
+        start_idx += (start_idx < 0 ? (int)strp.len(len) : -1);
+
+        /* if there's a substring, we can limit the skip */
+        size_t min_len = (str2 != 0 ? vmb_get_len(str2) : 0);
+
+        /* skip that many characters */
+        int32_t i;
+        for (i = 0 ; i < start_idx && len > min_len ; ++i, strp.inc(&len)) ;
+
+        /* 
+         *   if the start index was past the end of the string (or past the
+         *   point where the remaining subject string is too short for the
+         *   target string), we definitely can't match 
+         */
+        if (i < start_idx)
+        {
+            retval->set_nil();
+            goto done;
+        }
+
+        /* start the search here */
+        str = strp.getptr();
+    }
 
     /* find the substring */
-    if (find_substr(vmg_ str, start_idx, str2, &idx) != 0)
+    if (find_substr(vmg_ basestr, str, len, str2, pat2,
+                    &match_idx, &match_len) != 0)
     {
         /* we found it - adjust to a 1-based value for return */
-        retval->set_int(idx + 1);
+        retval->set_int(start_idx + match_idx + 1);
     }
     else
     {
@@ -1574,77 +1630,11 @@ int CVmObjString::getp_find(VMG_ vm_val_t *retval, const vm_val_t *self_val,
         retval->set_nil();
     }
 
+done:
+    /* discard arguments */
+    G_stk->discard(orig_argc);
+
     /* handled */
-    return TRUE;
-}
-
-
-/* ------------------------------------------------------------------------ */
-/*
- *   Utility routine: do a case-insensitive match of two UTF-8 strings.  Each
- *   string is at least 'len' bytes long.  'a' is the reference string: we
- *   compare characters in 'b' by converting them to the same case as the
- *   corresponding letters in 'a'.
- *   
- *   If 'bmatchlen' is null, it means that the two strings must have the same
- *   number of characters.  Otherwise, we'll return true as long as 'a' is a
- *   leading substring of 'b', and fill in '*bmatchlen' with the length in
- *   bytes of the 'b' string that we matched.  This might differ from the
- *   length of the 'a' string because 
- */
-int equals_ignore_case(const char *a, size_t alen,
-                       const char *b, size_t blen, size_t *bmatchlen)
-{
-    /* set up pointers to the two buffers */
-    utf8_ptr ap((char *)a), bp((char *)b);
-    size_t orig_blen = blen;
-
-    /* keep going until we find a mismatch or run out of one string */
-    for ( ; alen != 0 && blen != 0 ; ap.inc(&alen), bp.inc(&blen))
-    {
-        /* get the next character of each string */
-        wchar_t ach = ap.getch(), bch = bp.getch();
-
-        /* if they're identical, keep going */
-        if (ach == bch)
-            continue;
-
-        /* if they're both alphabetic, convert to matching case and compare */
-        if (t3_is_alpha(ach) && t3_is_alpha(bch))
-        {
-            /* compare according to the case of the first character */
-            if (t3_is_upper(ach))
-            {
-                if (ach == t3_to_upper(bch))
-                    continue;
-            }
-            else
-            {
-                if (ach == t3_to_lower(bch))
-                    continue;
-            }
-        }
-
-        /* no match */
-        return FALSE;
-    }
-
-    /* if 'b' ran out before 'a', it's no match */
-    if (alen != 0)
-        return FALSE;
-
-    /* 
-     *   if 'a' ran out before 'b', it's a match if we don't need an exact
-     *   length match 
-     */
-    if (blen != 0 && bmatchlen == 0)
-        return FALSE;
-
-    /* if desired, fill in the 'b' match length */
-    if (bmatchlen != 0)
-        *bmatchlen = orig_blen - blen;
-
-    /* we have a match */
     return TRUE;
 }
 
@@ -1735,6 +1725,7 @@ struct replace_arg
          *   return 
          */
         match_valid = TRUE;
+        match_len = 0;
 
         /* set up a pointer to the current position */
         utf8_ptr p((char *)curp);
@@ -1742,37 +1733,37 @@ struct replace_arg
         /* figure the number of bytes left in the string */
         size_t rem = vmb_get_len(str) - (curp - (str + VMB_LEN));
 
-        /* scan for a match */
-        for ( ; rem >= srch_len ; p.inc(&rem))
+        /* scan for a match, according to case sensitivity */
+        if ((flags & GETP_RPL_NOCASE) != 0)
         {
-            /* check for a match to the pattern string */
-            int match;
-            if ((flags & GETP_RPL_NOCASE) != 0)
+            /* scan for a match */
+            for ( ; rem >= srch_len ; p.inc(&rem))
             {
-                /* case-insensitive - compare ignoring case */
-                match = equals_ignore_case(srch_str, srch_len,
-                                           p.getptr(), rem, &match_len);
+                /* case-insensitive - compare with case folding */
+                if (t3_compare_case_fold(
+                    srch_str, srch_len, p.getptr(), rem, &match_len) == 0)
+                {
+                    /* success - set the match index, and we're done */
+                    match_idx = p.getptr() - (str + VMB_LEN);
+                    return;
+                }
             }
-            else
+        }
+        else
+        {
+            /* scan for a match */
+            for ( ; rem >= srch_len ; p.inc(&rem))
             {
                 /* case-sensitive - just do a byte-by-byte comparision */
-                match = (memcmp(p.getptr(), srch_str, srch_len) == 0);
-
-                /* 
-                 *   since this is an exact match, the match length equals
-                 *   the search string length 
-                 */
-                match_len = srch_len;
-            }
-
-            /* if we have a match, stop searching */
-            if (match)
-            {
-                /* remember the match position */
-                match_idx = p.getptr() - (str + VMB_LEN);
-
-                /* done */
-                return;
+                if (memcmp(p.getptr(), srch_str, srch_len) == 0)
+                {
+                    /* success - remember the match length and position */
+                    match_len = srch_len;
+                    match_idx = p.getptr() - (str + VMB_LEN);
+                    
+                    /* we're done */
+                    return;
+                }
             }
         }
 
@@ -2208,27 +2199,38 @@ int CVmObjString::getp_replace(VMG_ vm_val_t *retval,
                         wchar_t ch = rp.getch();
 
                         /* convert lower-case letters only */
+                        const wchar_t *u = 0;
                         if (t3_is_lower(ch))
                         {
                             if (match_has_upper && !match_has_lower)
                             {
-                                /* all upper-case - convert to caps */
-                                ch = t3_to_upper(ch);
+                                /* all upper-case -> convert to all caps */
+                                u = t3_to_upper(ch);
                             }
-                            else if (match_has_lower && !match_has_upper)
+                            else if (match_has_upper && match_has_lower
+                                     && alpha_rpl_cnt++ == 0)
                             {
-                                /* all lower-case - leave as-is */
-                            }
-                            else
-                            {
-                                /* mixed case - capitalize the first letter */
-                                if (alpha_rpl_cnt++ == 0)
-                                    ch = t3_to_upper(ch);
+                                /* mixed case -> first alpha to title case */
+                                u = t3_to_title(ch);
                             }
                         }
 
-                        /* add it to the string */
-                        dstp.setch(ch);
+                        /* if we found a case conversion, apply it */
+                        if (u != 0)
+                        {
+                            /* ensure we have room for the conversion */
+                            size_t need = utf8_ptr::s_wstr_size(u);
+                            dstp.set(ret_str->cons_ensure_space(
+                                vmg_ dstp.getptr(), need, 512));
+
+                            /* store the converted characters */
+                            dstp.setwcharsz(u, need);
+                        }
+                        else
+                        {
+                            /* no case conversion - copy it as-is */
+                            dstp.setch(ch);
+                        }
                     }
                 }
                 else
@@ -2912,6 +2914,9 @@ int CVmObjString::getp_split(VMG_ vm_val_t *retval,
     size_t len = vmb_get_len(str);
     str += VMB_LEN;
 
+    /* remember the start of the base string */
+    const char *basestr = str;
+
     /* 
      *   Get the delimiter or split size, leaving it on the stack for gc
      *   protection.  This can be a string, a RexPattern, or an integer.  
@@ -2944,11 +2949,11 @@ int CVmObjString::getp_split(VMG_ vm_val_t *retval,
     }
 
     /* get the split count limit, if there is one */
-    int limit = -1;
+    int32_t limit = -1;
     if (argc >= 2 && G_stk->get(1)->typ != VM_NIL)
     {
         /* there's an explicit limit; fetch it and make sure it's at least 1 */
-        if ((limit = G_stk->get(1)->num_to_int()) < 1)
+        if ((limit = G_stk->get(1)->num_to_int(vmg0_)) < 1)
             err_throw(VMERR_BAD_VAL_BIF);
     }
 
@@ -2974,7 +2979,9 @@ int CVmObjString::getp_split(VMG_ vm_val_t *retval,
     {
         /* split length -> divide the string length by the split length */
         init_list_len = (len + split_len - 1)/split_len;
-        if (init_list_len < 1)
+
+        /* set the length to at least one, unless it's an empty string */
+        if (init_list_len < 1 && len != 0)
             init_list_len = 1;
     }
     else
@@ -3016,13 +3023,14 @@ int CVmObjString::getp_split(VMG_ vm_val_t *retval,
         {
             /* search for the substring or pattern */
             const char *nxt = find_substr(
-                vmg_ str, len, delim_str, delim_pat, &match_len);
+                vmg_ basestr, str, len, delim_str, delim_pat,
+                &match_ofs, &match_len);
 
             /* if we didn't find it, we're done */
             if (nxt == 0)
                 break;
 
-            /* figure the offset to the match */
+            /* figure the byte offset to the match */
             match_ofs = nxt - str;
         }
 
@@ -3038,12 +3046,18 @@ int CVmObjString::getp_split(VMG_ vm_val_t *retval,
     }
 
     /* add a final element for the remainder of the string */
-    lst->cons_ensure_space(vmg_ cnt, 0);
-    ele.set_obj(CVmObjString::create(vmg_ FALSE, str, len));
-    lst->cons_set_element(cnt, &ele);
+    if (len != 0)
+    {
+        lst->cons_ensure_space(vmg_ cnt, 0);
+        ele.set_obj(CVmObjString::create(vmg_ FALSE, str, len));
+        lst->cons_set_element(cnt, &ele);
+
+        /* count it */
+        ++cnt;
+    }
 
     /* set the final size of the list */
-    lst->cons_set_len(cnt + 1);
+    lst->cons_set_len(cnt);
 
     /* discard arguments plus gc protection */
     G_stk->discard(argc + 2);
@@ -3760,25 +3774,35 @@ int CVmObjString::specialsTo(VMG_ vm_val_t *retval,
 
             default:
                 /* Ordinary character.  Check for caps/nocaps conversions. */
-                if (caps)
                 {
-                    ch = t3_to_upper(ch);
-                    caps = FALSE;
+                    const wchar_t *u = 0;
+                    if (caps)
+                    {
+                        u = t3_to_upper(ch);
+                        caps = FALSE;
+                    }
+                    else if (nocaps)
+                    {
+                        u = t3_to_lower(ch);
+                        nocaps = FALSE;
+                    }
+
+                    /* we're now within a line */
+                    in_line = TRUE;
+
+                    /* add this character or string to the output */
+                    if (u != 0)
+                    {
+                        for ( ; *u != 0 ; buf->append_utf8(*u++)) ;
+                    }
+                    else
+                    {
+                        buf->append_utf8(ch);
+                    }
+
+                    /* advance the tab-stop column */
+                    col++;
                 }
-                else if (nocaps)
-                {
-                    ch = t3_to_lower(ch);
-                    nocaps = FALSE;
-                }
-
-                /* we're now within a line */
-                in_line = TRUE;
-
-                /* add it to the output */
-                buf->append_utf8(ch);
-
-                /* advance the tab-stop column */
-                col++;
                 break;
             }
         }
@@ -4090,7 +4114,7 @@ int CVmObjString::static_getp_packBytes(VMG_ vm_val_t *retval, uint *pargc)
         return TRUE;
 
     /* set up an in-memory data stream to receive the packed data */
-    CVmMemorySource *dst = new CVmMemorySource(0);
+    CVmMemorySource *dst = new CVmMemorySource(0L);
 
     err_try
     {
@@ -4137,6 +4161,8 @@ public:
         this->charidx = 0;
         this->byteidx = 0;
     }
+
+    virtual CVmDataSource *clone(VMG_ const char * /*mode*/) { return 0; }
 
     /* read bytes - returns 0 on success, non-zero on EOF or error */
     virtual int read(void *buf, size_t len)
@@ -4284,6 +4310,94 @@ int CVmObjString::getp_unpackBytes(VMG_ vm_val_t *retval,
     /* unpack the string */
     CVmUTF8Source src(str, len);
     CVmPack::unpack(vmg_ retval, fmt, fmtlen, &src);
+
+    /* discard arguments */
+    G_stk->discard(1);
+
+    /* done */
+    return TRUE;
+}
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   property evaluator - compareTo()
+ */
+int CVmObjString::getp_compareTo(VMG_ vm_val_t *retval,
+                                 const vm_val_t *self_val,
+                                 const char *str, uint *argc)
+{
+    /* check arguments */
+    static CVmNativeCodeDesc desc(1);
+    if (get_prop_check_argc(retval, argc, &desc))
+        return TRUE;
+
+    /* get the length and buffer pointer */
+    size_t len = vmb_get_len(str);
+    str += VMB_LEN;
+
+    /* get the other string (leave it on the stack for gc protection) */
+    const char *other = G_stk->get(0)->get_as_string(vmg0_);
+    if (other == 0)
+        err_throw(VMERR_STRING_VAL_REQD);
+
+    /* get its buffer and length */
+    size_t olen = vmb_get_len(other);
+    other += VMB_LEN;
+
+    /* no result yet */
+    retval->set_nil();
+
+    /* compare character by character */
+    utf8_ptr a((char *)str);
+    utf8_ptr b((char *)other);
+    for ( ; len != 0 && olen != 0 ; a.inc(&len), b.inc(&olen))
+    {
+        int delta = (int)a.getch() - (int)b.getch();
+        if (delta != 0)
+        {
+            retval->set_int(delta);
+            break;
+        }
+    }
+
+    /* if we didn't find any differences, the shorter string sorts first */
+    if (retval->typ == VM_NIL)
+        retval->set_int(len - olen);
+
+    /* discard arguments */
+    G_stk->discard(1);
+
+    /* done */
+    return TRUE;
+}
+
+/*
+ *   property evaluator - compareIgnoreCase()
+ */
+int CVmObjString::getp_compareIgnoreCase(VMG_ vm_val_t *retval,
+                                         const vm_val_t *self_val,
+                                         const char *str, uint *argc)
+{
+    /* check arguments */
+    static CVmNativeCodeDesc desc(1);
+    if (get_prop_check_argc(retval, argc, &desc))
+        return TRUE;
+
+    /* get the length and buffer pointer */
+    size_t len = vmb_get_len(str);
+    str += VMB_LEN;
+
+    /* get the other string (leave it on the stack for gc protection) */
+    const char *other = G_stk->get(0)->get_as_string(vmg0_);
+    if (other == 0)
+        err_throw(VMERR_STRING_VAL_REQD);
+
+    /* get its buffer and length */
+    size_t olen = vmb_get_len(other);
+    other += VMB_LEN;
+
+    /* compare the strings */
+    retval->set_int(t3_compare_case_fold(str, len, other, olen, 0));
 
     /* discard arguments */
     G_stk->discard(1);

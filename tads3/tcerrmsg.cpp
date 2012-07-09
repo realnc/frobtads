@@ -2158,6 +2158,12 @@ const err_msg_t tc_messages_english[] =
     "The syntax for the defined() operator is invalid. This operator "
     "requires a single symbol name as the argument, in parentheses." },
 
+    { TCERR___OBJREF_SYNTAX,
+    "invalid syntax for __objref() operator",
+    "The syntax for the __objref() operator is invalid. This operator "
+    "requires syntax of the form __objref(symbol) or __objref(symbol, mode), "
+    "where the mode is 'warn' or 'error'." },
+
     { TCERR_CODEGEN_NO_MEM,
     "out of memory for code generation",
     "Out of memory.  The compiler cannot allocate memory to generate "
@@ -2597,6 +2603,14 @@ const err_msg_t tc_messages_english[] =
     "The usual way to declare an intrinsic class is simply to #include "
     "the system header file that defines the class, near the beginning "
     "of your source file." },
+
+    { TCERR_FUNC_CALL_NO_PROTO,
+    "cannot call extern function %.*s without an argument list definition",
+    "The function %.*s was declared 'extern' without an argument list "
+    "definition. This function can't be called without declaring the "
+    "argument list. You can declare the argument list in the 'extern' "
+    "statement, but note that in most cases the problem is that the "
+    "function itself is never defined within the program." },
 
     { TCERR_SYMEXP_INV_TYPE,
     "invalid symbol type in symbol file",

@@ -249,9 +249,8 @@ void CVmObjPattern::post_load_init(VMG_ vm_obj_id_t self)
  */
 void CVmObjPattern::save_to_file(VMG_ class CVmFile *fp)
 {
-    char buf[VMB_DATAHOLDER];
-    
     /* write the source string reference */
+    char buf[VMB_DATAHOLDER];
     vmb_put_dh(buf, get_orig_str());
     fp->write_bytes(buf, VMB_DATAHOLDER);
 }
@@ -263,14 +262,13 @@ void CVmObjPattern::save_to_file(VMG_ class CVmFile *fp)
 void CVmObjPattern::restore_from_file(VMG_ vm_obj_id_t self,
                                       class CVmFile *fp, CVmObjFixup *fixups)
 {
-    char buf[VMB_DATAHOLDER];
-
     /* if we don't already have an extension, allocate one */
     if (ext_ == 0)
         ext_ = (char *)G_mem->get_var_heap()
                ->alloc_mem(sizeof(vmobj_pat_ext), this);
 
     /* read the source string reference */
+    char buf[VMB_DATAHOLDER];
     fp->read_bytes(buf, VMB_DATAHOLDER);
 
     /* fix it up */

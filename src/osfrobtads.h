@@ -20,7 +20,9 @@ extern "C++" {
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 #ifdef __cplusplus
 }
 #endif
@@ -220,6 +222,11 @@ extern int frobVmUndoMaxRecords;
 #define OSPATHCHAR '/'
 #endif
 
+#ifndef OSPATHPWD
+/* Generic name for current working directory. */
+#define OSPATHPWD "."
+#endif
+
 #ifndef OS_NEWLINE_SEQ
 /* ASCII string giving the local newline sequence to write on output. */
 #define OS_NEWLINE_SEQ  "\n"
@@ -230,6 +237,25 @@ extern int frobVmUndoMaxRecords;
 
 /* File handle structure for osfxxx functions. */
 typedef FILE osfildef;
+
+/* Directory handle for searches via os_open_dir() et al. */
+typedef DIR* osdirhdl_t;
+
+/* file type/mode bits */
+#define OSFMODE_FILE    S_IFREG
+#define OSFMODE_DIR     S_IFDIR
+#define OSFMODE_CHAR    S_IFCHR
+#define OSFMODE_BLK     S_IFBLK
+#define OSFMODE_PIPE    S_IFIFO
+#define OSFMODE_LINK    S_IFLNK
+#ifdef S_IFSOCK
+#define OSFMODE_SOCKET  S_IFSOCK
+#else
+#define OSFMODE_SOCKET  0
+#endif
+
+/* Get a file's stat() type. */
+int osfmode( const char* fname, int follow_links, unsigned long* mode );
 
 /* The maximum width of a line of text.
  *
@@ -358,6 +384,14 @@ osfoprwb( const char* fname, os_filetype_t typ );
  * (SVID, AT&T, POSIX, X/OPEN, BSD 4.3, DOS, MS Windows, maybe more). */
 #define osfacc(fname) (access((fname), F_OK))
 
+/* Rename a file. */
+#define os_rename_file(from, to) (rename(from, to) == 0)
+
+/* Get a file's stat() type. */
+struct os_file_stat_t;
+int os_file_stat( const char* fname, int follow_links,
+                  struct os_file_stat_t* s );
+
 /* Get a character from a file. */
 #define osfgetc fgetc
 
@@ -385,5 +419,13 @@ osfoprwb( const char* fname, os_filetype_t typ );
  * other Unix variants. */
 #define os_asprintf asprintf
 #define os_vasprintf vasprintf
+
+/*
+ *   Thread local storage declaration keyword.  This is only needed on
+ *   platforms where we implement multithreading, and then only in builds
+ *   that actually use threading; at the moment, this is limited to the
+ *   network-enabled TADS 3 interpreter.
+ */
+#define OS_DECL_TLS(typ, varname)  TLS typ varname
 
 #endif /* OSFROBTADS_H */

@@ -3974,7 +3974,7 @@ langMessageBuilder: MessageBuilder
              *   Check if this special sequence matches our tense-switching
              *   syntax.
              */
-            if (nil == rexMatch(patTenseSwitching, str, idx))
+            if (rexMatch(patTenseSwitching, str, idx) == nil)
             {
                 /*
                  *   It doesn't, so forget about it and continue searching

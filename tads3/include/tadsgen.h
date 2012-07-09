@@ -1,4 +1,5 @@
 #charset "us-ascii"
+#pragma once
 
 /* 
  *   Copyright (c) 1999, 2006 Michael J. Roberts
@@ -10,17 +11,12 @@
  *   object iteration, regular expressions, and state persistence operations.
  */
 
-/*
- *   TADS basic data manipulation intrinsic function set 
- */
-
-#ifndef TADSGEN_H
-#define TADSGEN_H
 
 /*
- *   The tads-gen function set 
+ *   The tads-gen function set.  This set contains basic data manipulation
+ *   and miscellaneous utility functions.
  */
-intrinsic 'tads-gen/030007'
+intrinsic 'tads-gen/030008'
 {
     /*
      *   Get the type of the given value.  This returns a TypeXxx value.
@@ -53,35 +49,139 @@ intrinsic 'tads-gen/030007'
     nextObj(obj, cls?, flags?);
 
     /*
-     *   Seed the random-number generator.  This uses unpredictable
-     *   information from the external operating system environment (which
-     *   might be something like the current time of day, but the exact
-     *   information used varies by system) to seed the rand() generator with
-     *   a new starting position.  Since rand() is a pseudo-random number
-     *   generator, its sequence is deterministic - each time it's started
-     *   with a given seed value, the identical sequence will result.  This
-     *   function helps produce apparent randomness by effectively
-     *   randomizing the starting point of the sequence.
+     *   Random number generator (RNG) initialization.  This selects and
+     *   initializes the random number generator algorithm used by rand().
+     *   TADS provides several different RNG algorithms; each RNG has
+     *   different properties, so some applications might have reasons to
+     *   prefer a particular algorithm.  For general purposes, any of them
+     *   should produce good results.
      *   
-     *   Note that if randomize() is never called, the system will use a
-     *   fixed initial seed, so rand() will return the same sequence each
-     *   time the program is run.  This is intentional, because it makes the
-     *   program's behavior exactly repeatable, even if the program calls
-     *   rand() to select random numbers.  This type of repeatable,
-     *   deterministic behavior is especially useful for testing purposes,
-     *   since it allows you to run the program through a fixed set of input
-     *   and compare the results against a fixed set of output, knowing the
-     *   the random number sequence will be the same on each run.  Typically,
-     *   what you'd want to do is check at start-up to see if you're in
-     *   "testing" mode (however you wish to define that), and call
-     *   randomize() only if you're not in testing mode.  This will create
-     *   apparently random behavior on normal runs, but produce repeatable
-     *   behavior during testing.  
+     *   The interpreter automatically makes a call to randomize() (the
+     *   no-arguments version) when it starts up, unless the user specifies
+     *   the "-norand" option when launching the interpreter.  For most
+     *   programs, this means that you'll never have to make your own call to
+     *   randomize() - you can just call rand() when you need random numbers.
+     *   
+     *   This function performs several tasks, depending on how you invoke
+     *   it:
+     *   
+     *.    randomize() - selects the default RNG algorithm (ISAAC), and seeds
+     *.          the RNG with truly random data from the operating system.
+     *   
+     *.    randomize(nil) - retrieves the current state of the RNG.  Returns
+     *.          a list: [id, state], where 'id' is the ID of the currently
+     *.          selected RNG algorithm, and 'state' is a value containing
+     *.          its internal state, which can be used in a later call to
+     *.          randomize([id, state]) to restore the RNG state.  The 'state'
+     *.          value is opaque, meaning that it's not meant to be used
+     *.          directly; the only thing you should do with it it save it
+     *.          for later if you should want to restore this state later.
+     *   
+     *.    randomize([id, state]) - if you pass in a list that obtained from
+     *.          an earlier call to randomize(nil), the RNG will be returned
+     *.          to its state at the time of the randomize(nil) call.  This
+     *.          selects the same RNG algorithm that was in effect then and
+     *.          restores the internal state of the generator.  After calling
+     *.          this, a series of calls to rand() will return the same
+     *.          sequence of numbers that were returned after the call to
+     *.          randomize(nil).
+     *   
+     *.    randomize(id) - selects the RNG algorithm identified by 'id'
+     *.          (an RNG_Xxx value).  This doesn't change the state of
+     *.          the generator; it simply selects the algorithm.
+     *   
+     *.    randomize(id, nil) - selects the RNG algorithm identified by
+     *.          'id' (an RNG_Xxx value), and seeds the generator with
+     *.          truly random data obtained from the operating system.
+     *   
+     *.    randomize(id, val) - selects the RNG algorithm identified by
+     *.          'id' (an RNG_Xxx value), and seeds the generator with
+     *.          the initial value 'val'.  This can be either an integer
+     *.          value or a string; the preferred format varies by
+     *.          algorithm, but they'll all accept either format.  After
+     *.          you set a given seed value, rand() will return a sequence
+     *.          of numbers that's repeatable every time you set the same
+     *.          seed value.  This can be useful for things like testing,
+     *.          where you want a sequence of numbers that's statistically
+     *.          random, but which can be reproduced on demand.
+     *   
+     *   Most programs that require random numbers want a truly unpredictable
+     *   series of numbers - that is, numbers that have a statistically
+     *   random distribution, with no discernible patterns, and which will be
+     *   different every time the program is run.  There are two separate
+     *   parts to this proposition, and they're handled by separate
+     *   functions.  rand() fulfills the first part: it uses a mathematical
+     *   formula to generate a series of numbers that are statistically
+     *   distributed in a random fashion (for example, so that "1" occurs as
+     *   often as "10" or any other number, any given sequence of 2, 3, or
+     *   more numbers is equally likely, and so on: mathematicians have many
+     *   formal tests that RNGs must satisfy to be considered random.)
+     *   randomize() fulfills the second part, which is making sure that the
+     *   sequence of numbers is different every time you run the program.
+     *   The reason this second part is important is that rand() is by its
+     *   nature deterministic: it's defined entirely in terms of a formula,
+     *   so given the same initial conditions, it'll always crank out the
+     *   same sequence of numbers.  The trick is to randomize its initial
+     *   conditions - and what makes it tricky is that we can't just turn to
+     *   rand(), since it's the thing we're trying to randomize!
+     *   
+     *   This is where the "seed" values come in.  randomize() and
+     *   randomize(id, nil) ask the operating system for truly random data to
+     *   use for the initial conditions.  The degree of entropy in this OS
+     *   seed data varies by system; some systems have better entropy sources
+     *   than others.  But whatever the source, the seed data should be
+     *   different each time you run the program.  randomize() feeds this
+     *   seed data into the RNG to set its initial conditions, so each time
+     *   you run, rand() will be starting from a different initial state.
+     *   This makes for a different series of numbers from rand() on each
+     *   run.
+     *   
+     *   Note that it's not necessary (or desirable) to call randomize()
+     *   every time you want a random number.  Once you seed the RNG, rand()
+     *   is all you need to call.  It can be slow to gather the true random
+     *   data that randomize() uses, since this sometimes requires
+     *   interacting with hardware devices or scanning large amounts of
+     *   system data.  rand() is quite fast, since it just calculates a
+     *   number using a formula.  Depending on the system, rand() might also
+     *   be more reliable at producing high volumes of statistically random
+     *   data than the OS sources.  The operating system sources of true
+     *   entropy don't always change quickly, so it's better to use them
+     *   infrequently, such as just once at the start of program execution,
+     *   than to use them as a routine source of random numbers.
+     *   
+     *   The fixed seed values, with randomize(id, val), do something a
+     *   little different.  Rather than making the RNG produce different
+     *   sequences on each run, a fixed seed makes rand() generate the same
+     *   series of numbers every time.  The numbers will still be
+     *   statistically random, but each time you run the program, you'll get
+     *   the same seaquence.  (The sequence is a function of the seed value.
+     *   You'll get a different sequence for each different seed value.)
+     *   
+     *   Why would you want a fixed series of rand() results?  One big reason
+     *   is testing.  One popular way to test software is regression testing,
+     *   where you run the program and compare its output to a reference
+     *   version that you know is correct.  If there are no differences, you
+     *   know that changes you've made to the program since haven't broken
+     *   anything in the test script.  Randomization interferes with this
+     *   kind of testing, because it makes the output different on each run -
+     *   it's useless to do a simple mechanical comparison of the new and old
+     *   output because they'll always differ.  Fixed seeds to the rescue.
+     *   Using a fixed seed, you can still exercise the program's random
+     *   behavior, but the sequence of random behavior will repeat on every
+     *   run, so you run those regression comparisons after all.  The really
+     *   great thing is that you don't have to make big changes to the
+     *   program if you want to switch between test mode and real randomness
+     *   - all you have to do is change the one call to randomize().
      */
-    randomize();
+    randomize(...);
 
     /*
-     *   Select a random number or a random value.
+     *   Select a random number or a random value.  This uses the current
+     *   random number algorithm as selected via randomize().
+     *   
+     *   If no arguments are supplied, the result is a random integer
+     *   distributed evenly over the full range of the 32-bit integer type.
+     *   The result can be positive or negative.
      *   
      *   If exactly one argument is supplied, the result depends on the type
      *   of the argument:
@@ -109,7 +209,7 @@ intrinsic 'tads-gen/030007'
      *   In all cases, the random numbers are uniformly distributed, meaning
      *   that each possible return value has equal probability.  
      */
-    rand(x, ...);
+    rand(...);
 
     /*
      *   Convert the given value to a string representation.  'val' can be an
@@ -185,8 +285,9 @@ intrinsic 'tads-gen/030007'
      *   hour on a 24-hour clock, ranging from 0 (midnight) to 23 (11pm);
      *   minute is the minute of the hour, from 0 to 59; second is the second
      *   of the minute, from 0 to 59; and timer is the number of seconds
-     *   elapsed since the "epoch," defined arbitrarily as midnight, January
-     *   1, 1970.
+     *   elapsed since the "Epoch," defined as midnight, January 1, 1970,
+     *   midnight UTC.  (This is the Epoch that Unix-like systems use, so it
+     *   appears frequently in computer timekeeping systems.)
      *   
      *   If timeType is GetTimeTicks, this return the number of milliseconds
      *   since an arbitrary starting time.  The first call to get this
@@ -466,6 +567,14 @@ intrinsic 'tads-gen/030007'
      *   See the System Manual for the list of '%' codes.  
      */
     sprintf(format, ...);
+
+    /*
+     *   Create a list by repeating the given value the given number of
+     *   times.  If the repeat count isn't specified, the default is 1; a
+     *   repeat count less than zero throws an error.  'val' can be any
+     *   value; it's simply repeated in each element of the list.
+     */
+    makeList(val, repeatCount?);
 }
 
 /*
@@ -490,6 +599,45 @@ intrinsic 'tads-gen/030007'
 #define GetTimeDateAndTime  1
 #define GetTimeTicks        2
 
+/*
+ *   Random number generator IDs for randomize().
+ */
 
-#endif /* TADSGEN_H */
+/*
+ *   
+ *   RNG_ISAAC - ISAAC is the default generator.  It's designed for both
+ *   cryptographic application and more mainstream uses.  Crypto applications
+ *   generally have more stringent requirements for an RNG than ordinary
+ *   applications.  ISAAC does well with the usual statistical tests for RNGs
+ *   and is reasonably fast.
+ *   
+ *   ISAAC's preferred format for a fixed seed is a string value.
+ */
+#define RNG_ISAAC    1
+
+
+/*   
+ *   RNG_LCG - LCG stands for Linear Congruential Generator, which generates
+ *   numbers using a simple linear formula.  This is the old standby of
+ *   computer RNGs; it's the sort that comes standard with C compilers.
+ *   These generators have been extensively studied and have reasonably good
+ *   statistical properties and a number of known weaknesses.  The TADS LCG
+ *   uses the method described in Knuth, The Art of Computer Programming,
+ *   volume 2, p170.
+ *   
+ *   The LCG's preferred format for a fixed seed is an integer value.
+ */
+#define RNG_LCG      2
+
+/*
+ *   RNG_MT19937 - Mersenne Twister MT19937 algorithm.  This is a widely used
+ *   RNG algorithm that's become especially popular for scientific
+ *   simulations.  It's relatively new, dating from 1997, and was designed to
+ *   remedy most of the known shortcomings of linear congruential generators
+ *   and other earlier RNGs.  It's fast and does well on standard statistical
+ *   tests.
+ *   
+ *   MT's preferred format for a fixed seed is a string value.
+ */
+#define RNG_MT19937  3
 

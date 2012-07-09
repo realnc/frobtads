@@ -1,3 +1,5 @@
+#charset "latin-1"
+
 /*
  *   built-in function tests 
  */
@@ -117,6 +119,14 @@ function main()
     "\bupper/lower test\n";
     "upper('<<str2>>') = '<<str2.toUpper()>>'\n";
     "lower('<<str2>>') = '<<str2.toLower()>>'\n";
+    "title('<<str2>>') = '<<str2.toTitleCase()>>'\n";
+    "caseFold('<<str2>>') = '<<str2.toFoldedCase()>>'\n";
+
+    local str3 = 'We\u0130ﬂstr‰ﬂe O\ufb03cepl‰tz';
+    "upper('<<latin1ify(str3)>>') = '<<latin1ify(str3.toUpper())>>'\n";
+    "lower('<<latin1ify(str3)>>') = '<<latin1ify(str3.toLower())>>'\n";
+    "title('<<latin1ify(str3)>>') = '<<latin1ify(str3.toTitleCase())>>'\n";
+    "caseFold('<<latin1ify(str3)>>') = '<<latin1ify(str3.toFoldedCase())>>'\n";
 
     "\btoString test\n";
     "toString(123) = <<toString(123)>>\n";
@@ -210,6 +220,22 @@ function main()
     "'<<str>>'.find('xyz') = <<str.find('xyz')>>\n";
     "'<<str>>'.find('1234567890') = <<str.find('1234567890')>>\n";
     "'<<str>>'.find('xxx') = <<str.find('xxx')>>\n";
+    "'<<str>>'.find(re '%d+') = <<str.find(new RexPattern('%d+'))>>\n";
+    for (local i = 1 ; i <= 5 ; ++i)
+        "'<<str>>'.find('cde', <<i>>) = <<str.find('cde', i)>>\n";
+
+    str = 'abcdefabcghiabcjklabcmnoabcpqrabcstuabcvwxabcyz...f';
+    for (local i in 1..10)
+        "'<<str>>'.find('abc', <<i>>) = <<str.find('abc', i)>>\n";
+    for (local i in -1..-10 step -1)
+        "'<<str>>'.find('abc', <<i>>) = <<str.find('abc', i)>>\n";
+
+    local pat = new RexPattern('a.*f');
+    for (local i in 1..10)
+        "'<<str>>'.find(re 'a.*f', <<i>>) = <<str.find(pat, i)>>\n";
+    for (local i in -1..-10 step -1)
+        "'<<str>>'.find(re 'a.*f', <<i>>) = <<str.find(pat, i)>>\n";
+    
     "<<sayList(lst)>>.indexOf('one') = <<lst.indexOf('one')>>\n";
     "<<sayList(lst)>>.indexOf('ONE') = <<lst.indexOf('ONE')>>\n";
     "<<sayList(lst)>>.indexOf('two') = <<lst.indexOf('two')>>\n";
@@ -232,6 +258,12 @@ function main()
         >>\n";
 
     regex_tests();
+}
+
+latin1ify(str)
+{
+    return str.toUnicode().mapAll(
+        {x: x > 255 ? '\\u<<%04x x>>' : makeString(x)}).join();
 }
 
 varfunc(...)

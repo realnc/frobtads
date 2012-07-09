@@ -15,7 +15,7 @@ Modified
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <net/if.h>
+#include <linux/if.h>
 #include <sys/ioctl.h>
 #include <sys/times.h>
 #include <unistd.h>
@@ -695,23 +695,11 @@ static size_t http_get_recv(void *ptr, size_t siz, size_t nmemb, void *stream)
     /* copy the received data to the caller's stream, if we have one */
     if (stream != 0)
     {
-        /* cast the stream to our CVmStream object */
-        CVmStream *reply = (CVmStream *)stream;
+        /* cast the stream to our CVmDataSource type */
+        CVmDataSource *reply = (CVmDataSource *)stream;
         
-        /* add the data to the buffer */
-        size_t len = siz * nmemb;
-        err_try
-        {
-            reply->write_bytes((char *)ptr, len);
-        }
-        err_catch(err)
-        {
-            len = 0;
-        }
-        err_end;
-        
-        /* we copied all of the bytes */
-        return len;
+        /* copy the data to the buffer */
+        return reply->write(ptr, siz * nmemb);
     }
     else
     {
@@ -727,23 +715,10 @@ static size_t http_get_send(void *ptr, size_t siz, size_t nmemb, void *stream)
     if (stream != 0)
     {
         /* cast the stream to our payload item object */
-        CVmStream *s = (CVmStream *)stream;
+        CVmDataSource *s = (CVmDataSource *)stream;
 
         /* read from the stream into the buffer */
-        size_t len = siz * nmemb;
-        size_t actual;
-        err_try
-        {
-            actual = s->read_nbytes((char *)ptr, len);
-        }
-        err_catch (err)
-        {
-            actual = 0;
-        }
-        err_end;
-
-        /* return the number of bytes transfered */
-        return actual;
+        return s->readc(ptr, siz * nmemb);
     }
     else
     {
@@ -775,7 +750,7 @@ int OS_HttpClient::request(int opts,
                            const char *verb, const char *resource,
                            const char *send_headers, size_t send_headers_len,
                            OS_HttpPayload *payload,
-                           CVmStream *reply, char **headers,
+                           CVmDataSource *reply, char **headers,
                            char **location, const char *ua)
 {
     char *url = 0;                                     /* full resource URL */
@@ -854,12 +829,12 @@ int OS_HttpClient::request(int opts,
              */
 
             /* get the file to send - this is the payload item's stream */
-            CVmStream *stream = payload->get(0)->stream;
+            CVmDataSource *stream = payload->get(0)->stream;
 
             /* set up the source data */
             curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
             curl_easy_setopt(h, CURLOPT_READDATA, stream);
-            curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_len());
+            curl_easy_setopt(h, CURLOPT_INFILESIZE, stream->get_size());
         }
         else if (payload->is_multipart())
         {
@@ -879,7 +854,7 @@ int OS_HttpClient::request(int opts,
                         CURLFORM_COPYNAME, item->name,
                         CURLFORM_FILENAME, item->val,
                         CURLFORM_CONTENTTYPE, item->mime_type,
-                        CURLFORM_CONTENTSLENGTH, item->stream->get_len(),
+                        CURLFORM_CONTENTSLENGTH, item->stream->get_size(),
                         CURLFORM_STREAM, item->stream,
                         CURLFORM_END))
                         goto done;
@@ -921,12 +896,12 @@ int OS_HttpClient::request(int opts,
         curl_easy_setopt(h, CURLOPT_UPLOAD, (long)1);
 
         /* get the file to send - this is the single payload item's stream */
-        CVmStream *stream = payload->get(0)->stream;
+        CVmDataSource *stream = payload->get(0)->stream;
 
         /* set up the source data */
         curl_easy_setopt(h, CURLOPT_READFUNCTION, http_get_send);
         curl_easy_setopt(h, CURLOPT_READDATA, stream);
-        curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_len());
+        curl_easy_setopt(h, CURLOPT_INFILESIZE, (long)stream->get_size());
     }
     else 
     {

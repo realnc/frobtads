@@ -1,4 +1,5 @@
 #charset "us-ascii"
+#pragma once
 
 /*
  *   Copyright 2000, 2006 Michael J. Roberts.
@@ -8,9 +9,6 @@
  *   This module defines the fundamental intrinsic classes, including Object,
  *   String, Collection, List, and Iterator.  
  */
-
-#ifndef _SYSTYPE_H_
-#define _SYSTYPE_H_
 
 
 /* ------------------------------------------------------------------------ */
@@ -353,7 +351,7 @@ intrinsic class TadsObject 'tads-object/030005': Object
 /*
  *   The native string type. 
  */
-intrinsic class String 'string/030006': Object
+intrinsic class String 'string/030007': Object
 {
     /* get the length of the string */
     length();
@@ -670,6 +668,90 @@ intrinsic class String 'string/030006': Object
      *   See Byte Packing in the System Manual for more details.  
      */
     unpackBytes(format);
+
+    /*
+     *   Convert each character in the string to title case, according to the
+     *   Unicode character database definitions.  Returns a new string with
+     *   the title-case version of this string.
+     *   
+     *   For most characters, title case is the same as upper case.  It
+     *   differs from upper case when a single Unicode character represents
+     *   more than one printed letter, such as the German sharp S U+00DF, or
+     *   the various "ff" and "fi" ligatures.  In these cases, the title-case
+     *   conversion consists of the upper-case version of the first letter of
+     *   the ligature followed by the lower-case versions of the remaining
+     *   characters.  Unicode doesn't define single-character title-case
+     *   equivalents of most of the ligatures, so the result is usually a
+     *   sequence of the individual characters making up the ligature.  For
+     *   example, title-casing the 'ffi' ligature character (U+FB03) produces
+     *   the three-character sequence 'F', 'f', 'i'.
+     *   
+     *   Note that this routine converts every character in the string to
+     *   title case, so it's not by itself a full title formatter - it's
+     *   simply a character case converter.
+     */
+    toTitleCase();
+
+    /*
+     *   Convert the string to "folded" case.  Returns a new string with the
+     *   case-folded version of this string.
+     *   
+     *   Folded case is used for eliminating case distinctions in sets of
+     *   strings, to allow for case-insensitive comparisons, sorting, etc.
+     *   This routine produces the case folding defined in the Unicode
+     *   character database; in most cases, the result is the same as
+     *   converting each original character to upper case and then converting
+     *   the result to lower case.  This process not only removes case
+     *   differences but also normalizes some variations in the ways certain
+     *   character sequences are rendered, such as converting the German
+     *   ess-zed U+00DF to "ss", and converting lower-case accented letters
+     *   that don't have single character upper-case equivalents to the
+     *   corresponding series of composition characters (e.g., U+01F0, a
+     *   small 'j' with a caron, turns into U+006A + U+030C, a regular small
+     *   'j' followed by a combining caron character).  Without this
+     *   normalization, the upper- and lower-case renderings of such
+     *   characters wouldn't match.
+     */
+    toFoldedCase();
+
+    /*
+     *   Compare this string to another string, using Unicode character code
+     *   points as the collation order.  Returns an integer less than zero if
+     *   this string sorts before the other string, zero if they're
+     *   identical, or greater than zero if this string sorts after the
+     *   other.  This makes the result suitable for use in a sort() callback,
+     *   for example.
+     *   
+     *   Note that if you use the result for sorting text that includes
+     *   accented Roman letters, the result order probably won't match the
+     *   dictionary order for your language.  Different languages (and even
+     *   different countries/cultures sharing a language) have different
+     *   rules for dictionary ordering, so collation is inherently language-
+     *   specific.  This routine doesn't take language differences into
+     *   account; it simply uses the fixed Unicode code point ordering.  The
+     *   Unicode ordering for accented characters is somewhat arbitrary,
+     *   because the accented Roman characters are arranged into multiple
+     *   disjoint blocks that are all separate from the unaccented
+     *   characters.  For example, A-caron sorts after Z-caron, which sorts
+     *   after A-breve, which sorts after Y-acute, which sorts after A-acute,
+     *   which sorts after plain Z. 
+     */
+    compareTo(str);
+
+    /*
+     *   Compare this string to another string, ignoring case.  The two
+     *   strings are compared on the basis of the "case folded" versions of
+     *   their characters, using the case folding rules from the Unicode
+     *   standard (the case folded version of a string is the value returned
+     *   by toFoldedCase()).  The return alue is an integer less than zero if
+     *   this string sorts before the other string, zero if they're
+     *   identical, or greater than zero if this string sorts after the
+     *   other. 
+     *   
+     *   As with compareTo(), this only produces alphabetically correct
+     *   sorting order when comparing ASCII strings.
+     */
+    compareIgnoreCase(str);
 }
 
 /*
@@ -1105,4 +1187,3 @@ intrinsic class StackFrameRef 'stack-frame-ref/030000'
 {
 }
 
-#endif /* _SYSTYPE_H_ */

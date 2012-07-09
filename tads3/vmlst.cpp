@@ -234,10 +234,8 @@ CVmObjList::CVmObjList(VMG_ size_t cnt)
  */
 void CVmObjList::alloc_list(VMG_ size_t cnt)
 {
-    size_t alo;
-    
     /* calculate the allocation size */
-    alo = calc_alloc(cnt);
+    size_t alo = calc_alloc(cnt);
 
     /* 
      *   ensure we're within the limit (NB: this really is 65535 on ALL
@@ -723,10 +721,8 @@ int CVmObjList::index_val_q(VMG_ vm_val_t *result, vm_obj_id_t /*self*/,
 void CVmObjList::index_list(VMG_ vm_val_t *result, const char *lst,
                             const vm_val_t *index_val)
 {
-    uint32_t idx;
-    
     /* get the index value as an integer */
-    idx = index_val->num_to_int();
+    uint32_t idx = index_val->num_to_int(vmg0_);
 
     /* index the list */
     index_list(vmg_ result, lst, idx);
@@ -780,11 +776,8 @@ void CVmObjList::set_index_list(VMG_ vm_val_t *result, const char *lst,
                                 const vm_val_t *index_val,
                                 const vm_val_t *new_val)
 {
-    uint32_t idx;
-    CVmObjList *obj;
-
     /* get the index value as an integer */
-    idx = index_val->num_to_int();
+    uint32_t idx = index_val->num_to_int(vmg0_);
 
     /* push the new value for gc protection during the create */
     G_stk->push(new_val);
@@ -797,7 +790,7 @@ void CVmObjList::set_index_list(VMG_ vm_val_t *result, const char *lst,
     result->set_obj(create(vmg_ FALSE, lst));
 
     /* get the new list object */
-    obj = (CVmObjList *)vm_objp(vmg_ result->val.obj);
+    CVmObjList *obj = (CVmObjList *)vm_objp(vmg_ result->val.obj);
 
     /* update the element of the new list */
     obj->cons_set_element(idx - 1, new_val);
@@ -1461,10 +1454,10 @@ int CVmObjList::getp_sublist(VMG_ vm_val_t *retval, const vm_val_t *self_val,
         return TRUE;
 
     /* get the original element count */
-    int old_cnt = vmb_get_len(lst);
+    int32_t old_cnt = vmb_get_len(lst);
 
     /* pop the starting index; negative counts from the end of the list */
-    int start = CVmBif::pop_int_val(vmg0_);
+    int32_t start = CVmBif::pop_long_val(vmg0_);
     if (start < 0)
         start += old_cnt + 1;
     
@@ -1473,7 +1466,7 @@ int CVmObjList::getp_sublist(VMG_ vm_val_t *retval, const vm_val_t *self_val,
      *   count, which will ensure that we use all available elements of
      *   the sublist 
      */
-    int len = (argc >= 2 ? CVmBif::pop_int_val(vmg0_) : old_cnt);
+    int32_t len = (argc >= 2 ? CVmBif::pop_long_val(vmg0_) : old_cnt);
 
     /* push the 'self' as protection from GC */
     G_stk->push(self_val);
@@ -1482,7 +1475,7 @@ int CVmObjList::getp_sublist(VMG_ vm_val_t *retval, const vm_val_t *self_val,
     lst += VMB_LEN;
 
     /* skip to the desired first element */
-    int new_cnt;
+    int32_t new_cnt;
     if (start >= 1 && start <= old_cnt)
     {
         /* it's in range - skip to the desired first element */
@@ -1500,8 +1493,14 @@ int CVmObjList::getp_sublist(VMG_ vm_val_t *retval, const vm_val_t *self_val,
      *   what we have left (we obviously can't give them more elements
      *   than we have remaining) 
      */
-    if (len < new_cnt)
-        new_cnt = (size_t)len;
+    if (len < 0)
+        new_cnt += len;
+    else if (len < new_cnt)
+        new_cnt = len;
+
+    /* make sure the new length is non-negative */
+    if (new_cnt < 0)
+        new_cnt = 0;
 
     /* create the new list */
     vm_obj_id_t obj = create(vmg_ FALSE, new_cnt);
@@ -1812,29 +1811,25 @@ int CVmObjList::for_each_gen(VMG_ vm_val_t *retval,
                              const char *lst, uint *argc,
                              int send_idx_to_cb, vm_rcdesc *rc)
 {
-    const vm_val_t *func_val;
-    size_t cnt;
-    size_t idx;
-    static CVmNativeCodeDesc desc(1);
-
     /* check arguments */
+    static CVmNativeCodeDesc desc(1);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
     /* get the function pointer argument, but leave it on the stack */
-    func_val = G_stk->get(0);
+    const vm_val_t *func_val = G_stk->get(0);
 
     /* push a self-reference while allocating to protect from gc */
     G_stk->push(self_val);
 
     /* get the length of the list */
-    cnt = vmb_get_len(lst);
+    size_t cnt = vmb_get_len(lst);
 
     /* no return value */
     retval->set_nil();
 
     /* invoke the callback on each element */
-    for (idx = 1 ; idx <= cnt ; ++idx)
+    for (size_t idx = 1 ; idx <= cnt ; ++idx)
     {
         /* re-translate the list address in case of swapping */
         VM_IF_SWAPPING_POOL(if (self_val->typ == VM_LIST)
@@ -2894,7 +2889,7 @@ int CVmObjList::static_getp_generate(VMG_ vm_val_t *retval, uint *in_argc)
         err_throw(VMERR_BAD_TYPE_BIF);
 
     /* get the count */
-    int cnt = G_stk->get(1)->num_to_int();
+    int32_t cnt = G_stk->get(1)->num_to_int(vmg0_);
 
     /* make sure it's not negative */
     if (cnt < 0)
