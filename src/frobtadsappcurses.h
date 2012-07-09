@@ -49,7 +49,8 @@ class FrobTadsApplicationCurses: public FrobTadsApplication {
     print( int line, int column, int attrs, const char* str )
     {
         int i;
-        for (i = 0; str[i] != '\0'; ++i) this->fDispBuf[i] = str[i] | attrs;
+        for (i = 0; str[i] != '\0'; ++i)
+            this->fDispBuf[i] = static_cast<unsigned char>(str[i]) | attrs;
         this->fDispBuf[i] = '\0';
         this->fGameWindow->printStr(line, column, this->fDispBuf);
     }
