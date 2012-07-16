@@ -5,9 +5,6 @@ Known bugs.  Don't report them; fix them! :)
     or higher is used.  This can be fixed by using the
     "-fno-strict-aliasing" option of g++ (gcc isn't affected).
 
-  - Currently, the interpreter cannot display characters outside the
-    7-bit ASCII range.
-
   - When a game has set a timeout for an input, and the terminal the
     interpreter runs in is resized, the timeout will be reset to its
     initial value rather than the remaining time.

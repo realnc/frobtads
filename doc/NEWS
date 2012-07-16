@@ -1,8 +1,14 @@
-Git
-===
+v1.2 - 2012/07/16
+=================
 
   - The interpreter should now work correctly when running inside an
     Emacs eterm.
+
+  - The "--no-seed-rand" option should now be usable.
+
+  - 8-bit characters (like German umlauts) should now display correctly.
+
+  - Tads virtual machines and compilers updated to 2.5.15/3.1.1.
 
 
 v1.1 - 2011/12/29
