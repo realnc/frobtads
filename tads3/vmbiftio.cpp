@@ -112,6 +112,11 @@ void CVmBifTIO::say_to_console(VMG_ CVmConsole *console, uint argc)
             /* go display it */
             goto disp_str;
 
+        case VM_LIST:
+            /* convert to a string */
+            str = val.cast_to_string(vmg_ &new_str);
+            goto disp_str;
+
         case VM_INT:
             /* convert it to a string */
             sprintf(buf + 2, "%ld", (long)val.val.intval);

@@ -1692,28 +1692,18 @@ void CTcGenTarg::add_const_list(CTPNList *lst,
 /*
  *   Generate a BigNumber object 
  */
-vm_obj_id_t CTcGenTarg::gen_bignum_obj(const char *txt, size_t len)
+vm_obj_id_t CTcGenTarg::gen_bignum_obj(
+    const char *txt, size_t len, int promoted)
 {
-    vm_obj_id_t id;
-    long size_ofs;
-    long end_ofs;
-    long num_ofs;
+    /* if the value was promoted from integer due to overflow, warn */
+    if (promoted)
+        G_tok->log_warning(TCERR_INT_CONST_OV);
+
+    /* write to BigNumber object stream */
     CTcDataStream *str = G_bignum_stream;
-    int exp;
-    int decpt;
-    utf8_ptr p;
-    size_t rem;
-    int dig[2];
-    int dig_idx;
-    int sig;
-    size_t tot_digits;
-    size_t prec;
-    int neg;
-    int val_zero;
-    uchar flags;
 
     /* generate a new object ID for the BigNumber */
-    id = new_obj_id();
+    vm_obj_id_t id = new_obj_id();
 
     /* 
      *   add the object ID to the non-symbol object list - this is
@@ -1722,235 +1712,69 @@ vm_obj_id_t CTcGenTarg::gen_bignum_obj(const char *txt, size_t len)
     G_prs->add_nonsym_obj(id);
 
     /* 
-     *   generate the object data to the BigNumber data stream
+     *   Get the BigNumber representation, inferring the radix.  The
+     *   tokenizer can pass us integer strings with '0x' (hex) or '0' (octal)
+     *   prefixes when the numbers they contain are too big for the 32-bit
+     *   signed integer type.  Floating-point values never have a radix
+     *   prefix.
      */
+    size_t bnlen;
+    char *bn = CVmObjBigNum::parse_str_alo(bnlen, txt, len, 0);
 
-    /* 
-     *   write the OBJS header - object ID plus byte count for
-     *   metaclass-specific data 
-     */
+    /* write the OBJS header - object ID plus byte count for metaclass data */
     str->write_obj_id(id);
-    size_ofs = str->get_ofs();
-    str->write2(0);
+    str->write2(bnlen);
+
+    /* write the BigNumber contents */
+    str->write(bn, bnlen);
+
+    /* free the BigNumber value */
+    delete [] bn;
+
+    /* return the new object ID */
+    return id;
+}
+
+/*
+ *   Generate a RexPattern object 
+ */
+vm_obj_id_t CTcGenTarg::gen_rexpat_obj(const char *txt, size_t len)
+{
+    /* write to RexPattern object stream */
+    CTcDataStream *rs = G_rexpat_stream;
+
+    /* generate a new object ID for the RexPattern object */
+    vm_obj_id_t id = new_obj_id();
+
+    /* add the object ID to the non-symbol object list */
+    G_prs->add_nonsym_obj(id);
 
     /* 
-     *   write the metaclass-specific data for the BigNumber metaclass 
+     *   write the OBJS header - object ID plus byte count for metaclass data
+     *   (a DATAHOLDER pointing to the constant string)
      */
-
-    /* remember where the number starts */
-    num_ofs = str->get_ofs();
-
-    /* write placeholders for the precision, exponent, and flags */
-    str->write2(0);
-    str->write2(0);
-    str->write(0);
-
-    /* start at the beginning of the number's text */
-    p.set((char *)txt);
-    rem = len;
-
-    /* presume the value won't be zero */
-    val_zero = FALSE;
-
-    /* check for leading sign indicators */
-    for (neg = FALSE ; rem != 0 ; p.inc(&rem))
-    {
-        /* if it's a sign, note it and keep scanning */
-        if (p.getch() == '-')
-        {
-            /* negative sign - note it and keep going */
-            neg = !neg;
-        }
-        else if (p.getch() == '+')
-        {
-            /* positive sign - ignore it and keep going */
-        }
-        else
-        {
-            /* not a sign character - stop scanning for signs */
-            break;
-        }
-    }
-
-    /* scan the digits of the number */
-    for (exp = 0, sig = FALSE, decpt = FALSE, prec = 0, tot_digits = 0,
-         dig_idx = 0 ; rem != 0 ; p.inc(&rem))
-    {
-        wchar_t ch;
-        
-        /* get this character */
-        ch = p.getch();
-
-        /* see what we have */
-        if (is_digit(ch))
-        {
-            /* 
-             *   if it's non-zero, it's definitely significant; otherwise,
-             *   it's significant only if we've seen a significant digit
-             *   already 
-             */
-            if (ch != '0')
-                sig = TRUE;
-
-            /* count it in the total digits whether or not its significant */
-            ++tot_digits;
-            
-            /* if the digit is significant, add it to the number */
-            if (sig)
-            {
-                /* add another digit to our buffer */
-                dig[dig_idx++] = value_of_digit(ch);
-
-                /* count the precision */
-                ++prec;
-
-                /* 
-                 *   if we haven't found the decimal point yet, count the
-                 *   exponent change
-                 */
-                if (!decpt)
-                    ++exp;
-                
-                /* 
-                 *   if we have two digits now, write out another byte of
-                 *   the number 
-                 */
-                if (dig_idx == 2)
-                {
-                    /* write out this digit pair */
-                    str->write((char)((dig[0] << 4) + dig[1]));
-
-                    /* the buffer is now empty */
-                    dig_idx = 0;
-                }
-            }
-            else if (decpt)
-            {
-                /* 
-                 *   we have a leading insignificant zero following the
-                 *   decimal point - decrease the exponent 
-                 */
-                --exp;
-            }
-        }
-        else if (!decpt && ch == '.')
-        {
-            /* we've found the decimal point - note it */
-            decpt = TRUE;
-        }
-        else if (ch == 'e' || ch == 'E')
-        {
-            int neg_exp = FALSE;
-            long acc;
-            
-            /* we've found our exponent - check for a sign */
-            p.inc(&rem);
-            if (rem != 0)
-            {
-                if (p.getch() == '-')
-                {
-                    /* note the sign and skip the '-' */
-                    neg_exp = TRUE;
-                    p.inc(&rem);
-                }
-                else if (p.getch() == '+')
-                {
-                    /* skip the '+' */
-                    p.inc(&rem);
-                }
-            }
-
-            /* scan the digits */
-            for (acc = 0 ; rem != 0 ; p.inc(&rem))
-            {
-                long new_acc;
-                
-                /* if this isn't a digit, we're done */
-                if (!is_digit(p.getch()))
-                    break;
-
-                /* add in this digit */
-                new_acc = acc*10 + value_of_digit(p.getch());
-                if ((!neg_exp && new_acc > 32767)
-                    || (neg_exp && new_acc > 32768))
-                    break;
-
-                /* set the new accumulator */
-                acc = new_acc;
-            }
-
-            /* set the sign */
-            if (neg_exp)
-                acc = -acc;
-
-            /* 
-             *   add this exponent to the exponent we derived for the
-             *   number itself 
-             */
-            exp = (int)(exp + acc);
-
-            /* 
-             *   since we scanned the string in our own loop, make sure we
-             *   haven't reached the end of the buffer - if we have, we're
-             *   done with the outer loop now 
-             */
-            if (rem == 0)
-                break;
-        }
-        else
-        {
-            /* 
-             *   anything else is invalid, so we've reached the end of the
-             *   number - stop scanning
-             */
-            break;
-        }
-    }
-
-    /* if we have a pending digit, write it out */
-    if (dig_idx == 1)
-        str->write((char)(dig[0] << 4));
+    rs->write_obj_id(id);
+    rs->write2(VMB_DATAHOLDER);
 
     /* 
-     *   if we had no significant digits, the number is all zeros, so in
-     *   this special case treat all of the zeros as significant 
+     *   Add the source text as an ordinary constant string.  Generate its
+     *   fixup in the RexPattern stream, in the DATAHOLDER we're about to
+     *   write. 
      */
-    if (prec == 0 && tot_digits != 0)
-    {
-        /* note that the value is zero */
-        val_zero = TRUE;
-        
-        /* use the zeros as significant digits */
-        prec = tot_digits;
-        
-        /* write out the zeros */
-        for ( ; tot_digits > 1 ; tot_digits -= 2)
-            str->write(0);
-        if (tot_digits > 0)
-            str->write(0);
+    add_const_str(txt, len, rs, rs->get_ofs() + 1);
 
-        /* 
-         *   the exponent for the value zero is always 1 (this is a
-         *   normalization rule) 
-         */
-        exp = 1;
-    }
+    /* 
+     *   Set up the constant string value.  Use zero as the pool offset,
+     *   since the fixup for the constant string will fill this in when the
+     *   pool layout is finalized. 
+     */
+    vm_val_t val;
+    val.set_sstring(0);
 
-    /* construct the flags */
-    flags = 0;
-    if (neg)
-        flags |= VMBN_F_NEG;
-    if (val_zero)
-        flags |= VMBN_F_ZERO;
-
-    /* go back and fix up the precision, exponent, and flags values */
-    str->write2_at(num_ofs, prec);
-    str->write2_at(num_ofs + 2, exp);
-    str->write_at(num_ofs + 4, flags);
-
-    /* fix up the size */
-    end_ofs = str->get_ofs();
-    str->write2_at(size_ofs, end_ofs - size_ofs - 2);
+    /* write the RexPattern data (a DATAHOLDER for the const string) */
+    char buf[VMB_DATAHOLDER];
+    vmb_put_dh(buf, &val);
+    rs->write(buf, VMB_DATAHOLDER);
 
     /* return the new object ID */
     return id;
@@ -1984,7 +1808,8 @@ void CTcGenTarg::write_const_as_dh(CTcDataStream *ds, ulong ofs,
     case TC_CVT_FLOAT:
         /* generate the BigNumber object */
         val.set_obj(gen_bignum_obj(src->get_val_float(),
-                                   src->get_val_float_len()));
+                                   src->get_val_float_len(),
+                                   src->is_promoted()));
 
         /* add a fixup for the object ID */
         if (G_keep_objfixups)
@@ -2006,6 +1831,17 @@ void CTcGenTarg::write_const_as_dh(CTcDataStream *ds, ulong ofs,
          *   real value 
          */
         val.set_sstring(0);
+        break;
+
+
+    case TC_CVT_RESTR:
+        /* generate the RexPattern object */
+        val.set_obj(gen_rexpat_obj(src->get_val_str(),
+                                   src->get_val_str_len()));
+
+        /* add a fixup for the object ID */
+        if (G_keep_objfixups)
+            CTcIdFixup::add_fixup(&G_objfixup, ds, ofs + 1, val.val.obj);
         break;
 
     case TC_CVT_LIST:
@@ -4001,12 +3837,22 @@ void CTPNConst::gen_code(int discard, int)
         break;
 
     case TC_CVT_FLOAT:
-        /* we'll represent it as a BigNumber object */
+        /* write the push-object instruction for the BigNumber object */
         G_cg->write_op(OPC_PUSHOBJ);
 
         /* generate the BigNumber object and write its ID */
-        G_cs->write_obj_id(G_cg->gen_bignum_obj(val_.get_val_float(),
-                                                val_.get_val_float_len()));
+        G_cs->write_obj_id(G_cg->gen_bignum_obj(
+            val_.get_val_float(), val_.get_val_float_len(),
+            val_.is_promoted()));
+        break;
+
+    case TC_CVT_RESTR:
+        /* write the push-object instruction for the RexPattern object */
+        G_cg->write_op(OPC_PUSHOBJ);
+
+        /* generate the RexPattern object and write its ID */
+        G_cs->write_obj_id(G_cg->gen_rexpat_obj(
+            val_.get_val_str(), val_.get_val_str_len()));
         break;
 
     case TC_CVT_SSTR:
@@ -4296,6 +4142,7 @@ void CTPNConst::gen_code_member(int discard,
 
     case TC_CVT_LIST:
     case TC_CVT_SSTR:
+    case TC_CVT_RESTR:
     case TC_CVT_FLOAT:
         /* 
          *   list/string/BigNumber constant - generate our value as
@@ -4468,6 +4315,36 @@ void CTPNDebugConst::gen_code(int discard, int for_condition)
             G_cs->write2(1);
             G_cs->write2(sym->get_meta_idx());
 
+            /* retrieve the value */
+            G_cg->write_op(OPC_GETR0);
+
+            /* 
+             *   note the net push of one value (we pushed the argument,
+             *   popped the argument, and pushed the new object) 
+             */
+            G_cg->note_push();
+        }
+        break;
+
+    case TC_CVT_RESTR:
+        {
+            /* find the RexPattern metaclass */
+            CTcSymMetaclass *sym =
+                (CTcSymMetaclass *)G_prs->get_global_symtab()->find(
+                    "RexPattern", 10);
+            if (sym == 0 || sym->get_type() != TC_SYM_METACLASS)
+                err_throw(VMERR_INVAL_DBG_EXPR);
+
+            /* push the pattern source string value as an immediate string */
+            G_cg->write_op(OPC_PUSHSTRI);
+            G_cs->write2(val_.get_val_str_len());
+            G_cs->write(val_.get_val_str(), val_.get_val_str_len());
+
+            /* create the new RexPattern object from the string */
+            G_cg->write_op(OPC_NEW2);
+            G_cs->write2(1);
+            G_cs->write2(sym->get_meta_idx());
+            
             /* retrieve the value */
             G_cg->write_op(OPC_GETR0);
 

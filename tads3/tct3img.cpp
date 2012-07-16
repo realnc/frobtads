@@ -119,6 +119,9 @@ void CTcGenTarg::write_to_object_file(CVmFile *fp, CTcMake *)
     /* write the BigNumber stream and its fixup list */
     G_bignum_stream->write_to_object_file(fp);
 
+    /* write the RexPattern stream and its fixup list */
+    G_rexpat_stream->write_to_object_file(fp);
+
     /* write the static initializer ID stream */
     G_static_init_id_stream->write_to_object_file(fp);
 
@@ -292,6 +295,7 @@ int CTcGenTarg::load_object_file(CVmFile *fp, const textchar_t *fname)
     G_os->set_object_file_start_ofs();
     G_icmod_stream->set_object_file_start_ofs();
     G_bignum_stream->set_object_file_start_ofs();
+    G_rexpat_stream->set_object_file_start_ofs();
     G_static_init_id_stream->set_object_file_start_ofs();
     G_lcl_stream->set_object_file_start_ofs();
 
@@ -445,6 +449,9 @@ int CTcGenTarg::load_object_file(CVmFile *fp, const textchar_t *fname)
         
         /* read the BigNumber stream and its fixup list */
         G_bignum_stream->load_object_file(fp, fname);
+
+        /* read the RexPattern stream and its fixup list */
+        G_rexpat_stream->load_object_file(fp, fname);
         
         /* read the static initializer ID stream */
         G_static_init_id_stream->load_object_file(fp, fname);
@@ -1000,6 +1007,7 @@ void CTcGenTarg::write_to_image(CVmFile *fp, uchar data_xor_mask,
     tc_fnset_entry *fnset;
     CVmImageWriter *image_writer;
     int bignum_idx;
+    int rexpat_idx;
     int int_class_idx;
     CTcPrsExport *exp;
     CTcDataStream *cs_list[2];
@@ -1011,6 +1019,10 @@ void CTcGenTarg::write_to_image(CVmFile *fp, uchar data_xor_mask,
      */
     if (G_bignum_stream->get_ofs() != 0)
         bignum_idx = find_or_add_meta("bignumber", 9, 0);
+
+    /* if we have any RexPattern data, get the RexPattern metaclass index */
+    if (G_rexpat_stream->get_ofs() != 0)
+        rexpat_idx = find_or_add_meta("regex-pattern", 13, 0);
 
     /* apply internal object/property ID fixups in the symbol table */
     G_prs->apply_internal_fixups();
@@ -1364,6 +1376,11 @@ void CTcGenTarg::write_to_image(CVmFile *fp, uchar data_xor_mask,
     if (G_bignum_stream->get_ofs() != 0)
         write_nontads_objs_to_image(G_bignum_stream,
                                     image_writer, bignum_idx, FALSE);
+
+    /* if we have any RexPattern data, write it out */
+    if (G_rexpat_stream->get_ofs() != 0)
+        write_nontads_objs_to_image(G_rexpat_stream,
+                                    image_writer, rexpat_idx, FALSE);
 
     /* if we have any IntrinsicClass data, write it out */
     if (G_int_class_stream->get_ofs() != 0)

@@ -171,7 +171,7 @@ void vm_init_base(vm_globals **vmg, const vm_init_options *opts)
     G_bif_tads_globals = new CVmBifTADSGlobals(vmg0_);
 
     /* allocate the BigNumber register cache */
-    G_bignum_cache = new CVmBigNumCache(32);
+    CVmObjBigNum::init_cache();
 
     /* no image loader yet */
     G_image_loader = 0;
@@ -299,7 +299,7 @@ void vm_terminate(vm_globals *vmg__, CVmMainClientIfc *clientifc)
     lib_free_str(G_disp_cset_name);
 
     /* delete the BigNumber register cache */
-    delete G_bignum_cache;
+    CVmObjBigNum::term_cache();
 
     /* delete the TADS intrinsic function set's globals */
     delete G_bif_tads_globals;

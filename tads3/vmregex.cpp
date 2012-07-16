@@ -1,5 +1,5 @@
 /* 
- *   Copyright (c) 1998, 2002 Michael J. Roberts.  All Rights Reserved.
+ *   Copyright (c) 1998, 2012 Michael J. Roberts.  All Rights Reserved.
  *   
  *   Please see the accompanying license file, LICENSE.TXT, for information
  *   on using and copying this software.  
@@ -136,14 +136,14 @@ Notes
               case-sensitive or case-insensitive.
 
      <FE> or <FirstEnd> - select the substring that ends earliest, in
-                case of an ambiguous match.  <FirstBegin> is the default.
+              case of an ambiguous match.  <FirstBegin> is the default.
      <FB> or <FirstBegin> - select the substring that starts earliest, in
-                case of an ambiguous match.  This is the default.
+              case of an ambiguous match.  This is the default.
 
      <Min> - select the shortest matching substring, in case of an
-                ambiguous match.  <Max> is the default.
+              ambiguous match.  <Max> is the default.
      <Max> - select the longest matching substring, in case of an
-                ambiguous match.
+              ambiguous match.
 
 Modified
   09/06/98 MJRoberts  - Creation
@@ -2696,7 +2696,7 @@ CRegexSearcher::~CRegexSearcher()
  *   Match a string to a compiled expression.  Returns the length of the
  *   match if successful, or -1 if no match was found.  
  */
-int CRegexSearcher::match(const char *entire_str,
+int CRegexSearcher::match(const char *entire_str, size_t entire_str_len,
                           const char *str, const size_t origlen,
                           const re_compiled_pattern_base *pattern,
                           const re_tuple *tuple_arr,
@@ -2704,23 +2704,16 @@ int CRegexSearcher::match(const char *entire_str,
                           re_group_register *regs,
                           short *loop_vars)
 {
-    size_t entire_str_len;
-    re_state_id cur_state, final_state;
-    utf8_ptr p;
-    size_t curlen;
-    int start_ofs;
-    int _retval_;
-    int case_sensitive;
-
     /* 
      *   if the case sensitivity was specified, it overrides the current
      *   search defaults; otherwise apply the search defaults 
      */
-    case_sensitive = (pattern->case_sensitivity_specified
-                      ? pattern->case_sensitive
-                      : default_case_sensitive_);
+    int case_sensitive = (pattern->case_sensitivity_specified
+                          ? pattern->case_sensitive
+                          : default_case_sensitive_);
 
     /* macro to perform a "local return" */
+    int _retval_;
 #define local_return(retval) \
     _retval_ = (retval); \
     goto do_local_return;
@@ -2728,11 +2721,9 @@ int CRegexSearcher::match(const char *entire_str,
     /* reset the stack */
     stack_.reset();
 
-    /* start at the machine's initial state */
-    cur_state = machine->init;
-
-    /* note the final state */
-    final_state = machine->final;
+    /* start at the machine's initial and final states */
+    re_state_id cur_state = machine->init;
+    re_state_id final_state = machine->final;
 
     /* 
      *   if we're starting in the final state, this is a zero-length
@@ -2743,20 +2734,20 @@ int CRegexSearcher::match(const char *entire_str,
         return 0;
 
     /* start at the beginning of the string */
-    p.set((char *)str);
-    curlen = origlen;
+    utf8_ptr p((char *)str);
+    size_t curlen = origlen;
 
     /* note the offset from the start of the entire string */
-    start_ofs = str - entire_str;
-    entire_str_len = start_ofs + origlen;
+    int start_ofs = str - entire_str;
+
+    /* note where the overall string ends */
+    const char *entire_str_end = entire_str + entire_str_len;
 
     /* run the machine */
     for (;;)
     {
-        const re_tuple *tuple;
-
         /* get the tuple for this state */
-        tuple = &tuple_arr[cur_state];
+        const re_tuple *tuple = &tuple_arr[cur_state];
 
         /* check the type of state we're processing */
         switch(tuple->typ)
@@ -2913,7 +2904,7 @@ int CRegexSearcher::match(const char *entire_str,
              *   else, this isn't a match.  Don't skip any characters on
              *   success.  
              */
-            if (curlen != 0)
+            if (p.getptr() != entire_str_end)
             {
                 local_return(-1);
             }
@@ -2951,7 +2942,8 @@ int CRegexSearcher::match(const char *entire_str,
              *   isn't a word character, we're not at the beginning of a
              *   word 
              */
-            if (curlen == 0 || !is_word_char(p.getch()))
+            if (p.getptr() == entire_str_end
+                || !is_word_char(p.getch()))
             {
                 local_return(-1);
             }
@@ -2962,7 +2954,8 @@ int CRegexSearcher::match(const char *entire_str,
              *   if the current character is a word character, we're not at
              *   the end of a word 
              */
-            if (curlen != 0 && is_word_char(p.getch()))
+            if (p.getptr() != entire_str_end
+                && is_word_char(p.getch()))
             {
                 local_return(-1);
             }
@@ -3004,38 +2997,24 @@ int CRegexSearcher::match(const char *entire_str,
         case RE_WORD_BOUNDARY:
         case RE_NON_WORD_BOUNDARY:
             {
-                int prev_is_word;
-                int next_is_word;
-                int boundary;
-
                 /*
-                 *   Determine if the previous character is a word character
-                 *   -- if we're at the beginning of the string, it's
-                 *   obviously not, otherwise check its classification 
+                 *   Determine if the previous character is a word character.
+                 *   If we're at the beginning of the string, it's obviously
+                 *   not, otherwise check the classification of the previous
+                 *   character.
                  */
-                if (p.getptr() == entire_str)
-                {
-                    /* 
-                     *   at the start of the string, so there definitely
-                     *   isn't a preceding word character 
-                     */
-                    prev_is_word = FALSE;
-                }
-                else
-                {
-                    /* look at the previous character */
-                    prev_is_word = is_word_char(p.getch_before(1));
-                }
+                int prev_is_word = (p.getptr() != entire_str
+                                    && is_word_char(p.getch_before(1)));
 
                 /* make the same check for the current character */
-                next_is_word = (curlen != 0
-                                && is_word_char(p.getch()));
+                int next_is_word = (p.getptr() != entire_str_end
+                                    && is_word_char(p.getch()));
 
                 /*
                  *   Determine if this is a boundary - it is if the two
                  *   states are different 
                  */
-                boundary = ((prev_is_word != 0) ^ (next_is_word != 0));
+                int boundary = ((prev_is_word != 0) ^ (next_is_word != 0));
 
                 /* 
                  *   make sure it matches what was desired, and return
@@ -3375,7 +3354,8 @@ int CRegexSearcher::match(const char *entire_str,
              *   It's an assertion.  Run this as a sub-state: push the
              *   current state so that we can come back to it later. 
              */
-            stack_.push(ST_ASSERT, start_ofs, p.getptr() - entire_str,
+            stack_.push(ST_ASSERT, start_ofs,
+                        p.getptr() - entire_str, curlen,
                         cur_state, final_state, 0);
 
             /*
@@ -3387,6 +3367,14 @@ int CRegexSearcher::match(const char *entire_str,
 
             /* in the sub-state, the sub-string to match starts here */
             start_ofs = p.getptr() - entire_str;
+
+            /* 
+             *   in the sub-state, we can use the entire source string, since
+             *   it's only an assertion - any text the assertion matches
+             *   after the end of the search region won't be consumed in the
+             *   enclosing state, so it's fair game within the assertion
+             */
+            curlen = entire_str_len - start_ofs;
 
             /*
              *   If this is a back assertion, figure the range of match
@@ -3408,7 +3396,7 @@ int CRegexSearcher::match(const char *entire_str,
                  */
                 int l = tuple->info.sub.minlen;
                 for ( ; l > 0 && p.getptr() != entire_str ;
-                      p.dec(), --l, ++curlen) ;
+                      p.dec(&curlen), --l) ;
 
                 /* 
                  *   If we were unable to back up by the required minimum
@@ -3436,7 +3424,7 @@ int CRegexSearcher::match(const char *entire_str,
              *   ordinary character match - if there's not another
              *   character, we obviously fail 
              */
-             if (curlen == 0)
+            if (curlen == 0)
             {
                 local_return(-1);
             }
@@ -3596,7 +3584,8 @@ int CRegexSearcher::match(const char *entire_str,
                  *   a two-branch epsilon so that we'll know to proceed to
                  *   the second branch when we finish with the first one.  
                  */
-                stack_.push(ST_EPS1, start_ofs, p.getptr() - entire_str,
+                stack_.push(ST_EPS1, start_ofs,
+                            p.getptr() - entire_str, curlen,
                             cur_state, final_state, 0);
 
                 /* the next state is the first branch of the epsilon */
@@ -3674,7 +3663,8 @@ int CRegexSearcher::match(const char *entire_str,
              *   and push a new state for the second branch.  
              */
             str_ofs = p.getptr() - entire_str;
-            stack_.swap_and_push(_retval_, ST_EPS2, &start_ofs, &str_ofs,
+            stack_.swap_and_push(_retval_, ST_EPS2,
+                                 &start_ofs, &str_ofs, &curlen,
                                  &cur_state, &final_state, regs, loop_vars);
 
             /* the next state is the second branch */
@@ -3682,7 +3672,6 @@ int CRegexSearcher::match(const char *entire_str,
 
             /* set up at the original string position */
             p.set((char *)entire_str + str_ofs);
-            curlen = entire_str_len - str_ofs;
 
             /* the second branch substring starts at the current character */
             start_ofs = p.getptr() - entire_str;
@@ -3719,13 +3708,12 @@ int CRegexSearcher::match(const char *entire_str,
                  *   will be restored from the enclosing frame that we're
                  *   returning to.
                  */
-                stack_.pop(&start_ofs, &str_ofs, &cur_state, &final_state,
-                           regs, loop_vars, &iter);
+                stack_.pop(&start_ofs, &str_ofs, &curlen,
+                           &cur_state, &final_state, regs, loop_vars, &iter);
                 stack_.discard();
 
                 /* set the string pointer */
                 p.set((char *)entire_str + str_ofs);
-                curlen = entire_str_len - str_ofs;
 
                 /* return failure */
                 local_return(-1);
@@ -3766,8 +3754,8 @@ int CRegexSearcher::match(const char *entire_str,
                  *   branch's initial state, since this is the baseline for
                  *   the first branch's final state. 
                  */
-                stack_.pop(&start_ofs, &str_ofs, &cur_state, &final_state,
-                           regs, loop_vars, &iter);
+                stack_.pop(&start_ofs, &str_ofs, &curlen,
+                           &cur_state, &final_state, regs, loop_vars, &iter);
 
                 /* add in the length up to the initial state at the epsilon */
                 ret1 += str_ofs - start_ofs;
@@ -3787,7 +3775,7 @@ int CRegexSearcher::match(const char *entire_str,
                  *   that we have the initial values of the group registers
                  *   back in the frame, for propagation to the parent frame.
                  */
-                stack_.swap_and_pop(&start_ofs, &str_ofs,
+                stack_.swap_and_pop(&start_ofs, &str_ofs, &curlen,
                                     &cur_state, &final_state,
                                     regs, loop_vars, &iter);
 
@@ -3796,7 +3784,6 @@ int CRegexSearcher::match(const char *entire_str,
 
                 /* set the string pointer */
                 p.set((char *)entire_str + str_ofs);
-                curlen = entire_str_len - str_ofs;
 
                 /* return the result */
                 local_return(ret1);
@@ -3838,8 +3825,8 @@ int CRegexSearcher::match(const char *entire_str,
              *   We're finishing an assertion sub-machine.  First, pop the
              *   machine state to get back to where we were.  
              */
-            stack_.pop(&start_ofs, &str_ofs, &cur_state, &final_state,
-                       regs, loop_vars, &iter);
+            stack_.pop(&start_ofs, &str_ofs, &curlen,
+                       &cur_state, &final_state, regs, loop_vars, &iter);
 
             /* we look at the type a lot, so get it into a local */
             typ = tuple_arr[cur_state].typ;
@@ -3857,7 +3844,6 @@ int CRegexSearcher::match(const char *entire_str,
              *   offset we popped from the state 
              */
             p.set((char *)entire_str + str_ofs);
-            curlen = entire_str_len - str_ofs;
 
             /*
              *   If this is a look-back assertion, and it's not a match,
@@ -3887,12 +3873,12 @@ int CRegexSearcher::match(const char *entire_str,
                 {
                     /* re-push our assertion sub-state */
                     stack_.push(ST_ASSERT, start_ofs,
-                                p.getptr() - entire_str,
+                                p.getptr() - entire_str, curlen,
                                 cur_state, final_state, iter);
                     
                     /* back up by lblen characters */
                     for ( ; lblen > 0 && p.getptr() != entire_str ;
-                          p.dec(), --lblen, ++curlen) ;
+                          p.dec(&curlen), --lblen) ;
 
                     /* recurse into the group */
                     final_state = tuple_arr[cur_state].info.sub.final;
@@ -3934,32 +3920,30 @@ int CRegexSearcher::search(const char *entirestr, const char *str, size_t len,
                            const re_machine *machine, re_group_register *regs,
                            int *result_len)
 {
-    utf8_ptr p;
     re_group_register best_match_regs[RE_GROUP_REG_CNT];
     short loop_vars[RE_LOOP_VARS_MAX];
-    int best_match_len;
-    int best_match_start;
-    const char *max_start_pos;
 
     /* we don't have a match yet */
-    best_match_len = -1;
-    best_match_start = -1;
+    int best_match_len = -1;
+    int best_match_start = -1;
 
     /* search the entire string */
-    max_start_pos = str + len;
+    const char *max_start_pos = str + len;
+
+    /* figure the length of the overall string */
+    size_t entirelen = len + (str - entirestr);
     
     /*
      *   Starting at the first character in the string, search for the
      *   pattern at each subsequent character until we either find the
      *   pattern or run out of string to test. 
      */
+    utf8_ptr p;
     for (p.set((char *)str) ; p.getptr() <= max_start_pos ; p.inc(&len))
     {
-        int matchlen;
-        
         /* check for a match */
-        matchlen = match(entirestr, p.getptr(), len,
-                         pattern, tuple_arr, machine, regs, loop_vars);
+        int matchlen = match(entirestr, entirelen, p.getptr(), len,
+                             pattern, tuple_arr, machine, regs, loop_vars);
         if (matchlen >= 0)
         {
             /* check our first-begin/first-end mode */
@@ -3998,10 +3982,8 @@ int CRegexSearcher::search(const char *entirestr, const char *str, size_t len,
                 }
                 else
                 {
-                    int end_idx;
-                    
                     /* calculate the ending index of this match */
-                    end_idx = (p.getptr() - str) + matchlen;
+                    int end_idx = (p.getptr() - str) + matchlen;
 
                     /* see what we have */
                     if (end_idx < best_match_start + best_match_len)
@@ -4091,6 +4073,152 @@ int CRegexSearcher::search(const char *entirestr, const char *str, size_t len,
     return -1;
 }
 
+/*
+ *   Search backwards.  In reverse searches, everything is mirrored.  The
+ *   starting position 'str' is actually the boundary for the right side of
+ *   the match, so the match must end before this character.  Likewise, the
+ *   endpoints and directions for <FirstBegin> and <FirstEnd> are mirrored.
+ *   The "beginning" endpoint is the right side of the match, and the
+ *   "ending" endpoint is the left side.  "First" means closest to the
+ *   starting position, so a higher index is firstier than a lower index.
+ */
+int CRegexSearcher::search_back(
+    const char *entirestr, const char *str, size_t len,
+    const re_compiled_pattern_base *pattern,
+    const re_tuple *tuple_arr,
+    const re_machine *machine, re_group_register *regs,
+    int *result_len)
+{
+    re_group_register best_match_regs[RE_GROUP_REG_CNT];
+    short loop_vars[RE_LOOP_VARS_MAX];
+
+    /* we don't have a match yet */
+    int best_match_len = -1;
+    int best_match_start = -1;
+
+    /* figure the overall string length */
+    size_t entirelen = len + (str - entirestr);
+
+    /* 
+     *   For a reverse search, we only want matches up to the starting
+     *   position, so the length of the matchable portion for the first
+     *   search at the starting position is zero.  Note that we still need
+     *   the entire string length, since patterns can have assertions that go
+     *   past the end of the matched text.
+     */
+    len = 0;
+
+    /*
+     *   Starting at the current position, search for the pattern at each
+     *   earlier character until we either find the pattern or run out of
+     *   string to test. 
+     */
+    utf8_ptr p;
+    for (p.set((char *)str) ; ; p.dec(&len))
+    {
+        /* check for a match */
+        int matchlen = match(entirestr, entirelen, p.getptr(), len,
+                             pattern, tuple_arr, machine, regs, loop_vars);
+        if (matchlen >= 0)
+        {
+            /* check our first-begin/first-end mode */
+            if (pattern->first_begin)
+            {
+                /*
+                 *   We're in first-beginning mode, which in a reverse search
+                 *   means that we want the *end* of the match to have the
+                 *   highest index.  The end of the match is the endpoint
+                 *   facing the starting point, so we want that endpoint to
+                 *   be as close to the starting point as possible, which
+                 *   means the one with the highest index.
+                 */
+                int keep;
+                int end_idx = (p.getptr() - str) + matchlen;
+                if (best_match_len == -1
+                    || end_idx > best_match_start + best_match_len)
+                {
+                    /* 
+                     *   this is the first match, or it's closer to the
+                     *   starting point than the previous match - keep it 
+                     */
+                    keep = TRUE;
+                }
+                else if (end_idx == best_match_start + best_match_len
+                         && pattern->longest_match)
+                {
+                    /* 
+                     *   this match has the same end index as the previous
+                     *   match; and we know it has an earlier start index
+                     *   (because our loop walks backwards through the
+                     *   string), which means it's longer than the previous
+                     *   match; and we're in longest match mode - so this is
+                     *   a longer match that's equally close, so it's a
+                     *   keeper
+                     */
+                    keep = TRUE;
+                }
+                else
+                {
+                    /* otherwise, we're not keeping this match */
+                    keep = FALSE;
+                }
+
+                /* if we're keeping this match, save it */
+                if (keep)
+                {
+                    /* save the start index, length, and register contents */
+                    best_match_start = p.getptr() - str;
+                    best_match_len = matchlen;
+                    memcpy(best_match_regs, regs, sizeof(best_match_regs));
+                }
+            }
+            else
+            {
+                /*
+                 *   We're in first-ending mode.  In a reverse search, this
+                 *   means that we want the *start* of the match (the end
+                 *   farther from the starting point) to have the *highest*
+                 *   index (so it's closer to the starting point).  This is
+                 *   the easy case for a reverse search, because the start
+                 *   point is the loop iteration variable: every future match
+                 *   will have a lower starting index (further away from the
+                 *   starting point) since that's how we walk through the
+                 *   string.  So we'll never find a match with a starting
+                 *   point as close as this one - meaning we can return this
+                 *   one without doing any more looking.
+                 */
+                *result_len = matchlen;
+                return str - p.getptr();
+            }
+        }
+
+        /* if we've reached the start of the string, there's nowhere to go */
+        if (p.getptr() == entirestr)
+            break;
+    }
+
+    /* if we found a previous match, return it */
+    if (best_match_len != -1)
+    {
+        /* set the caller's match length */
+        *result_len = best_match_len;
+
+        /* copy the saved match registers into the caller's registers */
+        memcpy(regs, best_match_regs, sizeof(best_match_regs));
+
+        /* 
+         *   Return the starting index of the match.  Note that the return
+         *   value is the number of bytes *before* the starting point,
+         *   whereas our internal counter is the index offset, which is
+         *   negative; so simply negate it for the return value. 
+         */
+        return -best_match_start;
+    }
+
+    /* we didn't find a match */
+    return -1;
+}
+
 /* ------------------------------------------------------------------------ */
 /*
  *   Search for a previously-compiled pattern within the given string.
@@ -4110,6 +4238,23 @@ int CRegexSearcher::search_for_pattern(
                   &pattern->machine, regs, result_len);
 }
 
+/*
+ *   Search backwards for a pattern
+ */
+int CRegexSearcher::search_back_for_pattern(
+    const re_compiled_pattern *pattern,
+    const char *entirestr, const char *searchstr, size_t searchlen,
+    int *result_len, re_group_register *regs)
+{
+    /* 
+     *   search for the pattern in our copy of the string - use the copy so
+     *   that the group registers stay valid even if the caller deallocates
+     *   the original string after we return 
+     */
+    return search_back(entirestr, searchstr, searchlen, pattern,
+                       pattern->tuples, &pattern->machine, regs, result_len);
+}
+
 /* ------------------------------------------------------------------------ */
 /*
  *   Check for a match to a previously compiled expression.  Returns the
@@ -4125,7 +4270,8 @@ int CRegexSearcher::match_pattern(
     short loop_vars[RE_LOOP_VARS_MAX];
 
     /* match the string */
-    return match(entirestr, searchstr, searchlen,
+    return match(entirestr, searchlen + (searchstr - entirestr),
+                 searchstr, searchlen,
                  pattern, pattern->tuples, &pattern->machine,
                  regs, loop_vars);
 }
@@ -4163,8 +4309,19 @@ int CRegexSearcherSimple::compile_and_match(
     group_cnt_ = pat.group_cnt;
 
     /* match the string */
-    return match(entirestr, searchstr, searchlen,
-                 &pat, parser_->tuple_arr_, &pat.machine, regs_, loop_vars);
+    int m = match(entirestr, searchlen + (searchstr - entirestr),
+                  searchstr, searchlen,
+                  &pat, parser_->tuple_arr_, &pat.machine, regs_, loop_vars);
+
+    /* save the match information on success */
+    if (m >= 0)
+    {
+        match_.start_ofs = searchstr - entirestr;
+        match_.end_ofs = match_.start_ofs + m;
+    }
+
+    /* return the result */
+    return m;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -4182,8 +4339,6 @@ int CRegexSearcherSimple::compile_and_search(
     const char *entirestr, const char *searchstr, size_t searchlen,
     int *result_len)
 {
-    re_compiled_pattern_base pat;
-
     /* no groups yet */
     group_cnt_ = 0;
 
@@ -4191,6 +4346,7 @@ int CRegexSearcherSimple::compile_and_search(
     clear_group_regs();
 
     /* compile the expression - return failure if we get an error */
+    re_compiled_pattern_base pat;
     if (parser_->compile(patstr, patlen, &pat) != RE_STATUS_SUCCESS)
         return -1;
 
@@ -4202,7 +4358,59 @@ int CRegexSearcherSimple::compile_and_search(
      *   that the group registers stay valid even if the caller deallocates
      *   the original string after we return 
      */
-    return search(entirestr, searchstr, searchlen,
-                  &pat, parser_->tuple_arr_, &pat.machine,
-                  regs_, result_len);
+    int m = search(entirestr, searchstr, searchlen,
+                   &pat, parser_->tuple_arr_, &pat.machine,
+                   regs_, result_len);
+
+    /* save the match information on success */
+    if (m >= 0)
+    {
+        match_.start_ofs = m;
+        match_.end_ofs = m + *result_len;
+    }
+
+    /* return the result */
+    return m;
+}
+
+/*
+ *   compile and search backwards 
+ */
+int CRegexSearcherSimple::compile_and_search_back(
+    const char *patstr, size_t patlen,
+    const char *entirestr, const char *searchstr, size_t searchlen,
+    int *result_len)
+{
+    /* no groups yet */
+    group_cnt_ = 0;
+
+    /* clear the group registers */
+    clear_group_regs();
+
+    /* compile the expression - return failure if we get an error */
+    re_compiled_pattern_base pat;
+    if (parser_->compile(patstr, patlen, &pat) != RE_STATUS_SUCCESS)
+        return -1;
+
+    /* remember the group count from the compiled pattern */
+    group_cnt_ = pat.group_cnt;
+
+    /* 
+     *   search for the pattern in our copy of the string - use the copy so
+     *   that the group registers stay valid even if the caller deallocates
+     *   the original string after we return 
+     */
+    int m = search_back(entirestr, searchstr, searchlen,
+                        &pat, parser_->tuple_arr_, &pat.machine,
+                        regs_, result_len);
+
+    /* save the match information on success */
+    if (m >= 0)
+    {
+        match_.start_ofs = searchstr - entirestr - m;
+        match_.end_ofs = match_.start_ofs + *result_len;
+    }
+
+    /* return the result */
+    return m;
 }

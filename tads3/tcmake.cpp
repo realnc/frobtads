@@ -60,6 +60,7 @@ Modified
 #include "tcvsn.h"
 #include "vmmaincn.h"
 #include "vmrunsym.h"
+#include "vmbignum.h"
 #include "tcunas.h"
 #include "vmcrc.h"
 #include "rcmain.h"
@@ -169,6 +170,9 @@ CTcMake::CTcMake()
 
     /* presume we won't create output directories */
     create_dirs_ = FALSE;
+
+    /* initialize the BigNumber internal cache */
+    CVmObjBigNum::init_cache();
 }
 
 /*
@@ -238,6 +242,9 @@ CTcMake::~CTcMake()
 
     /* delete the source character set name */
     lib_free_str(source_charset_);
+
+    /* delete the BigNumber cache */
+    CVmObjBigNum::term_cache();
 }
 
 /*
@@ -1444,6 +1451,10 @@ void CTcMake::create_dir(CTcHostIfc *hostifc,
         /* extract the directory path portion */
         os_get_path_name(dir, sizeof(dir), path);
         path = dir;
+
+        /* don't do anything if there's no path */
+        if (strlen(dir) == 0)
+            return;
     }
 
     /* if the directory doesn't already exist, create it */

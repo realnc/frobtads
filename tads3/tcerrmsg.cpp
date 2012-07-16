@@ -447,9 +447,14 @@ const err_msg_t tc_messages_english[] =
     "reading source code." },
 
     { TCERR_INT_CONST_OV,
-    "integer constant exceeds maximum value",
-    "An integer constant value exceeds the maximum that can be stored. "
-    "Integers are limited to -2147483648 to 2147483647." },
+    "constant value exceeds integer range; promoted to BigNumber",
+    "The numeric value specified is outside of the range that can be "
+    "stored in the TADS integer type (-2147483648 to +2147483647), so it "
+    "has been automatically promoted to a BigNumber (floating point) "
+    "value. BigNumber values can represent much larger numbers than "
+    "TADS integers, but some functions that require numeric arguments "
+    "only accept integer values. If you're using this value in such a "
+    "context, it might cause an error at run-time." },
 
     { TCERR_BACKSLASH_SEQ,
     "invalid backslash escape sequence \\%c in string",
@@ -2163,6 +2168,11 @@ const err_msg_t tc_messages_english[] =
     "The syntax for the __objref() operator is invalid. This operator "
     "requires syntax of the form __objref(symbol) or __objref(symbol, mode), "
     "where the mode is 'warn' or 'error'." },
+
+    { TCERR_BAD_OP_FOR_FLOAT,
+    "floating point values can't be used with this operator",
+    "Floating point values can't be used with this operator. Only ordinary "
+    "integer values can be used." },
 
     { TCERR_CODEGEN_NO_MEM,
     "out of memory for code generation",

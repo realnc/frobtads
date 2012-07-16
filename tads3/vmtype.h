@@ -312,11 +312,25 @@ struct vm_val_t
     int is_logical() const { return (typ == VM_NIL || typ == VM_TRUE); }
 
     /* 
-     *   Get a logical as numeric TRUE or FALSE.  This does not perform
+     *   Get a logical as numeric TRUE or FALSE.  This doesn't perform
      *   any type checking; the caller must ensure that the value is
      *   either true or nil, or this may return meaningless results.  
      */
     int get_logical() const { return (typ == VM_TRUE); }
+
+    /* get as logical, checking type */
+    int get_logical_only() const
+    {
+        if (typ == VM_TRUE)
+            return TRUE;
+        else if (typ == VM_NIL)
+            return FALSE;
+        else
+        {
+            err_throw(VMERR_BAD_TYPE_BIF);
+            AFTER_ERR_THROW(return FALSE;)
+        }
+    }
 
     /*
      *   Get the underlying string constant value.  If the value does not

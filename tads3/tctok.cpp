@@ -480,6 +480,7 @@ const char *CTcTokenizer::get_op_text(tc_toktyp_t op)
         { TOKT_DSTR_START, "<double-quoted string>" },
         { TOKT_DSTR_MID, "<double-quoted string>" },
         { TOKT_DSTR_END, "<double-quoted string>" },
+        { TOKT_RESTR, "<regex string>" },
         { TOKT_LPAR, "(" },
         { TOKT_RPAR, ")" },
         { TOKT_COMMA, "," },
@@ -535,6 +536,7 @@ const char *CTcTokenizer::get_op_text(tc_toktyp_t op)
         { TOKT_QQ, "??" },
         { TOKT_COLONCOLON, "::" },
         { TOKT_FLOAT, "<float>" },
+        { TOKT_BIGINT, "<bigint>" },
         { TOKT_AT, "@" },
         { TOKT_DOTDOT, ".." },
         { TOKT_SELF, "self" },
@@ -896,8 +898,12 @@ void CTcTokenizer::set_string_capture(osfildef *fp)
     if (string_fp_ != 0)
         delete string_fp_;
 
-    /* remember the new capture file */
-    string_fp_ = new CVmFileSource(fp);
+    /* 
+     *   Remember the new capture file.  Use a duplicate handle, since we
+     *   pass ownership of the handle to the CVmFileSource object (i.e.,
+     *   it'll close the handle when done). 
+     */
+    string_fp_ = new CVmFileSource(osfdup(fp, "w"));
 
     /* 
      *   if we don't already have a character mapping to translate from
@@ -1097,7 +1103,9 @@ int CTcTokenizer::is_tok_safe(tc_toktyp_t typ)
     case TOKT_DSTR_START:
     case TOKT_DSTR_MID:
     case TOKT_DSTR_END:
+    case TOKT_RESTR:
     case TOKT_FLOAT:
+    case TOKT_BIGINT:
         /* these types are always stored in the source list */
         return TRUE;
 
@@ -1289,34 +1297,30 @@ void CTcTokenizer::skip_ws_and_markers(utf8_ptr *p)
 tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                                        tok_embed_ctx *ec, int expanding)
 {
-    wchar_t cur;
     tc_toktyp_t typ;
-    utf8_ptr start;
-    int num_minus;
-    
+
     /* skip whitespace */
     skip_ws_and_markers(p);
 
     /* remember where the token starts */
-    start = *p;
+    utf8_ptr start = *p;
+
+    /* get the initial character */
+    wchar_t cur = p->getch();
 
     /* if there's nothing left in the current line, return EOF */
-    if (p->getch() == '\0')
+    if (cur == '\0')
     {
         /* indicate end of file */
         typ = TOKT_EOF;
         goto done;
     }
 
-    /* get the initial character, and skip it */
-    cur = p->getch();
+    /* skip the initial character */
     p->inc();
 
     /* presume the token will not be marked as fully macro-expanded */
     tok->set_fully_expanded(FALSE);
-
-    /* presume it's not a number with a minus sign */
-    num_minus = FALSE;
 
     /* see what we have */
     switch(cur)
@@ -1401,14 +1405,24 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
     case '8':
     case '9':
         {
-            long acc;
-            int overflow = 0;
-
             /* 
              *   Start out with the leading digit in the accumulator.  Note
              *   that the character set internally is always UTF-8.  
              */
-            acc = value_of_digit(cur);
+            ulong acc = value_of_digit(cur);
+
+            /*
+             *   The overflow limit differs for positive and negative values,
+             *   but we can't be sure at this point which we have, since even
+             *   if there's a '-' before the number, it could be a
+             *   subtraction operator rather than a negation operator.  We
+             *   can't know until we've folded constants whether the number
+             *   is positive or negative.  Use the lower limit for now; the
+             *   compiler will un-promote values after constant folding if
+             *   they end up fitting after all, which will handle the case of
+             *   INT32MINVAL, whose absolute value is higher than this limit.
+             */
+            const ulong ovlimit = 2147483647U;
 
             /* 
              *   If it's a leading zero, treat as octal or hex.  '0x' means
@@ -1437,7 +1451,7 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
 
                         /* check for 32-bit integer overflow */
                         if ((acc & 0xF0000000) != 0)
-                            ++overflow;
+                            goto do_int_overflow;
 
                         /* 
                          *   Shift the accumulator and add this digit's value.
@@ -1467,7 +1481,7 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                     {
                         /* check for overflow */
                         if ((acc & 0xE0000000) != 0)
-                            ++overflow;
+                            goto do_int_overflow;
 
                         /* add the digit */
                         acc = 8*acc + value_of_odigit(p->getch());
@@ -1505,7 +1519,7 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                 {
                     /* check for integer overflow in the shift */
                     if (acc > 214748364)
-                        ++overflow;
+                        goto do_int_overflow;
 
                     /* shift the accumulator */
                     acc *= 10;
@@ -1514,17 +1528,13 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                     int d = value_of_digit(p->getch());
 
                     /* check for overflow adding the digit */
-                    if ((unsigned)acc > 2147483648U - d)
-                        ++overflow;
+                    if ((unsigned)acc > ovlimit - d)
+                        goto do_int_overflow;
 
                     /* add the digit */
                     acc += d;
                 }
             }
-
-            /* negate the value if we had a minus sign */
-            if (num_minus)
-                acc = -acc;
 
             /* 
              *   If we stopped at a decimal point or an exponent, it's a
@@ -1533,24 +1543,54 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
              *   marker operator or an ellipsis operator.  
              */
             if (p->getch() == '.' && p->getch_at(1) != '.')
+            {
+                typ = TOKT_FLOAT;
                 goto do_float;
+            }
             else if (p->getch() == 'e' || p->getch() == 'E')
+            {
+                typ = TOKT_FLOAT;
                 goto do_float;
+            }
 
             /* it's an integer value */
             typ = TOKT_INT;
 
             /* set the integer value */
-            tok->set_int_val(acc, overflow != 0);
+            tok->set_int_val(acc);
         }
         break;
 
+    do_int_overflow:
+        /* mark it as an integer that overflowed into a float type */
+        typ = TOKT_BIGINT;
+        
     do_float:
         {
-            int found_decpt;
+            /* haven't found a decimal point yet */
+            int found_decpt = FALSE;
+            int is_hex = FALSE;
+
+            /* start over at the beginning of the number */
+            *p = start;
+
+            /* skip any leading sign */
+            if (p->getch() == '-')
+                p->inc();
+
+            /* skip any leading "0x" */
+            if (typ == TOKT_BIGINT && p->getch() == '0')
+            {
+                wchar_t c1 = p->getch_at(1);
+                if (c1 == 'x' || c1 == 'X')
+                {
+                    is_hex = TRUE;
+                    p->inc_by(2);
+                }
+            }
             
-            /* start over and parse the float */
-            for (*p = start, found_decpt = FALSE ; ; p->inc())
+            /* parse the rest of the float */
+            for ( ; ; p->inc())
             {
                 /* get this character and move on */
                 cur = p->getch();
@@ -1560,10 +1600,18 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                 {
                     /* we have another digit; just keep going */
                 }
-                else if (!found_decpt && cur == '.')
+                else if (is_hex && is_xdigit(cur))
+                {
+                    /* we have another hex digit, so keep going */
+                }
+                else if (!found_decpt && !is_hex && cur == '.')
                 {
                     /* it's the decimal point - note it and keep going */
                     found_decpt = TRUE;
+
+                    /* if it started as a promoted int, it's really a float */
+                    if (typ == TOKT_BIGINT)
+                        typ = TOKT_FLOAT;
                 }
                 else if (cur == 'e' || cur == 'E')
                 {
@@ -1586,6 +1634,10 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                     /* advance to the end of the exponent */
                     *p = p2;
 
+                    /* if it started as a promoted int, it's now a float */
+                    if (typ == TOKT_BIGINT)
+                        typ = TOKT_FLOAT;
+
                     /* the end of the exponent is the end of the number */
                     break;
                 }
@@ -1596,9 +1648,6 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                 }
             }
         }
-
-        /* it's a float */
-        typ = TOKT_FLOAT;
         break;
 
     case '"':
@@ -1637,7 +1686,10 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
                 typ = TOKT_DOTDOT;
         }
         else if (is_digit(p->getch()))
+        {
+            typ = TOKT_FLOAT;
             goto do_float;
+        }
         else
             typ = TOKT_DOT;
         break;
@@ -1928,6 +1980,20 @@ tc_toktyp_t CTcTokenizer::next_on_line(utf8_ptr *p, CTcToken *tok,
             typ = TOKT_POUND;
         break;
 
+    case 'R':
+        /* check for regular expression string syntax */
+        if (p->getch() == '"' || p->getch() == '\'')
+        {
+            /* 
+             *   It's a regular expression string.  Tokenize the string
+             *   portion as normal, but mark it as a regex string rather than
+             *   a regular string. 
+             */
+            *p = start;
+            return tokenize_string(p, tok, ec);
+        }
+        /* not a regex string - fall through to default case */
+
     default:        
         /* check to see if it's a symbol */
         if (is_syminit(cur))
@@ -2030,6 +2096,13 @@ tc_toktyp_t CTcTokenizer::next_on_line_xlat(utf8_ptr *p, CTcToken *tok,
 
         /* use the default case */
         goto do_normal;
+
+    case 'R':
+        /* check for a regex string */
+        if (p->getch_at(1) == '"' || p->getch_at(1) == '\'')
+            return tokenize_string(p, tok, ec);
+
+        /* not a regex string - fall through to the default handling */
         
     default:
     do_normal:
@@ -2094,6 +2167,13 @@ tc_toktyp_t CTcTokenizer::next_on_line_xlat_keep()
 
             /* use the normal parsing */
             goto do_normal;
+
+        case 'R':
+            /* check for a regex string */
+            if (p_.getch_at(1) == '"' || p_.getch_at(1) == '\'')
+                return xlat_string_to_src(&main_in_embedding_, FALSE);
+
+            /* not a regex string - fall through to the default case */
             
         default:
         do_normal:
@@ -2140,7 +2220,8 @@ tc_toktyp_t CTcTokenizer::next_on_line_xlat_keep()
                 break;
 
             case TOKT_FLOAT:
-                /* floating-point number */
+            case TOKT_BIGINT:
+                /* floating-point number (or promoted large integer) */
                 {
                     const char *p;
 
@@ -2189,11 +2270,9 @@ tc_toktyp_t CTcTokenizer::next_on_line_xlat_keep()
  *   Translate the string at the current token position in the input
  *   stream to the source block list.  
  */
-tc_toktyp_t CTcTokenizer::xlat_string_to_src(tok_embed_ctx *ec,
-                                             int force_embed_end)
+tc_toktyp_t CTcTokenizer::xlat_string_to_src(
+    tok_embed_ctx *ec, int force_embed_end)
 {
-    tc_toktyp_t typ;
-    
     /* 
      *   Reserve space for the entire rest of the line.  This is
      *   conservative, in that we will definitely need less space than
@@ -2206,7 +2285,8 @@ tc_toktyp_t CTcTokenizer::xlat_string_to_src(tok_embed_ctx *ec,
                    (p_.getptr() - curbuf_->get_text()));
 
     /* translate into the source block */
-    typ = xlat_string_to(src_ptr_, &p_, &curtok_, ec, force_embed_end);
+    tc_toktyp_t typ = xlat_string_to(
+        src_ptr_, &p_, &curtok_, ec, force_embed_end);
 
     /* commit the space in the source block */
     commit_source(curtok_.get_text_len() + 1);
@@ -2256,9 +2336,9 @@ static int count_quotes(const utf8_ptr *p, wchar_t qu)
  *   We'll update the line buffer in-place to incorporate the translated
  *   string text.
  */
-tc_toktyp_t CTcTokenizer::xlat_string_to(char *dstp, utf8_ptr *p,
-                                         CTcToken *tok, tok_embed_ctx *ec,
-                                         int force_embed_end)
+tc_toktyp_t CTcTokenizer::xlat_string_to(
+    char *dstp, utf8_ptr *p, CTcToken *tok, tok_embed_ctx *ec,
+    int force_embed_end)
 {
     /* set up our output utf8 pointer */
     utf8_ptr dst(dstp);
@@ -2269,8 +2349,16 @@ tc_toktyp_t CTcTokenizer::xlat_string_to(char *dstp, utf8_ptr *p,
     /* set the appropriate string token type */
     tok->settyp(qu == '"' ? TOKT_DSTR :
                 qu == '\'' ? TOKT_SSTR :
+                qu == 'R' ? TOKT_RESTR :
                 ec != 0 ? ec->endtok :
                 TOKT_INVALID);
+
+    /* if it's a regex string, skip the 'R' and note the actual quote type */
+    if (qu == 'R')
+    {
+        p->inc();
+        qu = p->getch();
+    }
 
     /* 
      *   If we're at a quote (rather than at '>>' for continuing from an
@@ -2464,6 +2552,7 @@ tc_toktyp_t CTcTokenizer::xlat_string_to(char *dstp, utf8_ptr *p,
             continue;
         }
         else if (ec != 0 && !ec->in_expr
+                 && tok->gettyp() != TOKT_RESTR
                  && cur == '<' && p->getch_at(1) == '<')
         {
             /* 
@@ -2841,7 +2930,12 @@ tc_toktyp_t CTcTokenizer::tokenize_string(utf8_ptr *p, CTcToken *tok,
     /* remember where the text starts */
     const char *start = p->getptr();
 
-    /* note the quote type */
+    /* check for a regex string - R'...' or R"..." */
+    int regex = (p->getch() == 'R');
+    if (regex)
+        p->inc();
+
+    /* note the quote type, for matching later */
     wchar_t qu = p->getch();
 
     /* skip the quote in the input */
@@ -2867,6 +2961,12 @@ tc_toktyp_t CTcTokenizer::tokenize_string(utf8_ptr *p, CTcToken *tok,
     case '\'':
         /* single-quoted string */
         typ = TOKT_SSTR;
+        allow_embedding = (ec != 0);
+        break;
+
+    case '"':
+        /* regular double-quoted string */
+        typ = TOKT_DSTR;
         allow_embedding = (ec != 0);
         break;
 
@@ -2897,18 +2997,22 @@ tc_toktyp_t CTcTokenizer::tokenize_string(utf8_ptr *p, CTcToken *tok,
         p->inc();
         break;
 
-    case '"':
-        /* regular double-quoted string */
-        typ = TOKT_DSTR;
-        allow_embedding = (ec != 0);
-        break;
-
     default:
         /* anything else is invalid */
         typ = TOKT_INVALID;
         qu = '"';
         allow_embedding = FALSE;
         break;
+    }
+
+    /* if it's a regex string, it has special handling */
+    if (regex)
+    {
+        /* embeddings aren't allowed in regex strings */
+        allow_embedding = FALSE;
+
+        /* the token type is 'regex string' */
+        typ = TOKT_RESTR;
     }
 
     /* this is where the string's contents start */
@@ -8139,6 +8243,11 @@ void CTcTokenizer::log_error_or_warning_with_tok(
     case TOKT_DSTR_END:
         prefix = ">>";
         suffix = "\"";
+        goto format_string;
+
+    case TOKT_RESTR:
+        prefix = "R'";
+        suffix = "'";
         goto format_string;
 
     format_string:

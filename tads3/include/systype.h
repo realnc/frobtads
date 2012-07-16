@@ -95,6 +95,10 @@ intrinsic class Object 'root-object/030004'
 #define PropDefInherits      3
 #define PropDefGetClass      4
 
+/* export the objToString method */
+property objToString;
+export objToString 'objToString';
+
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -365,7 +369,29 @@ intrinsic class String 'string/030007': Object
     /* convert to lower case */
     toLower();
 
-    /* find a substring */
+    /* 
+     *   Find a substring or pattern within the subject string (self),
+     *   searching the string from left to right returning the index of the
+     *   first match found.  If 'str' is a string, this searches for an exact
+     *   match to the substring.  If 'str' is a RexPattern object, this
+     *   searches for a match to the pattern.  Returns the character index of
+     *   the start of the match if found (the first character is at index 1),
+     *   or nil if no match is found.
+     *   
+     *   'index' is the optional starting index for the search.  the first
+     *   character is at index 1; a negative index specifies an offset from
+     *   the end of the string, with -1 indicating the last character, -2 the
+     *   second to last, and so on.  If 'index' is omitted, the search starts
+     *   at the first character.  Note that the search proceeds from left to
+     *   right even if 'index' is negative - a negative starting index is
+     *   just a convenience to specify an offset from the end of the string,
+     *   but the search still proceeds in the same direction.
+     *   
+     *   (Note: "left to right" in this context simply means from lower to
+     *   higher character index in the string.  We're using the term loosely,
+     *   in particular ignoring anything related to the reading order or
+     *   display direction for different languages or scripts.)
+     */
     find(str, index?);
 
     /* 
@@ -387,7 +413,7 @@ intrinsic class String 'string/030007': Object
      *   Map to a byte array, converting to the given character set.  If
      *   'charset' is provided, it must be an object of intrinsic class
      *   CharacterSet, or a string giving the name of a character set.  The
-     *   characters in the string will be mapped from the internal Unicode
+     *   characters in the string are mapped from the internal Unicode
      *   representation to the appropriate byte representation in the given
      *   character set.  Any unmappable characters are replaced with the
      *   usual default/missing character for the set, as defined by the
@@ -395,9 +421,10 @@ intrinsic class String 'string/030007': Object
      *   
      *   If 'charset' is omitted or nil, the byte array is created simply by
      *   treating the Unicode character code of each character in the string
-     *   as a byte value.directly to byte value.  A byte can only hold values
-     *   from 0 to 255, so a numeric overflow will occur if any character
-     *   code is outside this range.  
+     *   as a byte value.  A byte can only hold values from 0 to 255, so a
+     *   numeric overflow error is thrown if any character code in the source
+     *   string is outside this range.
+     *   
      */
     mapToByteArray(charset?);
 
@@ -406,21 +433,33 @@ intrinsic class String 'string/030007': Object
      *   with the given new string.
      *   
      *   'self' is the subject string, which we search for instances of the
-     *   replacement.  'origStr' is the string to search for within 'self',
-     *   and 'newStr' is the string to replace it with on each occurrence.
+     *   replacement.
      *   
-     *   'newStr' can be a function (regular or anonymous) instead of a list.
-     *   In this case, it's invoked as 'newStr(match, index, orig)' for each
-     *   match where 'match' is the matching text, 'index' is the index
-     *   within the original subject string of the match, and 'orig' is the
-     *   full original subject string.  This function must return a string
-     *   value, which is used as the replacement text.  Using a function
-     *   allows greater flexibility in specifying the replacement, since it
-     *   can vary the replacement according to the actual text matched and
-     *   its position in the subject string.
+     *   'origStr' is the string to search for within 'self'.  This is
+     *   treated as a literal text substring to find within 'self'.
+     *   'origStr' can alternatively be a RexPattern object, in which case
+     *   the regular expression is matched.
+     *   
+     *   'newStr' is the replacement text, as a string.  'newStr' can
+     *   alternatively be a function (regular or anonymous) instead of a
+     *   string.  In this case, it's invoked as 'newStr(match, index, orig)'
+     *   for each match where 'match' is the matching text, 'index' is the
+     *   index within the original subject string of the match, and 'orig' is
+     *   the full original subject string.  This function must return a
+     *   string value, which is used as the replacement text.  Using a
+     *   function allows greater flexibility in specifying the replacement,
+     *   since it can vary the replacement according to the actual text
+     *   matched and its position in the subject string.
      *   
      *   'flags' is a combination of ReplaceXxx flags specifying the search
      *   options.  It's optional; if omitted, the default is ReplaceAll.
+     *   
+     *   ReplaceOnce and ReplaceAll are mutually exclusive; they mean,
+     *   respectively, that only the first occurrence of the match should be
+     *   replaced, or that every occurrence should be replaced.  ReplaceOnce
+     *   and ReplaceAll are ignored if a 'limit' value is specified (this is
+     *   true even if 'limit' is nil, which means that all occurrences are
+     *   replaced).
      *   
      *   'index' is the starting index within 'self' for the search.  If this
      *   is given, we'll ignore any matches that start before the starting
@@ -437,6 +476,12 @@ intrinsic class String 'string/030007': Object
      *   elements, each match to an excess 'origStr' element is replaced with
      *   an empty string.  This allows you to perform several replacements
      *   with a single call.
+     *   
+     *   'limit', if specified, is an integer indicating the maximum number
+     *   of matches to replace, or nil to replace all matches.  If the limit
+     *   is reached before all matches have been replaced, no further
+     *   replacements are performed.  If this parameter is specified, it
+     *   overrides any ReplaceOnce or ReplaceAll flag.
      *   
      *   There are two search modes when 'origStr' is a list.  The default is
      *   "parallel" mode.  In this mode, we search for all of the 'origStr'
@@ -462,7 +507,7 @@ intrinsic class String 'string/030007': Object
      *   modified.  Parallel mode, in contrast, never re-scans replacement
      *   text.  
      */
-    findReplace(origStr, newStr, flags?, index?);
+    findReplace(origStr, newStr, flags?, index?, limit?);
 
     /*
      *   Splice: delete 'del' characters starting at 'idx', and insert the
@@ -752,6 +797,69 @@ intrinsic class String 'string/030007': Object
      *   sorting order when comparing ASCII strings.
      */
     compareIgnoreCase(str);
+
+    /*
+     *   Find the last instance of a substring or pattern within the string,
+     *   searching the subject string (self) from right to left (that is,
+     *   from the end of the string towards the beginning).  This works like
+     *   find(), but searches in the reverse direction.  Returns the index of
+     *   the match, or nil if no match is found.
+     *   
+     *   'str' can be a string or a RexPattern.  If it's a string, we look
+     *   for an exact match to the substring.  If it's a RexPattern, we
+     *   search for a match to the pattern.
+     *   
+     *   The optional 'index' specifies the starting index for the search.
+     *   This is the index of the character AFTER the last character that's
+     *   allowed to be included in the match.  The first character of the
+     *   string is at index 1; a negative index indicates an offset from the
+     *   end of the string, so -1 is the last character.  0 has the special
+     *   meaning of the end of the string, just past the last character in
+     *   the string, so you can use 0 (or, equivalently, self.length()+1) to
+     *   search the entire string from the end.  For a repeated search, pass
+     *   the index of the previous match, since this will find the next
+     *   earlier matching substring that doesn't overlap with the previous
+     *   match.
+     *   
+     *   (Note: "right to left" in this context simply means that the search
+     *   runs from higher to lower character index in the string.  We're
+     *   using the term loosely, in particular ignoring anything related to
+     *   the reading order or display direction for different languages or
+     *   scripts.)
+     */
+    findLast(str, index?);
+
+    /*
+     *   Find all occurrences of substring or pattern within a string,
+     *   returning a list of the results.
+     *   
+     *   'str' can be a string or RexPattern object.  If it's a string, we
+     *   look for exact matches to the substring.  If it's a RexPattern, we
+     *   search for matches to the pattern.
+     *   
+     *   'func' is an optional function used to process the results.  If this
+     *   is provided, the function is called once for each match found in the
+     *   string.  The function's return value is then placed into the result
+     *   list for the overall findAll() result.  The function is called for
+     *   each match found as follows: func(match, idx, g1, g2, ...), where
+     *   'match' is a string giving the text of the match, 'idx' is an
+     *   integer giving the index in the string (self) of the first character
+     *   of the match, and the 'gN' arguments are strings giving the text of
+     *   the correspondingly numbered capture groups (the parenthesized
+     *   groups in a regular expression match).  All of the 'func' arguments
+     *   except 'match' are optional: the function can omit them, in which
+     *   case the caller doesn't pass them.  If 'func' specifies more 'gN'
+     *   capture group parameters than were actually found in the match, nil
+     *   is passed for each extra parameter.
+     *   
+     *   The return value is a list of the results.  If no occurrences of
+     *   'str' are found, the result is an empty list.  If 'func' is
+     *   specified, each element in the return list is the return value from
+     *   calling 'func' for the corresponding match; if 'func' is omitted,
+     *   each element in the return list is a string with the text of that
+     *   match.
+     */
+    findAll(str, func?);
 }
 
 /*

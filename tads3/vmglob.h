@@ -14,6 +14,25 @@ Function
   by several subsystems.  This file defines the globals and a scheme
   for accessing them.
 
+  Important: note that some VM globals aren't part of the scheme
+  described and defined below.  In particular, the try-catch-throw
+  exception handling subsystem doesn't use it; the dynamic compiler
+  doesn't use it; read-only statics don't use it; and some global
+  caches don't use it.  The exception subsystem opts out because
+  its globals constitute a critical performance bottleneck, plus
+  they need to be per-thread for multi-threaded builds; so they use
+  native thread-local storage if threads are used, otherwise they're
+  just ordinary globals.  The dynamic compiler doesn't use the VM
+  globals scheme because the compiler wasn't originally designed to
+  be used within the VM at all; by the time we adapted it, it was too
+  late and would have required too much work to bring it into the
+  scheme.  Read-only statics can be excluded because they can be
+  safely shared among threads and/or instances without any extra
+  work.  And caches can safely opt out as long as the information
+  cached is truly global, not private to a VM instance; but note that
+  caches might need to use per-thread storage, or else mutexes, if
+  they can be accessed from multiple threads.
+
   The globals can be configured in four different ways, depending on
   how the T3 VM is to be used:
 
@@ -302,6 +321,8 @@ inline void vmglob_delete(vm_globals *) { }
 #define VMG0_
 #define vmg_
 #define vmg0_
+#define VMGNULL_
+#define VMG0NULL_
 #define Pvmg0_P             /* "vmg0_" in parens, for constructor arguments */
 
 /* 
@@ -352,6 +373,8 @@ inline void vmglob_delete(vm_globals *) { }
 #define VMG0_
 #define vmg_
 #define vmg0_
+#define VMGNULL_
+#define VMG0NULL_
 #define Pvmg0_P
 
 /* get the address of the globals */
@@ -399,6 +422,8 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 #define VMG0_
 #define vmg_
 #define vmg0_
+#define VMGNULL_
+#define VMG0NULL_
 #define Pvmg0_P
 
 /* get the address of the globals */
@@ -438,6 +463,8 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 /* parameter reference for passing to a function */
 #define vmg_   vmg__,
 #define vmg0_  vmg__
+#define VMGNULL_  ((vm_globals *)NULL),
+#define VMG0NULL_ ((vm_globals *)NULL)
 #define Pvmg0_P  (vmg__)
 
 /* get the address of the globals */
@@ -488,7 +515,6 @@ inline void vmglob_delete(vm_globals *glob) { delete glob; }
 #define G_dbg_lclsym_hdr_size VMGLOB_ACCESS(dbg_lclsym_hdr_size)
 #define G_dbg_fmt_vsn VMGLOB_ACCESS(dbg_fmt_vsn)
 #define G_dbg_frame_size VMGLOB_ACCESS(dbg_frame_size)
-#define G_bignum_cache VMGLOB_ACCESS(bignum_cache)
 #define G_dyncomp     VMGLOB_ACCESS(dyncomp)
 #define G_net_queue   VMGLOB_ACCESS(net_queue)
 #define G_net_config  VMGLOB_ACCESS(net_config)

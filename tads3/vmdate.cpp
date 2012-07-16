@@ -2587,8 +2587,8 @@ int CVmObjDate::sub_val(VMG_ vm_val_t *result, vm_obj_id_t /*self*/,
         int32_t vdaytime = vdate->get_ext()->daytime;
 
         /* we need fractional days, so calculate as bignum_t */
-        bignum_t<32> d1(vmg_ (long)dayno), t1(vmg_ (long)daytime);
-        bignum_t<32> d2(vmg_ (long)vdayno), t2(vmg_ (long)vdaytime);
+        bignum_t<32> d1((long)dayno), t1((long)daytime);
+        bignum_t<32> d2((long)vdayno), t2((long)vdaytime);
         d1 += (t1 / (long)(24*60*60*1000));
         d2 += (t2 / (long)(24*60*60*1000));
 
@@ -3282,7 +3282,7 @@ size_t CVmObjDate::format_date(VMG_ char *buf, size_t buflen,
                      *   figure the combined date/time value, adjusting the
                      *   day number to the Julian day Epoch 
                      */
-                    bignum_t<32> bdn(vmg_ dn), bdt(vmg_ dt);
+                    bignum_t<32> bdn(dn), bdt(dt);
                     bdn += 1721119L;
                     bdn += (bdt / (long)(24*60*60*1000));
 
@@ -3678,10 +3678,10 @@ int CVmObjDate::getp_getJulianDay(VMG_ vm_obj_id_t self,
 
     /* get the Julian day number for midnight UTC on my day number */
     caldate_t cd(get_ext()->dayno);
-    bignum_t<32> jday(vmg_ cd.julian_dayno());
+    bignum_t<32> jday(cd.julian_dayno());
 
     /* add my fraction of a day past midnight UTC */
-    bignum_t<32> jt(vmg_ (long)get_ext()->daytime);
+    bignum_t<32> jt((long)get_ext()->daytime);
     jday += jt / (long)(24*60*60*1000);
 
     /* return a BigNumber result */

@@ -178,6 +178,12 @@ test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     tads3/sha2.cpp \
     tads3/md5.cpp \
     tads3/vmlog.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmtz.cpp \
+    tads3/vmtzobj.cpp \
+    tads3/vmdate.cpp \
+    tads3/vmfilnam.cpp \
+    tads3/vmop.cpp \
     $(DYN_COMP_OBJS) \
     $(REG_METACLASS) \
     $(REG_BUILTIN_CHAR) \
@@ -185,6 +191,7 @@ test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     tads2/osifc.c \
     tads2/osnoui.c \
     tads2/osrestad.c \
+    tads2/osstzprs.c \
     $(TARGET_OBJS_NO_LINK)
 
 test_test_utf8_SOURCES = tads3/test/test_utf8.cpp \
@@ -194,24 +201,28 @@ test_test_chr_SOURCES = tads3/test/test_chr.cpp \
     src/osportable.cc \
     src/missing.cc \
     tads2/osnoui.c \
-    tads3/std.cpp \
-    tads3/std_dbg.cpp \
-    tads3/utf8.cpp \
-    tads3/charmap.cpp \
-    tads3/resload.cpp \
-    tads3/resnoexe.cpp
-
-test_test_gets_SOURCES = tads3/test/test_gets.cpp \
-    src/osportable.cc \
-    src/missing.cc \
-    tads2/osnoui.c \
+    tads2/osstzprs.c \
     tads3/std.cpp \
     tads3/std_dbg.cpp \
     tads3/utf8.cpp \
     tads3/charmap.cpp \
     tads3/resload.cpp \
     tads3/resnoexe.cpp \
-    tads3/tcsrc.cpp
+    tads3/derived/vmuni_cs.cpp
+
+test_test_gets_SOURCES = tads3/test/test_gets.cpp \
+    src/osportable.cc \
+    src/missing.cc \
+    tads2/osnoui.c \
+    tads2/osstzprs.c \
+    tads3/std.cpp \
+    tads3/std_dbg.cpp \
+    tads3/utf8.cpp \
+    tads3/charmap.cpp \
+    tads3/resload.cpp \
+    tads3/resnoexe.cpp \
+    tads3/tcsrc.cpp \
+    tads3/derived/vmuni_cs.cpp
 
 test_test_pool_SOURCES = tads3/test/test_pool.cpp \
     tads3/std.cpp \
@@ -220,13 +231,15 @@ test_test_pool_SOURCES = tads3/test/test_pool.cpp \
     tads3/vmpoolim.cpp \
     tads3/vmerr.cpp \
     tads3/vmerrmsg.cpp \
-    tads3/vmglob.cpp
+    tads3/vmglob.cpp \
+    tads3/derived/vmuni_cs.cpp
 
 test_test_err_SOURCES = tads3/test/test_err.cpp \
     tads3/std.cpp \
     tads3/std_dbg.cpp \
     tads3/vmerr.cpp \
-    tads3/vmerrmsg.cpp
+    tads3/vmerrmsg.cpp \
+    tads3/derived/vmuni_cs.cpp
 
 test_test_regex_SOURCES = tads3/test/test_regex.cpp \
     src/missing.cc \
@@ -344,11 +357,18 @@ test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads3/tccmdutl.cpp \
     tads3/vmrunsym.cpp \
     tads3/vmlog.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmfilnam.cpp \
+    tads3/vmdate.cpp \
+    tads3/vmtz.cpp \
+    tads3/vmtzobj.cpp \
+    tads3/vmop.cpp \
     $(TARGET_OBJS_NO_LINK) \
     tads3/tct3prg.cpp \
     tads2/osifc.c \
     tads2/osnoui.c \
-    tads2/osrestad.c
+    tads2/osrestad.c \
+    tads2/osstzprs.c
 
 test_test_sort_SOURCES = tads3/test/test_sort.cpp \
     tads3/vmsort.cpp
@@ -360,7 +380,8 @@ test_test_write_SOURCES = tads3/test/test_write.cpp \
     tads3/vmfile.cpp \
     tads3/vmerr.cpp \
     tads3/vmerrmsg.cpp \
-    tads3/vmtypedh.cpp
+    tads3/vmtypedh.cpp \
+    tads3/derived/vmuni_cs.cpp
 
 test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     src/missing.cc \
@@ -452,6 +473,12 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads3/vmhosttx.cpp \
     tads3/vmhostsi.cpp \
     tads3/vmhash.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmfilnam.cpp \
+    tads3/vmdate.cpp \
+    tads3/vmtz.cpp \
+    tads3/vmtzobj.cpp \
+    tads3/vmop.cpp \
     $(REG_METACLASS) \
     $(REG_BUILTIN_CHARNET) \
     tads3/derived/vmuni_cs.cpp \
@@ -460,6 +487,7 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads2/osifc.c \
     tads2/osnoui.c \
     tads2/osrestad.c \
+    tads2/osstzprs.c \
     $(TARGET_OBJS_NO_LINK)
 
 test_test_tok_SOURCES = tads3/test/test_tok.cpp \
@@ -491,7 +519,11 @@ test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     tads3/tct3_d.cpp \
     tads3/vmhash.cpp \
     tads3/vmtypedh.cpp \
-    tads2/osnoui.c
+    tads3/vmbignumlib.cpp \
+    tads3/vmop.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads2/osnoui.c \
+    tads2/osstzprs.c
 
 test_test_prs_SOURCES = tads3/test/test_prs.cpp \
     src/osportable.cc \
@@ -524,7 +556,11 @@ test_test_prs_SOURCES = tads3/test/test_prs.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp \
     tads2/osnoui.c \
-    tads3/vmglob.cpp
+    tads3/vmglob.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmop.cpp \
+    tads2/osstzprs.c
 
 test_test_sym_SOURCES = tads3/test/test_sym.cpp \
     src/osportable.cc \
@@ -555,8 +591,13 @@ test_test_sym_SOURCES = tads3/test/test_sym.cpp \
     tads3/vmhash.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmglob.cpp \
+    tads3/vmop.cpp \
     tads2/osnoui.c \
-    tads3/vmglob.cpp
+    tads2/osstzprs.c
+
 
 test_test_prs_top_SOURCES = tads3/test/test_prs_top.cpp \
     src/osportable.cc \
@@ -588,8 +629,13 @@ test_test_prs_top_SOURCES = tads3/test/test_prs_top.cpp \
     tads3/vmwrtimg.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp \
+    tads3/vmglob.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmop.cpp \
     tads2/osnoui.c \
-    tads3/vmglob.cpp
+    tads2/osstzprs.c
+
 
 test_test_comp_obj_SOURCES = tads3/test/test_comp_obj.cpp \
     src/osportable.cc \
@@ -621,8 +667,12 @@ test_test_comp_obj_SOURCES = tads3/test/test_comp_obj.cpp \
     tads3/vmwrtimg.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp \
+    tads3/vmglob.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmop.cpp \
     tads2/osnoui.c \
-    tads3/vmglob.cpp
+    tads2/osstzprs.c
 
 test_test_link_SOURCES = tads3/test/test_link.cpp \
     src/osportable.cc \
@@ -654,5 +704,9 @@ test_test_link_SOURCES = tads3/test/test_link.cpp \
     tads3/vmwrtimg.cpp \
     tads3/vmtypedh.cpp \
     tads3/vmfile.cpp \
+    tads3/vmglob.cpp \
+    tads3/derived/vmuni_cs.cpp \
+    tads3/vmbignumlib.cpp \
+    tads3/vmop.cpp \
     tads2/osnoui.c \
-    tads3/vmglob.cpp
+    tads2/osstzprs.c

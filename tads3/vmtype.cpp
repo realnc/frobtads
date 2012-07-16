@@ -449,6 +449,16 @@ const char *vm_val_t::cast_to_string(VMG_ vm_val_t *new_str) const
         /* return an empty string */
         new_str->set_obj(CVmObjString::create(vmg_ FALSE, 0));
         return new_str->get_as_string(vmg0_);
+
+    case VM_TRUE:
+        /* return 'true' */
+        new_str->set_obj(CVmObjString::create(vmg_ FALSE, "true", 4));
+        return new_str->get_as_string(vmg0_);
+
+    case VM_LIST:
+        /* join the list into a string, separating items with commas */
+        CVmObjList::join(vmg_ new_str, this, ",", 1);
+        return new_str->get_as_string(vmg0_);
         
     default:
         err_throw(VMERR_NO_STR_CONV);

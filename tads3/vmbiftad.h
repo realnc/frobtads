@@ -70,12 +70,22 @@ public:
     static void get_func_params(VMG_ uint argc);
     static void sprintf(VMG_ uint argc);
     static void make_list(VMG_ uint argc);
+    static void get_abs(VMG_ uint argc);
+    static void get_sgn(VMG_ uint argc);
+    static void concat(VMG_ uint argc);
+    static void re_search_back(VMG_ uint argc);
+
+    /* internal toString interface */
+    static void toString(VMG_ vm_val_t *retval, const vm_val_t *srcval,
+                         int radix, int flags);
 
     /* format a date-and-time list per getTime(GetDateAndTime) */
     static vm_obj_id_t format_datetime_list(VMG_ os_time_t timer);
-    
 
 protected:
+    /* common handler for re_search() and re_search_back() */
+    template<int dir> inline static void re_search_common(VMG_ uint argc);
+
     /* enumerate objects (common handler for firstobj and nextobj) */
     static void enum_objects(VMG_ uint argc, vm_obj_id_t start_obj);
 
@@ -178,8 +188,8 @@ vm_bif_desc CVmBifTADS::bif_table[] =
     { &CVmBifTADS::firstobj, 0, 2, FALSE },                            /* 2 */
     { &CVmBifTADS::nextobj, 1, 2, FALSE },                             /* 3 */
     { &CVmBifTADS::randomize, 0, 0, FALSE },                           /* 4 */
-    { &CVmBifTADS::rand, 1, 0, TRUE },                                 /* 5 */
-    { &CVmBifTADS::toString, 1, 1, FALSE },                            /* 6 */
+    { &CVmBifTADS::rand, 0, 0, TRUE },                                 /* 5 */
+    { &CVmBifTADS::toString, 1, 2, FALSE },                            /* 6 */
     { &CVmBifTADS::toInteger, 1, 1, FALSE },                           /* 7 */
     { &CVmBifTADS::gettime, 0, 1, FALSE },                             /* 8 */
     { &CVmBifTADS::re_match, 2, 1, FALSE },                            /* 9 */
@@ -197,7 +207,11 @@ vm_bif_desc CVmBifTADS::bif_table[] =
     { &CVmBifTADS::get_func_params, 1, 0, FALSE },                    /* 21 */
     { &CVmBifTADS::toNumber, 1, 1, FALSE },                           /* 23 */
     { &CVmBifTADS::sprintf, 1, 0, TRUE },                             /* 24 */
-    { &CVmBifTADS::make_list, 1, 1, FALSE }                           /* 25 */
+    { &CVmBifTADS::make_list, 1, 1, FALSE },                          /* 25 */
+    { &CVmBifTADS::get_abs, 1, 0, FALSE },                            /* 26 */
+    { &CVmBifTADS::get_sgn, 1, 0, FALSE },                            /* 27 */
+    { &CVmBifTADS::concat, 0, 0, TRUE },                              /* 28 */
+    { &CVmBifTADS::re_search_back, 2, 1, FALSE }                      /* 29 */
 };
 
 #endif /* VMBIF_DEFINE_VECTOR */

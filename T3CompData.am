@@ -72,17 +72,10 @@ T3_EXT_FILES = \
     tads3/lib/extensions/OpenState.t
 
 T3_EXT_TCOMMAND_FILES = \
-    tads3/lib/extensions/TCommand/GiveToAskFor.t \
     tads3/lib/extensions/TCommand/TCommand.t
 
 T3_EXT_TCOMMAND_DOC_FILES = \
-    tads3/lib/extensions/TCommand/doc/cicon9.gif \
-    tads3/lib/extensions/TCommand/doc/contpage.htm \
-    tads3/lib/extensions/TCommand/doc/givetoaskfor.htm \
-    tads3/lib/extensions/TCommand/doc/index.html \
-    tads3/lib/extensions/TCommand/doc/introduction.htm \
-    tads3/lib/extensions/TCommand/doc/tcommand.htm \
-    tads3/lib/extensions/TCommand/doc/telltoaction.htm
+    tads3/lib/extensions/TCommand/doc/tcommand.htm
 
 T3_ADV3_FILES = \
     tads3/lib/adv3/actions.t \
@@ -123,7 +116,6 @@ T3_ADV3_FILES = \
     tads3/lib/adv3/status.t \
     tads3/lib/adv3/thing.t \
     tads3/lib/adv3/tips.t \
-    tads3/lib/adv3/to_do.txt \
     tads3/lib/adv3/travel.t \
     tads3/lib/adv3/verify.t
 

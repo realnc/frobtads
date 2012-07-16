@@ -40,6 +40,7 @@ Modified
 #include "vmiter.h"
 #include "vmsort.h"
 #include "vmstr.h"
+#include "vmbiftad.h"
 
 
 
@@ -194,10 +195,8 @@ vm_obj_id_t CVmObjList::create(VMG_ int in_root_set, const char *lst)
  */
 CVmObjList::CVmObjList(VMG_ const char *lst)
 {
-    size_t cnt;
-    
     /* get the element count from the original list */
-    cnt = vmb_get_len(lst);
+    size_t cnt = vmb_get_len(lst);
 
     /* allocate space */
     alloc_list(vmg_ cnt);
@@ -305,6 +304,9 @@ void CVmObjList::cons_ensure_space(VMG_ size_t idx, size_t margin)
         
         /* reallocate the list at the new size */
         ext_ = (char *)G_mem->get_var_heap()->realloc_mem(new_siz, ext_, this);
+
+        /* set the new length */
+        vmb_put_len(ext_, new_cnt);
 
         /*
          *   Because the caller is iteratively building the list, we should
@@ -1695,23 +1697,19 @@ int CVmObjList::gen_index_which(VMG_ vm_val_t *retval,
                                 const char *lst, uint *argc,
                                 int forward, vm_rcdesc *rc)
 {
-    const vm_val_t *func_val;
-    size_t cnt;
-    size_t idx;
-    static CVmNativeCodeDesc desc(1);
-
     /* check arguments */
+    static CVmNativeCodeDesc desc(1);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
     /* get the function pointer argument, but leave it on the stack */
-    func_val = G_stk->get(0);
+    const vm_val_t *func_val = G_stk->get(0);
 
     /* push a self-reference while allocating to protect from gc */
     G_stk->push(self_val);
 
     /* get the length of the list */
-    cnt = vmb_get_len(lst);
+    size_t cnt = vmb_get_len(lst);
 
     /* presume that we won't find any element that satisfies the condition */
     retval->set_nil();
@@ -1720,7 +1718,7 @@ int CVmObjList::gen_index_which(VMG_ vm_val_t *retval,
      *   start at either the first or last index, depending on which way
      *   we're stepping
      */
-    idx = (forward ? 1 : cnt);
+    size_t idx = (forward ? 1 : cnt);
 
     /*
      *   Go through each element of our list, and invoke the callback on
@@ -2026,30 +2024,29 @@ int CVmObjList::getp_count_which(VMG_ vm_val_t *retval,
                                  const vm_val_t *self_val,
                                  const char *lst, uint *argc)
 {
-    const vm_val_t *func_val;
-    size_t cnt;
-    size_t idx;
-    int val_cnt;
-    static CVmNativeCodeDesc desc(1);
-    vm_rcdesc rc(vmg_ "List.countWhich", self_val, 16, G_stk->get(0), argc);
-
     /* check arguments */
+    static CVmNativeCodeDesc desc(1);
     if (get_prop_check_argc(retval, argc, &desc))
         return TRUE;
 
     /* get the function pointer argument, but leave it on the stack */
-    func_val = G_stk->get(0);
+    const vm_val_t *func_val = G_stk->get(0);
+
+    /* set up a native callback descriptor */
+    vm_rcdesc rc(vmg_ "List.countWhich", self_val, 16, G_stk->get(0), argc);
 
     /* push a self-reference while allocating to protect from gc */
     G_stk->push(self_val);
 
     /* get the length of the list */
-    cnt = vmb_get_len(lst);
+    size_t cnt = vmb_get_len(lst);
 
     /* no return value */
     retval->set_nil();
 
     /* invoke the callback on each element */
+    size_t idx;
+    int val_cnt;
     for (idx = 1, val_cnt = 0 ; idx <= cnt ; ++idx)
     {
         vm_val_t *val;
@@ -2723,7 +2720,24 @@ int CVmObjList::getp_join(VMG_ vm_val_t *retval,
         sep_len = vmb_get_len(sep);
         sep += VMB_LEN;
     }
-          
+
+    /* do the join */
+    join(vmg_ retval, self_val, sep, sep_len);
+
+    /* discard arguments */
+    G_stk->discard(argc);
+
+    /* handled */
+    return TRUE;
+}
+
+/*
+ *   Join list elements into a string 
+ */
+void CVmObjList::join(VMG_ vm_val_t *retval,
+                      const vm_val_t *self_val,
+                      const char *sep, size_t sep_len)
+{
     /* push 'self' for gc protection */
     G_stk->push(self_val);
 
@@ -2792,13 +2806,13 @@ int CVmObjList::getp_join(VMG_ vm_val_t *retval,
     {
         char buf[128];
         vm_val_t tmp_str;
-        
+
         /* get this element */
         self_val->ll_index(vmg_ &ele, i);
 
         /* assume we won't need a temporary string */
         tmp_str.set_nil();
-        
+
         /* try getting it as a string directly */
         const char *es = ele.get_as_string(vmg0_);
         size_t es_len;
@@ -2845,7 +2859,7 @@ int CVmObjList::getp_join(VMG_ vm_val_t *retval,
         dst = strp->cons_ensure_space(vmg_ dst, es_len, 256);
         memcpy(dst, es, es_len);
         dst += es_len;
-        
+
         /* if there's another element, append the separator */
         if (i < lst_len && sep_len != 0)
         {
@@ -2853,20 +2867,61 @@ int CVmObjList::getp_join(VMG_ vm_val_t *retval,
             memcpy(dst, sep, sep_len);
             dst += sep_len;
         }
-        
+
         /* discard the temp string */
-        G_stk->discard();
+        G_stk->discard(1);
     }
 
     /* set the string to its final length */
     strp->cons_shrink_buffer(vmg_ dst);
 
-    /* remove gc protection and arguments */
-    G_stk->discard(2 + argc);
-
-    /* handled */
-    return TRUE;
+    /* remove gc protection */
+    G_stk->discard(2);
 }
+
+/*
+ *   explicit string conversion, using toString() semantics 
+ */
+const char *CVmObjList::list_to_string(
+    VMG_ vm_val_t *retval, const vm_val_t *self, int radix, int flags)
+{
+    /* count our elements */
+    int n = self->ll_length(vmg0_);
+
+    /* create a list with the same number of elements */
+    vm_val_t newlstval;
+    newlstval.set_obj(create(vmg_ FALSE, n));
+    CVmObjList *newlst = vm_objid_cast(CVmObjList, newlstval.val.obj);
+    newlst->cons_clear();
+
+    /* push the new list for gc protection */
+    G_stk->push(&newlstval);
+
+    /* set up the new list as self.mapAll({x: toString(x)}) */
+    for (int i = 0 ; i < n ; ++i)
+    {
+        /* get this element of the old list */
+        vm_val_t ele;
+        self->ll_index(vmg_ &ele, i+1);
+
+        /* convert it to a string */
+        vm_val_t newele;
+        CVmBifTADS::toString(vmg_ &newele, &ele, radix, flags);
+
+        /* store the result in the new list */
+        newlst->cons_set_element(i, &newele);
+    }
+
+    /* convert the new list to a string using the basic join with commas */
+    join(vmg_ retval, &newlstval, ",", 1);
+
+    /* discard gc protection */
+    G_stk->discard(1);
+
+    /* return the new string */
+    return retval->get_as_string(vmg0_);
+}
+
 
 /* ------------------------------------------------------------------------ */
 /*

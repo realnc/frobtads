@@ -212,6 +212,11 @@ public:
         return ext_;
     }
 
+    /* convert a value to string via reflection services in the bytecode */
+    static const char *reflect_to_str(
+        VMG_ vm_val_t *new_str, char *result_buf, size_t result_buf_size,
+        const vm_val_t *val, const char *fmt, ...);
+
     /* get the underlying string */
     const char *get_as_string(VMG0_) const { return ext_; }
 
@@ -353,8 +358,9 @@ public:
      *   Both strings are in standard constant string format, with UINT2
      *   length prefixes.  
      */
-    static const char *find_substr(VMG_ const char *str, int32_t start_idx,
-                                   const char *substr, size_t *idxp);
+    static const char *find_substr(
+        VMG_ const char *str, int32_t start_idx,
+        const char *substr, size_t *idxp);
 
     /*
      *   Find a substring or RexPattern.  Returns a pointer to the matching
@@ -381,7 +387,15 @@ public:
      *   matched, if successful; otherwise this is undefined.
      */
     static const char *find_substr(
-        VMG_ const char *basestr, const char *str, size_t len,
+        VMG_ const vm_val_t *strval,
+        const char *basestr, const char *str, size_t len,
+        const char *substr, class CVmObjPattern *pat,
+        int *match_idx, int *match_len);
+
+    /* find the last matching substring or pattern */
+    static const char *find_last_substr(
+        VMG_ const vm_val_t *strval,
+        const char *basestr, const char *str, size_t len,
         const char *substr, class CVmObjPattern *pat,
         int *match_idx, int *match_len);
                                    
@@ -441,6 +455,12 @@ public:
     static int getp_find(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                          const char *str, uint *argc);
 
+    /* common handler for find() and findLast() */
+    template<int dir> static inline int find_common(
+        VMG_ vm_val_t *retval,
+        const vm_val_t *self_val, const char *str,
+        uint *argc);
+
     /* property evaluator - convert to unicode */
     static int getp_to_uni(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                            const char *str, uint *argc);
@@ -464,7 +484,7 @@ public:
                                   const vm_val_t *self_val,
                                   const char *str, uint *argc);
 
-    /* property evaluator - replace substring */
+    /* property evaluator - findReplace() - replace substring */
     static int getp_replace(VMG_ vm_val_t *retval, const vm_val_t *self_val,
                             const char *str, uint *argc);
 
@@ -529,6 +549,15 @@ public:
     static int getp_compareIgnoreCase(VMG_ vm_val_t *retval,
                                       const vm_val_t *self_val,
                                       const char *str, uint *argc);
+
+    /* property evaluator - findLast */
+    static int getp_findLast(VMG_ vm_val_t *retval, const vm_val_t *self_val,
+                             const char *str, uint *argc);
+
+    /* property evaluator - findAll */
+    static int getp_findAll(VMG_ vm_val_t *retval, const vm_val_t *self_val,
+                            const char *str, uint *argc);
+
 
 protected:
     /* create a string with no initial contents */

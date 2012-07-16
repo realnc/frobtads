@@ -350,6 +350,43 @@ int CVmObject::inh_prop(VMG_ vm_prop_id_t prop, vm_val_t *retval,
                               defining_obj, source_obj, argc);
 }
 
+/*
+ *   Cast the object to a string.  If we got here, it means that there's no
+ *   metaclass override, so use reflection services if available, or the
+ *   basic "object#xxx" template.
+ */
+const char *CVmObject::cast_to_string(VMG_ vm_obj_id_t self,
+                                      vm_val_t *new_str) const
+{
+    /* set up a vm_val_t for 'self' */
+    vm_val_t val;
+    val.set_obj(self);
+
+    /* try calling self.objToString */
+    vm_prop_id_t objToString = G_predef->objToString;
+    if (objToString != VM_INVALID_PROP)
+    {
+        /* call self.objToString */
+        G_interpreter->get_prop(vmg_ 0, &val, objToString, &val, 0, 0);
+
+        /* if that yielded a string, return it */
+        const char *str = G_interpreter->get_r0()->get_as_string(vmg0_);
+        if (str != 0)
+        {
+            /* set the return value */
+            *new_str = *G_interpreter->get_r0();
+
+            /* return the string buffer */
+            return str;
+        }
+    }
+
+    /* try getting a symbolic name, otherwise use the object#xxx template */
+    return CVmObjString::reflect_to_str(
+        vmg_ new_str, 0, 0, &val, "object#%ld", (long)self);
+}
+
+
 /* 
  *   Any object can be listlike, even if it doesn't natively implement
  *   indexing, if it defines operator[] and 'length' as user-code methods.  

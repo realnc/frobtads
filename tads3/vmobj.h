@@ -811,15 +811,8 @@ public:
      *   By default, we'll throw an error indicating that the object
      *   cannot be converted to a string.  
      */
-    virtual const char *cast_to_string(VMG_ vm_obj_id_t /*self*/,
-                                       vm_val_t * /*new_str*/) const
-    {
-        /* throw an error */
-        err_throw(VMERR_NO_STR_CONV);
-
-        /* we can't get here, but the compiler doesn't always know that */
-        AFTER_ERR_THROW(return 0;)
-    }
+    virtual const char *cast_to_string(VMG_ vm_obj_id_t self,
+                                       vm_val_t *new_str) const;
 
     /*
      *   Same as cast_to_string, but the conversion is explicitly due to a

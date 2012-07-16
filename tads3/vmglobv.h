@@ -118,9 +118,6 @@ VM_GLOBALS_BEGIN
     /* user interface primary console */
     VM_GLOBAL_OBJDEF(class CVmConsoleMain, console)
 
-    /* BigNumber package temporary register cache */
-    VM_GLOBAL_OBJDEF(class CVmBigNumCache, bignum_cache)
-
     /* TadsObject inheritance path analysis queue */
     VM_GLOBAL_PREOBJDEF(class CVmObjTadsInhQueue, tadsobj_queue)
 

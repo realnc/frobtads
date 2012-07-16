@@ -44,10 +44,14 @@ static int G_err_refs = 0;
 void err_init(size_t /*param_stack_size*/)
 {
     /* increase the error system reference counter */
-    ++G_err_refs;
-
-    /* allocate the thread-local variable slot for the error frame pointer */
-    os_tls_create(G_err_frame);
+    if (++G_err_refs == 1)
+    {
+        /* 
+         *   first initialization - allocate the thread-local variable slot
+         *   for the error frame pointer 
+         */
+        os_tls_create(G_err_frame);
+    }
 }
 
 /*
@@ -65,6 +69,9 @@ void err_terminate()
         err_delete_message_array(&vm_messages, &vm_message_count,
                                  vm_messages_english,
                                  vm_message_count_english);
+
+        /* delete the thrad-local slot for the error frame pointer */
+        os_tls_delete(G_err_frame);
     }
 }
 

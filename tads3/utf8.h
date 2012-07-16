@@ -151,10 +151,8 @@ public:
      */
     void inc(size_t *rem)
     {
-        char *p;
-        
         /* calculate the increment amount */
-        p = s_inc(p_);
+        char *p = s_inc(p_);
 
         /* decrement the length counter by the change */
         *rem -= (p - p_);
@@ -173,10 +171,8 @@ public:
     /* decrement poniter and increment the remaining size to compensate */
     void dec(size_t *rem)
     {
-        char *p;
-
         /* calculate the decrement amount */
-        p = s_dec(p_);
+        char *p = s_dec(p_);
 
         /* decrement the length counter by the change */
         *rem += (p_ - p);

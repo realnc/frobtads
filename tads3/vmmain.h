@@ -132,6 +132,9 @@ struct vm_run_image_params
         cmd_log_file = 0;
         script_quiet = FALSE;
 
+        /* assume we'll use [More] mode for interactive output */
+        more_mode = TRUE;
+
         /* assume we're loading from a separate .t3 file */
         load_from_exe = FALSE;
 
@@ -205,6 +208,14 @@ struct vm_run_image_params
      *   from the console to this file.
      */
     const char *cmd_log_file;
+
+    /* 
+     *   In [More] mode, we pause and await a keystroke after each screenful
+     *   of text to give the user a chance to read text before it scrolls off
+     *   the screen.  This is the default, but sometimes users will want to
+     *   run in batch/stdio mode, where there's no pausing.
+     */
+    int more_mode;
 
     /*
      *   Flag: load from the application executable file.  If this is true,
@@ -425,7 +436,8 @@ public:
                              const char *script_file, int script_quiet,
                              const char *log_file,
                              const char *cmd_log_file,
-                             const char *banner_str) = 0;
+                             const char *banner_str,
+                             int more_mode) = 0;
 
     /*
      *   Termination - we'll invoke this immediately before terminating the
@@ -489,7 +501,7 @@ public:
         { return 0; }
     virtual void delete_console(struct vm_globals *, class CVmConsoleMain *) { }
     virtual void client_init(struct vm_globals *, const char *, int,
-                             const char *, const char *, const char *) { }
+                             const char *, const char *, const char *, int) { }
     virtual void client_terminate(struct vm_globals *) { }
     virtual void pre_exec(struct vm_globals *) { }
     virtual void post_exec(struct vm_globals *) { }

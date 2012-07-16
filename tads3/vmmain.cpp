@@ -147,7 +147,8 @@ int vm_run_image(const vm_run_image_params *params)
             VMGLOB_ADDR,
             params->script_file, params->script_quiet,
             params->log_file, params->cmd_log_file,
-            params->show_banner ? T3VM_BANNER_STRING : 0);
+            params->show_banner ? T3VM_BANNER_STRING : 0,
+            params->more_mode);
         
         /* open the byte-code file */
         if (params->load_from_exe)
@@ -490,6 +491,11 @@ int vm_run_image_main(CVmMainClientIfc *clientifc,
             {
                 /* make a note not to seed the RNG */
                 params.seed_rand = FALSE;
+            }
+            else if (strcmp(argv[curarg], "-nomore") == 0)
+            {
+                /* turn off MORE mode */
+                params.more_mode = FALSE;
             }
             else
                 goto opt_error;

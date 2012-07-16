@@ -113,7 +113,7 @@ recent changes are first).
 
 <!------------------------------- 3.1.1 --------------------------------->
 <div class="sepbar"><a name='311'></a>3.1.1</div>
-<p><b><i>Released TBD</i></b>
+<p><b><i>Released July 14, 2012</i></b>
 <p>
 
 <!------------------->
@@ -219,6 +219,69 @@ actions you intended to define but never got around to.
 
 
 </div>
+
+<!------------------->
+<div class=entry>
+
+The English parser is a little more nuanced about the way it handles
+queries for missing direct objects for verbs with prepositional phrasing
+for the direct object.  For example:
+
+<p>
+<pre>&gt;DIG
+What do you want to dig in?
+
+&gt;IN THE DIRT
+</pre>
+
+<p>In the past, the parser treated the reply "IN THE DIRT" as a new
+command meaning ENTER DIRT.  The assumption was that if the reply
+matched the phrasing of a new command, it must in fact be a new
+command rather than a reply to the missing object query.  In many
+cases where there's this kind of ambiguity, the parser would have to
+be able to read the user's mind to know what was intended, but in this
+particular case the parallel phrasing of the query ("...dig in?") and
+the reply ("in <i>noun</i>") suggests pretty strongly that the user
+did indeed intend the input as a reply to the query rather than as a
+new command.
+
+<p>To address this, the parser has a new method for production
+matches, isSpecialResponseMatch.  This new method returns true if the
+production matches special phrasing that makes it more likely to be a
+query response than a new command, otherwise nil.  The English parser
+uses this for the various prepositional response phrasings, such as
+inSingleNoun and forSingleNoun; these are all subclasses of
+PrepSingleNounProd.  When one of these productions matches input that
+starts with its preposition, it will return true from
+isSpecialResponseMatch, causing the missing object query processor to
+treat the match as a reply to the query rather than as a new command,
+even when the phrasing could also be interpreted as a new command.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000147">bugdb.tads.org #0000147</a>)
+
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+A bug in the parser caused the wrong message to be displayed when a
+command was directed to an actor, and the predicate portion of the
+command contained an unknown word, and the noun phrase wording for the
+actor portion matched at least one grammatical structure phrasing that
+could only refer to an out-of-scope object.  In such a case, the
+parser reported "You see no <i>actor</i> here" rather than "The word
+<i>word</i> is not necessary in this story".  This was obviously the
+wrong message when an actor matching the noun phrase actually was in
+scope, but was also inconsistent with the "unknown word" message shown
+in other similar cases that didn't meet all of the bug conditions.
+This has now been fixed so that the "unknown word" message is used.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000149">bugdb.tads.org #0000149</a>)
+
+</div>
+
+
 
 <!------------------->
 <div class=entry>

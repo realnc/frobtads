@@ -336,6 +336,7 @@ T3HEADERS = \
     tads3/vmfile.h \
     tads3/vmfilobj.h \
     tads3/vmfilnam.h \
+    tads3/vmfindrep.h \
     tads3/vmdate.h \
     tads3/vmtz.h \
     tads3/vmtzobj.h \
@@ -437,6 +438,7 @@ T3RCSOURCES = \
     tads3/vmbiftad.cpp \
     tads3/vmbiftio.cpp \
     tads3/vmbignum.cpp \
+    tads3/vmbignumlib.cpp \
     tads3/vmbt3_nd.cpp \
     tads3/vmbytarr.cpp \
     tads3/vmcfgmem.cpp \

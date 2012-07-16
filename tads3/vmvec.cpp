@@ -3009,6 +3009,30 @@ int CVmObjVector::getp_join(VMG_ vm_obj_id_t self, vm_val_t *retval,
     return CVmObjList::getp_join(vmg_ retval, &vself, 0, argc);
 }
 
+/*
+ *   C++ interface to join() 
+ */
+void CVmObjVector::join(VMG_ vm_val_t *retval, vm_obj_id_t self,
+                        const char *sep, size_t sep_len) const
+{
+    vm_val_t vself;
+    vself.set_obj(self);
+    return CVmObjList::join(vmg_ retval, &vself, sep, sep_len);
+}
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   Explicitly convert to a string 
+ */
+const char *CVmObjVector::explicit_to_string(
+    VMG_ vm_obj_id_t self, vm_val_t *new_str, int radix, int flags) const
+{
+    /* use the generic list converter */
+    vm_val_t vself;
+    vself.set_obj(self);
+    return CVmObjList::list_to_string(vmg_ new_str, &vself, radix, flags);
+}
+
 /* ------------------------------------------------------------------------ */
 /*
  *   Property evaluator - generate a new vector

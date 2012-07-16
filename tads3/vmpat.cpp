@@ -221,16 +221,13 @@ void CVmObjPattern::load_from_image(VMG_ vm_obj_id_t self, const char *ptr,
  */
 void CVmObjPattern::post_load_init(VMG_ vm_obj_id_t self)
 {
-    const vm_val_t *origval;
-    const char *strval;
-
     /* make sure the original string object is initialized */
-    origval = get_orig_str();
+    const vm_val_t *origval = get_orig_str();
     if (origval->typ == VM_OBJ)
         G_obj_table->ensure_post_load_init(vmg_ origval->val.obj);
 
     /* get the string value */
-    strval = get_orig_str()->get_as_string(vmg0_);
+    const char *strval = get_orig_str()->get_as_string(vmg0_);
     if (strval != 0)
     {
         /* if we already have a compiled pattern, delete it */

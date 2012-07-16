@@ -194,6 +194,13 @@ VM_IMPORT_PROP("TadsNet.FileUpload.file", file_upload_fileObj)
 VM_IMPORT_PROP("TadsNet.FileUpload.contentType", file_upload_contentType)
 VM_IMPORT_PROP("TadsNet.FileUpload.filename", file_upload_filename)
 
+/* reflection services */
+VM_IMPORT_OBJ("reflection.reflectionServices", reflection_services)
+VM_IMPORT_PROP("reflection.valToSymbol", reflection_valToSymbol)
+
+/* general-purpose object-to-string formatting */
+VM_IMPORT_PROP("objToString", objToString)
+
 
 /*
  *   now that we've built the table, undefine the macros used to build it,

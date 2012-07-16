@@ -2394,7 +2394,7 @@ void CVmPack::pack_one_item(VMG_ CVmPackGroup *group, CVmPackArgs *args,
                 /* encode the BigNumber in BER format */
                 int ov;
                 ((CVmObjBigNum *)vm_objp(vmg_ cval.val.obj))->encode_ber(
-                    vmg_ buf, sizeof(buf), blen, ov);
+                    buf, sizeof(buf), blen, ov);
 
                 /* check for overflow */
                 if (ov && !t->pct)

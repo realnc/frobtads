@@ -2703,10 +2703,10 @@ int CVmConsole::read_line_timeout(VMG_ char *buf, size_t buflen,
                                   unsigned long timeout, int use_timeout,
                                   int bypass_script)
 {
-    int echo_text;
-    char *outp;
-    size_t outlen;
-    int evt;
+    /* no event yet */
+    int evt = OS_EVT_NONE;
+
+    /* we haven't received any script input yet */
     int got_script_input = FALSE;
 
     /* 
@@ -2714,7 +2714,7 @@ int CVmConsole::read_line_timeout(VMG_ char *buf, size_t buflen,
      *   will be echoed to the display in the course of reading it from
      *   the keyboard 
      */
-    echo_text = FALSE;
+    int echo_text = FALSE;
 
     /* remember the initial MORE mode */
     S_old_more_mode = is_more_mode();
@@ -2920,8 +2920,8 @@ int CVmConsole::read_line_timeout(VMG_ char *buf, size_t buflen,
      *   Convert the text from the local UI character set to UTF-8.  Reserve
      *   space in the output buffer for the null terminator.  
      */
-    outp = buf;
-    outlen = buflen - 1;
+    char *outp = buf;
+    size_t outlen = buflen - 1;
     G_cmap_from_ui->map(&outp, &outlen, S_read_buf, strlen(S_read_buf));
 
     /* add the null terminator */

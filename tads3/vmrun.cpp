@@ -982,7 +982,7 @@ public:
 
 static void promote_int_add(VMG_ vm_val_t *aval, int32_t b)
 {
-    bignum_t<10> sum(vmg_ (long)aval->val.intval);
+    bignum_t<10> sum((long)aval->val.intval);
     sum += (long)b;
     aval->set_obj(CVmObjBigNum::create(vmg_ FALSE, sum));
 }
@@ -990,7 +990,7 @@ static void promote_int_add(VMG_ vm_val_t *aval, int32_t b)
 static inline void int_add(VMG_ vm_val_t *aval, int32_t b)
 {
     int32_t a = aval->val.intval, sum = a + b;
-    if (a >= 0 ? b < 0 || sum >= a : b >= 0 || sum <= a)
+    if (a >= 0 ? b <= 0 || sum >= a : b >= 0 || sum <= a)
         aval->val.intval = sum;
     else
         promote_int_add(vmg_ aval, b);
@@ -998,7 +998,7 @@ static inline void int_add(VMG_ vm_val_t *aval, int32_t b)
 
 static void promote_int_sub(VMG_ vm_val_t *aval, int32_t b)
 {
-    bignum_t<10> diff(vmg_ (long)aval->val.intval);
+    bignum_t<10> diff((long)aval->val.intval);
     diff -= (long)b;
     aval->set_obj(CVmObjBigNum::create(vmg_ FALSE, diff));
 }
@@ -1014,7 +1014,7 @@ static inline void int_sub(VMG_ vm_val_t *aval, int32_t b)
 
 static void promote_int_mul(VMG_ vm_val_t *aval, int32_t b)
 {
-    bignum_t<20> prod(vmg_ (long)aval->val.intval);
+    bignum_t<20> prod((long)aval->val.intval);
     prod *= (long)b;
     aval->set_obj(CVmObjBigNum::create(vmg_ FALSE, prod));
 }
@@ -1030,7 +1030,7 @@ static inline void int_mul(VMG_ vm_val_t *aval, int32_t b)
 
 static void promote_int_div(VMG_ vm_val_t *aval, int32_t b)
 {
-    bignum_t<10> quo(vmg_ (long)aval->val.intval);
+    bignum_t<10> quo((long)aval->val.intval);
     quo /= (long)b;
     aval->set_obj(CVmObjBigNum::create(vmg_ FALSE, quo));
 }
@@ -1054,7 +1054,7 @@ static inline void int_div(VMG_ vm_val_t *aval, int32_t b)
 
 static void promote_int_neg(VMG_ vm_val_t *aval)
 {
-    bignum_t<10> neg(vmg_ (long)aval->val.intval);
+    bignum_t<10> neg((long)aval->val.intval);
     neg = -neg;
     aval->set_obj(CVmObjBigNum::create(vmg_ FALSE, neg));
 }

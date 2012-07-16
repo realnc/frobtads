@@ -127,6 +127,19 @@ public:
     int get_prop(VMG_ vm_prop_id_t prop, vm_val_t *val,
                  vm_obj_id_t self, vm_obj_id_t *source_obj, uint *argc);
 
+    /* cast to string */
+    const char *cast_to_string(VMG_ vm_obj_id_t self, vm_val_t *new_str) const
+    {
+        /* join the vector into a string, using commas as separators */
+        join(vmg_ new_str, self, ",", 1);
+
+        /* return the new string */
+        return new_str->get_as_string(vmg0_);
+    }
+
+    virtual const char *explicit_to_string(
+        VMG_ vm_obj_id_t self, vm_val_t *new_str, int radix, int flags) const;
+    
     /* add a value to the vector, yielding a new vector */
     int add_val(VMG_ vm_val_t *result,
                 vm_obj_id_t self, const vm_val_t *val);
@@ -232,6 +245,13 @@ public:
     /* set an element, recording undo for the change; 0-based index */
     void set_element_undo(VMG_ vm_obj_id_t self,
                           size_t idx, const vm_val_t *val);
+
+    /* 
+     *   join the list into a string - this is the C++ interface to the
+     *   self.join() method 
+     */
+    void join(VMG_ vm_val_t *retval, vm_obj_id_t self,
+              const char *sep, size_t sep_len) const;
 
 protected:
     /* load image data */

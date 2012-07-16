@@ -140,7 +140,7 @@ parseTokenLoop:
                     /* if we got any matches, try to resolve actors */
                     lst = lst.mapAll({x: x.resolveNouns(
                         issuingActor, issuingActor,
-                        new ActorResolveResults())});
+                        new TryAsActorResolveResults())});
 
                     /* drop any that didn't yield any results */
                     lst = lst.subset({x: x != nil && x.length() != 0});

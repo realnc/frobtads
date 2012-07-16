@@ -218,13 +218,19 @@ intrinsic 'tads-gen/030008'
      *   36), or base 10 (decimal) if 'radix' is omitted; nil or true, in
      *   which case the string 'nil' or 'true' is returned; a string, which
      *   is returned unchanged; or a BigNumber, in which case the number is
-     *   converted to a string representation in the given radix.  Note that
-     *   in the case of BigNumber, you might prefer to use
-     *   BigNumber.formatString(), as that gives you much more control over
-     *   the formatting for floating-point values.
+     *   converted to a string representation in the given radix; a list or
+     *   vector, in which case the individual elements are converted
+     *   recursively, then the results concatenated together into a string
+     *   with commas separating elements; or any of the built-in object types
+     *   with default string conversions (ByteArray, StringBuffer, FileName,
+     *   Date, TimeZone, FileName, etc).
      *   
-     *   'radix' is only meaningful with numeric values, namely integers and
-     *   BigNumbers.  For BigNumbers, only whole integer values can be
+     *   Note that when working with BigNumber values, you might prefer to
+     *   use BigNumber.formatString(), as that gives you more control over
+     *   the formatting style.
+     *   
+     *   'radix' is only meaningful with numeric values (integers and
+     *   BigNumbers).  For BigNumbers, only whole integer values can be
      *   displayed in a non-decimal radix; if the number has a fractional
      *   part, the radix will be ignored and the number will be shown in
      *   decimal.
@@ -287,7 +293,8 @@ intrinsic 'tads-gen/030008'
      *   of the minute, from 0 to 59; and timer is the number of seconds
      *   elapsed since the "Epoch," defined as midnight, January 1, 1970,
      *   midnight UTC.  (This is the Epoch that Unix-like systems use, so it
-     *   appears frequently in computer timekeeping systems.)
+     *   appears frequently in computer timekeeping systems.)  See the Date
+     *   class for more comprehensive date/time handling.
      *   
      *   If timeType is GetTimeTicks, this return the number of milliseconds
      *   since an arbitrary starting time.  The first call to get this
@@ -319,10 +326,12 @@ intrinsic 'tads-gen/030008'
 
     /*
      *   Search the given string for the given regular expression pattern.
-     *   'pat' is a string giving the regular expression, or a RexPattern
-     *   object.  'str' is the string to search, and 'index' is the optional
-     *   starting index (the first character is at index 1).  If the pattern
-     *   cannot be found, returns nil.  If the pattern is found, the return
+     *   'pat' is a string giving the regular expression to find, or a
+     *   RexPattern object.  'str' is the string to search, and 'index' is
+     *   the optional starting index (the first character is at index 1;
+     *   negative indices are from the end of the string, so -1 is the last
+     *   character, -2 is the second to last, and so on).  If a match to the
+     *   pattern isn't found, returns nil.  If a match is found, the return
      *   value is a list: [index, length, string], where index is the
      *   starting character index of the match, length is the length in
      *   characters of the match, and string is the text of the match.  
@@ -367,6 +376,13 @@ intrinsic 'tads-gen/030008'
      *   the flags include ReplaceAll, all occurrences of the pattern are
      *   replaced; otherwise only the first occurrence is replaced.
      *   
+     *   ReplaceOnce and ReplaceAll are mutually exclusive; they mean,
+     *   respectively, that only the first occurrence of the match should be
+     *   replaced, or that every occurrence should be replaced.  ReplaceOnce
+     *   and ReplaceAll are ignored if a 'limit' value is specified (this is
+     *   true even if 'limit' is nil, which means that all occurrences are
+     *   replaced).
+     *   
      *   If ReplaceIgnoreCase is included, the capitalization of the match
      *   pattern is ignored, so letters in the pattern match both their
      *   upper- and lower-case equivalents.  Otherwise the case will be
@@ -394,8 +410,9 @@ intrinsic 'tads-gen/030008'
      *   second pattern, replacing one or all occurrences of it.  We repeat
      *   this for each pattern.
      *   
-     *   If the flags are omitted entirely, the default is ReplaceAll
-     *   (replace all occurrences, exact case, parallel searching).
+     *   If the flags are omitted entirely, the default is ReplaceAll (which
+     *   means replace all occurrences, exact case matches only, parallel
+     *   searching).
      *   
      *   'index', if provided, is the starting character index of the search;
      *   instances of the pattern before this index will be ignored.  Returns
@@ -405,13 +422,19 @@ intrinsic 'tads-gen/030008'
      *   there's no danger of infinite recursion; instead, scanning proceeds
      *   from the next character after the replacement text.
      *   
+     *   'limit', if specified, is an integer indicating the maximum number
+     *   of matches to replace, or nil to replace all matches.  If the limit
+     *   is reached before all matches have been replaced, no further
+     *   replacements are performed.  If this parameter is specified, it
+     *   overrides any ReplaceOnce or ReplaceAll flag.
+     *   
      *   The replacement text can use "%n" sequences to substitute group
      *   matches from the input into the output.  %1 is replaced by the match
      *   to the first group, %2 the second, and so on.  %* is replaced by the
      *   entire matched input.  (Because of the special meaning of "%", you
      *   must use "%%" to include a percent sign in the replacement text.)  
      */
-    rexReplace(pat, str, replacement, flags?, index?);
+    rexReplace(pat, str, replacement, flags?, index?, limit?);
 
     /*
      *   Create an UNDO savepoint.  This adds a marker to the VM's internal
@@ -478,7 +501,7 @@ intrinsic 'tads-gen/030008'
 
     /*
      *   Get the minimum of the given arguments.  The values must be
-     *   comparable with the ordinary "<" and ">" operators. Note that
+     *   comparable with the ordinary "<" and ">" operators.  Note that
      *   because this is an ordinary function call, all of the arguments are
      *   evaluated (which means any side effects of these evaluations will be
      *   triggered).  
@@ -575,6 +598,79 @@ intrinsic 'tads-gen/030008'
      *   value; it's simply repeated in each element of the list.
      */
     makeList(val, repeatCount?);
+
+    /*
+     *   Get the absolute value of a number.  The argument can be an integer
+     *   or a BigNumber; the return value is the absolute value of the
+     *   argument, and has the same type as the argument.  (The absolute
+     *   value of a positive number X (or zero) is X; the absolute value of a
+     *   negative number X is -X.) 
+     */
+    abs(num);
+
+    /*
+     *   Get the sign of a number.  The argument can be an integer or a
+     *   BigNumber.  The return value is an integer: 1 if the argument is
+     *   positive, 0 if the argument is zero, -1 if the argument is negative.
+     */
+    sgn(num);
+
+    /*
+     *   Concatenate the arguments together into a single string.  The
+     *   arguments can be strings or any types that can be automatically
+     *   converted to string for the regular "+" operator; non-strings are
+     *   first converted to strings using the same rules that "+" uses when
+     *   combining a string with a non-string.  If there are no arguments,
+     *   the result is an empty string.
+     *   
+     *   This function is essentially the same as concatenating a series of
+     *   values with the "+" operator, but it's more efficient with three or
+     *   more values, since the "+" operator has to be applied successively
+     *   in pairs; that creates and copies an extra intermediate result
+     *   string at each step.  This function only creates one result string
+     *   and only has to copy each input string once.
+     */
+    concat(...);
+
+    /*
+     *   Search backwards in the given string for the given regular
+     *   expression pattern.  'pat' is a string giving the regular expression
+     *   to find, or a RexPattern object.  'str' is the string to search, and
+     *   'index' is the optional starting index (the first character is at
+     *   index 1; negative indices are from the end of the string, so -1 is
+     *   the last character, -2 is the second to last, and so on; 0 means the
+     *   position just after the last character of the string).  If 'index'
+     *   is omitted, the default is to search the entire string from the end,
+     *   which is equivalent to passing 0 or str.length()+1 for 'index'.
+     *   
+     *   If a match is found, the return value is a list: [index, length,
+     *   string], where index is the starting character index of the match,
+     *   length is the length in characters of the match, and string is the
+     *   text of the match.
+     *   
+     *   This does the same work as rexSearch(), but searches the string
+     *   backwards, from the end to the start.  The match must end before the
+     *   starting index, which allows for repeated searches: simply pass the
+     *   match index from the previous search as the 'index' value for the
+     *   next search to find the next earlier match that doesn't overlap the
+     *   previous match.
+     *   
+     *   The meanings of the <FirstBegin> and <FirstEnd> flags for a reverse
+     *   search are essentially the mirror image of their meanings in a
+     *   regular forward search.  This is easiest to understand by thinking
+     *   about the flags in the abstract.  <FirstBegin> means that the
+     *   winning match is the one whose "near" endpoint is closest to the
+     *   starting index; <FirstEnd> means that the winner is the match whose
+     *   "far" endpoint is closest to the starting index.  The near endpoint
+     *   in a forward search is the start of the match, whereas it's the end
+     *   of the match in a reverse search.  Similarly, the far endpoint is
+     *   the end of the match in a forward search and the start of the match
+     *   in a reverse search.  So in a reverse search, <FirstBegin> means
+     *   that the winner is the match whose ending index is highest, and
+     *   <FirstEnd> means that the winner is the one whose starting index is
+     *   highest.
+     */
+    rexSearchLast(pat, str, index?);
 }
 
 /*

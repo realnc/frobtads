@@ -69,23 +69,53 @@ etc.  For changes to the Adv3 library, see
 <a href="../lib/adv3/changes.htm">Recent Library Changes</a>.)
 
 <!------------------------------------------------------------------------>
-<h3>Changes for 3.1.1 (Release date TBD)</h3>
+<h3>Changes for 3.1.1 (July 14, 2012)</h3>
 
 <ul>
-   
+
+<li>New syntax lets you create constant regular expression values:
+<tt>R"<i>pattern</i>"</tt> and <tt>R'<i>pattern</i>'</tt> are
+equivalent, and define static, pre-compiled RexPattern objects.  The
+compiler converts a string of the form <tt>R"..."</tt> or
+<tt>R'...'</tt> into a static RexPattern object, which you can
+then use in any context where a pattern is required.  For example:
+
+<pre>  local str = 'test string';
+  local title = str.findReplace(R'%&lt;%w', {x: x.toTitleCase()});
+</pre>
+
+<p>To define a regular expression literal, the R must be capitalized,
+and there must be no spaces between the R and the open quote.  "R"
+strings can't use embedded expressions (the &lt;&lt; &gt;&gt; syntax).
+The triple-quote syntax can be used with R strings, as in
+<tt>R"""..."""</tt>.
+
+<p>In the past, you could achieve a similar effect by defining a
+static property and setting it to a <tt>new RexPattern()</tt>
+expression.  You can still use that approach, of course, but the new
+syntax is more compact and eliminates the need to define an extra
+property just to cache the RexPattern object.  Using the new syntax
+also generates slightly more efficient code, since it doesn't require
+a property lookup to retrieve the RexPattern object.  (There might be
+other reasons to use the property approach in specific cases, though;
+for example, in a library or extension, defining the pattern via a
+property provides a clean way for users of the module to override the
+pattern if they need to replace it with a customized version.)
+
 <li>The basic integer arithmetic operators (+, -, *, /, and the
 corresponding combination operators such as ++ and +=) now check for
-overflow, and automatically promote a result to BigNumber when an
+overflow, and automatically promote the result to BigNumber when an
 overflow occurs.  In the past, overflows were simply truncated to fit
-the 32-bit integer type.  It's difficult to do anything sensible with
-such results; you really had to just be careful to avoid overflows,
-which isn't easy when working with external or user-entered data.  The
-new treatment ensures that the results of the arithmetic operators
-will always be arithmetically correct, even when they exceed the
-capacity of the basic integer type.  This is more in keeping with the
-general philosophy that TADS provides a high-level environment where
-you don't have to worry about hardware-level details, such as how many
-bits can be stored in an integer.
+the 32-bit integer type.  It was very difficult to detect such cases
+or to do anything sensible with the results; you really had to just be
+careful to avoid overflows, which isn't easy when working with
+external or user-entered data.  The new treatment ensures that the
+results of the arithmetic operators will always be arithmetically
+correct, even when they exceed the capacity of the basic integer type.
+This is more in keeping with the TADS philosophy of providing
+a high-level environment where you don't have to worry about
+hardware-level details such as how many bits can be stored in an
+integer.
 
 <p>This change should be transparent to existing programs, since (a)
 BigNumbers can for the most part be used interchangeably with
@@ -93,12 +123,53 @@ integers, and (b) any program that encountered an integer overflow in
 the past probably misbehaved when it did, since there was no good way
 to detect or handle overflows.  The effect on most existing programs
 should thus be to allow them to correctly handle a wider range of
-inputs.  There's a slight impact on execution speed because of the
-extra checks required for arithmetic operations; typical TADS programs
-aren't arithmetically intensive enough to notice any difference,
-though.  What's more, the VM-level checking eliminates the need for
-extra program code to do bounds checking, so this could end up being a
-performance enhancement in situations where overflows are a concern.
+inputs.  In some cases, the effect will be to flag a run-time error
+for a case where a value really does have to fit in an integer, where
+in the past the code would have failed somewhat more mysteriously due
+to the truncated arithmetic result.  The new handling should be an
+improvement even in error cases, since the source of the error will
+be more immediately apparent than in the past.
+
+<p>There's a slight impact on execution speed because of the extra
+checks required for arithmetic operations, although typical TADS
+programs aren't arithmetically intensive enough to notice any
+difference.  What's more, the VM-level checking eliminates the need
+for extra program code to do bounds checking, so this could end up
+being a performance enhancement in situations where overflows are a
+concern.
+
+<li>The compiler now automatically promotes any integer constant value
+that overflows the ordinary integer type to BigNumber.  This applies
+to values that are explicitly stated (e.g., "x = 3000000000;") as well
+as to constant expressions (e.g., "x = 1000000000 * 3;").  The
+compiler shows a warning message each time it applies such a
+promotion; BigNumber values aren't necessarily allowed in all contexts
+where integers are normally used, such as for some built-in function
+and method arguments, so the compiler wants you to be aware when it
+substitutes a BigNumber for a value you stated as an integer.  You can
+remove the warning on a case-by-case basis by explicitly stating the
+value as a BigNumber constant in the first place, by including a
+decimal point in the number (e.g., "x = 3000000000.;").
+
+<p>Integers specified in hex or octal notation (e.g., 0x80000000 or
+040000000000) aren't promoted if they can fit within a 32-bit
+<i>unsigned</i> integer.  Hex and octal are frequently used to enter
+numbers with specific bit patterns, so the compiler assumes you know
+what you're doing with this format.  A hex or octal number that's over
+the 32-bit unsigned limit of 4294967295 will be promoted, though,
+since there's no way to store such a large value in a 32-bit integer
+regardless of its signedness.
+
+<li>The compiler now pre-calculates the results of arithmetic
+expressions involving BigNumber constant values.  (This is known
+as "constant folding".)  If an expression contains only constant
+numeric values, with any combination of integers and BigNumber values,
+the compiler will pre-calculate the results for the ordinary
+arithmetic operators (+ - * / %) and the comparison operators (== !=
+&lt; &gt; &lt;= &gt;=).  In the past, the compiler deferred
+calculations involving BigNumber values until run-time; constant
+folding improves the execution speed of affected expressions for
+obvious reasons.
 
 <li>You can now use <a href="sysman/tadsgen.htm#sprintf">sprintf</a>
 format codes directly within embedded expressions.  To do this, start
@@ -113,10 +184,50 @@ range of format code syntax that sprintf() accepts.
 codes %r and %R generate Roman numerals for integer values, in lower-
 and upper-case.
 
-<li>The String method <a href="sysman/string.htm#find">find()</a> now
-accepts a RexPattern object as the search target (an ordinary string
-can also still be used, of course).  This is similar to using the
-rexSearch() function, but it's often cleaner syntactically.
+<li>The String methods <a href="sysman/string.htm#find">find()</a> and
+<a href="sysman/string.htm#findReplace">findReplace()</a> now accept a
+RexPattern object as the search target.  An ordinary string can also
+still be used, of course.  This essentially makes String.find() and
+String.findReplace() replicate the functionality of
+<a href="sysman/tadsgen.htm#rexSearch">rexSearch()</a> and
+<a href="sysman/tadsgen.htm#rexReplace">rexReplace()</a>,
+respectively; the main benefit is that the syntax for the String
+methods is a little cleaner and more intuitive, since the subject
+string is moved out of the parameter list.
+
+<p>This is especially convenient with the new <tt>R'...'</tt> syntax
+for creating static RexPattern objects.  For example,
+<tt>str.find(R'%w+')</tt> finds the first word in a string.
+
+<li>The String method
+<a href="sysman/string.htm#findReplace">findReplace()</a> and the
+<a href="sysman/tadsgen.htm#rexReplace">rexReplace()</a> function each
+now take an optional additional argument, <i>limit</i>, specifying the
+maximum number of replacements to perform.  If the <i>limit</i>
+argument is omitted, the ReplaceOnce and ReplaceAll flags determine
+the limit; if <i>limit</i> is included in the arguments, the
+ReplaceOnce and ReplaceAll flags are ignored, and the <i>limit</i>
+value takes precedence.  <i>limit</i> can be nil to specify that all
+occurrences are to be replaced, or an integer to set a limit count.
+Zero means that no replacements are performed, in which case
+the original subject string is returned unchanged.
+
+<li>The new String function
+<a href="sysman/string.htm#findAll">findAll()</a> searches a string
+for all occurrences of a given substring or regular expression, and
+returns a list of the matches.
+
+<li>Two new functions implement reverse searches in strings:
+<a href="sysman/tadsgen.htm#rexSearchLast">rexSearchLast()</a> and
+<a href="sysman/string.htm#findLast">String.findLast()</a> These
+functions search a string from right to left, allowing you to find the
+last (rightmost) match for a substring or regular expression pattern.
+
+<li>The <a href="sysman/tadsgen.htm#rexGroup">rexGroup()</a> function
+can now be used to get information on the entire match, by passing 0
+for the group number.  rexGroup(0) returns the same format as the
+other groups, but contains the text and location of the entire match
+rather than of a parenthesized group within the match.
 
 <li>TADS now has more complete support for Unicode case conversions.
 Unicode defines two levels of case conversions; the older, simpler
@@ -244,6 +355,21 @@ toFoldedCase() on each string, but compareIgnoreCase() is more
 efficient since it never constructs the full case-folded versions of
 the two strings (it does the case folding character by character as it
 compares the strings).
+
+<li>The new function <a href="sysman/tadsgen.htm#concat">concat()</a>
+returns a string with the concatenation of the argument values.  This
+is essentially the same as using the "+" operator to concatenate a
+series of strings, but it's more efficient when combining three or
+more values, since the "+" operator is applied successively in
+pairs and so has to build and copy an intermediate result string at
+each step.
+
+<li>The new function <a href="sysman/tadsgen.htm#abs">abs()</a>
+returns the absolute value of an integer or BigNumber value.
+
+<li>The new function <a href="sysman/tadsgen.htm#sgn">sgn()</a> 
+returns the SGN (sign) of an integer or BigNumber value.  The SGN is 1
+for a positive argument, 0 for zero, and -1 for a negative argument.
 
 <li>The new t3make option -FC automatically creates the project's
 output directories.  If this option is specified, the compiler creates
@@ -374,9 +500,9 @@ with calendar dates and times; it works with the new
 <a href="sysman/timezone.htm">TimeZone</a> class to convert between
 universal time and local time anywhere in the world, correctly
 accounting for historical changes in time zone definitions and
-daylight savings time.  Authors writing games involving time travel,
-or set during the early morning hours on certain Sundays in March or
-November, should find this especially useful.
+daylight savings time.  This should be especially useful to authors
+writing games involving time travel, or set during the early morning
+hours on certain Sundays in March or November.
 
 <li>The new function <a href="sysman/tadsgen.htm#makeList">makeList()</a>
 constructs a list consisting of a repeated value.
@@ -388,6 +514,39 @@ providing the standard "args" parameter if needed and otherwise
 omitting it.  For little stand-alone programs that don't use the Adv3
 library, this simplifies the code a little by letting you omit the
 argument list parameter if you don't need it.
+
+<li>Lists and vectors can now be converted to strings, explicitly with
+<a href="sysman/tadsgen.htm#toString">toString()</a> as well as in
+contexts where non-string values are automatically coerced to strings,
+such as on the right-hand side of a "+" operator where the left-hand
+side is a string value.  The string representation of a list or vector
+is the concatenation of its elements, each first converted to a string
+itself if necessary, with commas separating elements.  For example,
+toString([1, 2, 3]) is the string '1,2,3'.
+
+<li>In implicit string conversions, the value <tt>true</tt> is now
+acceptable, and is converted to the string 'true'.  In the past,
+<tt>true</tt> worked this way with the
+<a href="sysman/tadsgen.htm#toString">toString</a> function, but not
+in implicit string conversions (such as when a value is used on the
+right-hand side of a "+" operator when the left-hand side is a
+string: <tt>'x=' + true</tt> caused a run-time error in the past,
+but now returns 'x=true').
+
+<li>The <a href="sysman/tadsgen.htm#toString">toString</a> function
+and implicit string conversions now accept properties, function
+pointers, pointers to built-in functions, and enum values.  If the
+reflection services module (reflect.t) is included in the build, these
+types will be passed to reflectionServices.valToSymbol() so that they
+can be translated to symbols when possible.  If reflect.t isn't
+included in the build, or if valToSymbol() doesn't return a string
+value, these types will be represented using a default format that
+indicates the value's type and an internal numeric identifier for the
+value, such as "property#23" or "enum#17".  Any object type that
+doesn't have a specialized string conversion defined by the built-in
+object type is now handled the same way, so an object without special
+formatting is represented either by its symbolic name (if it has one
+and reflect.t is included in the build) or a generic "object#" format.
 
 <li>The List method <a href="sysman/list.htm#sublist">sublist()</a>
 now accepts negative <i>length</i> values, for better consistency with
@@ -433,7 +592,7 @@ built-in function can do several new tricks.  First, it allows you to
 select from three different RNG algorithms to use in
 <a href="sysman/tadsgen.htm#rand">rand()</a>: the default ISAAC
 algorithm (the original TADS 3 RNG), a Linear Congruential Generator
-(or LCG, the long-time de factor standard for computer RNGs), and the
+(or LCG, the long-time de facto standard for computer RNGs), and the
 Mersenne Twister (a newer algorithm that's become popular in other
 modern interpreted languages).  ISAAC is still a good general-purpose
 choice, but the new options are there in case you have some reason to
@@ -534,8 +693,15 @@ and returns a zero-length result for the format item.
 of an empty string) when used on an empty string.  This now correctly
 returns an empty list.
 
-<li>A bug introduced in 3.1.0 caused exceptions to be directed to the
-wrong handler under certain rare conditions.  The problem happened
+<li>A bug in String.split() caused sporadic crashes when splitting
+at a delimiter and the result list had more than 10 elements.  The
+bug was related to garbage collection timing, so it was unpredictable.
+This is now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000156">bugdb.tads.org #0000156</a>)
+
+<li>A bug introduced in 3.1.0 caused exceptions to be caught in the
+wrong handlers under certain rare conditions.  The problem happened
 with exceptions thrown from within method calls when the caller had a
 new "try" block starting immediately after the expression containing
 the method call, with no other VM instructions between the call and
@@ -615,6 +781,18 @@ lack of Flash that we're preventing the browser from alerting them
 to.)
 
 (<a href="http://bugdb.tads.org/view.php?id=0000145">bugdb.tads.org #0000145</a>)
+
+
+<li>The compiler didn't generate the full string list properly when
+the -Os option was used; only strings for the first source module in
+the build were included, rather than strings for all modules being
+compiled.  (What's more, when the build included many modules, the
+underlying bug sometimes caused internal memory corruptions within the
+compiler that generated spurious error messages or other unpredictable
+results.)  This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000150">bugdb.tads.org #0000150</a>)
+
 
 </ul>
 
@@ -1287,8 +1465,8 @@ for a string buffer, you can convert it to a regular string using
 toString().  You can also extract a substring of the buffer using the
 substr() method, just like for a regular string.
 
-<li>The <a href="sysman/tadsgen.htm#rexReplace">rexReplace()
-function</a> has several new features that make it more powerful
+<li>The <a href="sysman/tadsgen.htm#rexReplace">rexReplace()</a>
+function has several new features that make it more powerful
 and more convenient to use:
 
 <ul>
