@@ -14,7 +14,7 @@
 # Autoconf.
 #
 AC_PREREQ(2.68)
-AC_INIT([FrobTADS],[1.1],[realnc@gmail.com],[frobtads])
+AC_INIT([FrobTADS],[1.2],[realnc@gmail.com],[frobtads])
 AC_CONFIG_SRCDIR(src/osfrobtads.h)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS(config.h)
