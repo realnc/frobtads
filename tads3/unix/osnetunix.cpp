@@ -15,7 +15,7 @@ Modified
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <linux/if.h>
+#include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/times.h>
 #include <unistd.h>
