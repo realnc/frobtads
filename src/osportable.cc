@@ -559,19 +559,8 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
         s->attrs |= OSFATTR_HIDDEN;
     }
 
-    uid_t euid = geteuid();
-    // Also reserve a spot for the effective group ID, which might
-    // not be included in the list in our next call.
-    int grpSize = getgroups(0, NULL) + 1;
-    // Paranoia.
-    if (grpSize > NGROUPS_MAX) {
-        return false;
-    }
-    gid_t* groups = new gid_t[grpSize];
-    getgroups(grpSize, groups + 1);
-    groups[0] = getegid();
-
     // If we're the owner, check if we have read/write access.
+    uid_t euid = geteuid();
     if (buf.st_uid == euid) {
         if (buf.st_mode & S_IRUSR)
             s->attrs |= OSFATTR_READ;
@@ -582,6 +571,17 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
 
     // Check if one of our groups matches the file's group and if so, check
     // for read/write access.
+
+    // Also reserve a spot for the effective group ID, which might
+    // not be included in the list in our next call.
+    int grpSize = getgroups(0, NULL) + 1;
+    // Paranoia.
+    if (grpSize > NGROUPS_MAX) {
+        return false;
+    }
+    gid_t* groups = new gid_t[grpSize];
+    getgroups(grpSize, groups + 1);
+    groups[0] = getegid();
     int i;
     for (i = 0; i < grpSize and buf.st_gid != groups[i]; ++i)
         ;
