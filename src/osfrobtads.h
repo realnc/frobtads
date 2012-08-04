@@ -254,8 +254,15 @@ typedef DIR* osdirhdl_t;
 #define OSFMODE_SOCKET  0
 #endif
 
+/* File attribute bits. */
+#define OSFATTR_HIDDEN  0x0001
+#define OSFATTR_SYSTEM  0x0002
+#define OSFATTR_READ    0x0004
+#define OSFATTR_WRITE   0x0008
+
 /* Get a file's stat() type. */
-int osfmode( const char* fname, int follow_links, unsigned long* mode );
+int osfmode( const char* fname, int follow_links, unsigned long* mode,
+             unsigned long* attr );
 
 /* The maximum width of a line of text.
  *

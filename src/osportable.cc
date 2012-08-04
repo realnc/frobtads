@@ -15,6 +15,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <sys/param.h>
 #ifdef HAVE_LANGINFO_CODESET
 #include <langinfo.h>
 #endif
@@ -518,33 +520,88 @@ os_rmdir( const char *dir )
  * simply call that routine and return the value.
  */
 int
-osfmode( const char *fname, int follow_links, unsigned long *mode )
+osfmode( const char *fname, int follow_links, unsigned long *mode,
+         unsigned long* attr )
 {
     os_file_stat_t s;
     int ok;
-    if ((ok = os_file_stat(fname, follow_links, &s)) != false)
-        *mode = s.mode;
+    if ((ok = os_file_stat(fname, follow_links, &s)) != false) {
+        if (mode != NULL)
+            *mode = s.mode;
+        if (attr != NULL)
+            *attr = s.attrs;
+    }
     return ok;
 }
 
 /* Get full stat() information on a file.
+ *
+ * TODO: Windows implementation for mingw.
  */
 int
 os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
 {
     struct stat buf;
-    int err = (follow_links ? stat(fname, &buf) : lstat(fname, &buf));
-    if (err == 0) {
-        s->sizelo = (uint32_t)(buf.st_size & 0xFFFFFFFF);
-        s->sizehi = sizeof(buf.st_size) > 4
-                    ? (uint32_t)((buf.st_size >> 32) & 0xFFFFFFFF)
-                    : 0;
-        s->cre_time = buf.st_ctime;
-        s->mod_time = buf.st_mtime;
-        s->acc_time = buf.st_atime;
-        s->mode = buf.st_mode;
+    if ((follow_links ? stat(fname, &buf) : lstat(fname, &buf)) != 0)
+        return false;
+
+    s->sizelo = (uint32_t)(buf.st_size & 0xFFFFFFFF);
+    s->sizehi = sizeof(buf.st_size) > 4
+                ? (uint32_t)((buf.st_size >> 32) & 0xFFFFFFFF)
+                : 0;
+    s->cre_time = buf.st_ctime;
+    s->mod_time = buf.st_mtime;
+    s->acc_time = buf.st_atime;
+    s->mode = buf.st_mode;
+    s->attrs = 0;
+
+    if (os_get_root_name(fname)[0] == '.') {
+        s->attrs |= OSFATTR_HIDDEN;
     }
-    return err == 0;
+
+    uid_t euid = geteuid();
+    // Also reserve a spot for the effective group ID, which might
+    // not be included in the list in our next call.
+    int grpSize = getgroups(0, NULL) + 1;
+    // Paranoia.
+    if (grpSize > NGROUPS_MAX) {
+        return false;
+    }
+    gid_t* groups = new gid_t[grpSize];
+    getgroups(grpSize, groups + 1);
+    groups[0] = getegid();
+
+    // If we're the owner, check if we have read/write access.
+    if (buf.st_uid == euid) {
+        if (buf.st_mode & S_IRUSR)
+            s->attrs |= OSFATTR_READ;
+        if (buf.st_mode & S_IWUSR)
+            s->attrs |= OSFATTR_WRITE;
+    } else {
+        // Otherwise, check if one of our groups matches the file's
+        // group and if so, check for read/write access.
+        int i;
+        for (i = 0; i < grpSize; ++i) {
+            if (buf.st_gid == groups[i])
+                break;
+        }
+        if (i < grpSize) {
+            if (buf.st_gid == groups[i]) {
+                if (buf.st_mode & S_IRGRP)
+                    s->attrs |= OSFATTR_READ;
+                if (buf.st_mode & S_IWGRP)
+                    s->attrs |= OSFATTR_WRITE;
+            }
+        } else {
+            // We're neither the owner of the file nor do we belong to its
+            // group.  Check whether the file is world readable/writable.
+            if (buf.st_mode & S_IROTH)
+                s->attrs |= OSFATTR_READ;
+            if (buf.st_mode & S_IWOTH)
+                s->attrs |= OSFATTR_WRITE;
+        }
+    }
+    return true;
 }
 
 /* Manually resolve a symbolic link.
@@ -1022,7 +1079,7 @@ os_get_zoneinfo_key( char *buf, size_t buflen )
     unsigned long mode;
     char linkbuf[OSFNMAX];
     const char *zi;
-    if (osfmode(elt, false, &mode)
+    if (osfmode(elt, false, &mode, NULL)
         and (mode & OSFMODE_LINK) != 0
         and os_resolve_symlink(elt, linkbuf, sizeof(linkbuf))
         and (zi = strstr(linkbuf, "/zoneinfo/")) != 0)
