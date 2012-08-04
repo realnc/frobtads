@@ -286,30 +286,28 @@ intrinsic class FileName 'filename/030000' : Object
     createDirectory(createParents?);
 
     /* 
-     *   Remove the directory named by this object.  The file safety
-     *   settings must allow write access to the directory.
+     *   Remove the directory named by this object.  The file safety settings
+     *   must allow write access to the directory.
      *   
-     *   If 'removeContents' is provided, it's a true or nil value
-     *   specifying whether or not to delete the contents of the directory
-     *   before deleting the directory itself.  If this is true, and the
-     *   directory contains any files or subdirectories, the routine will
-     *   attempt to delete those contents before deleting the directory
-     *   itself.  Any subdirectories will be recursively emptied and
-     *   removed.  For obvious reasons, use caution when using this flag.
-     *   If any of the contents can't be deleted, the function will stop
-     *   and throw an error.  Note that if this occurs, the function might
-     *   have successfully deleted some of the contents of the directory
-     *   before encountering the error; those deletions won't be undone.
+     *   If 'removeContents' is provided, it's a true or nil value specifying
+     *   whether or not to delete the contents of the directory before
+     *   deleting the directory itself.  If this is true, and the directory
+     *   contains any files or subdirectories, the routine will attempt to
+     *   delete those contents before deleting the directory itself.  Any
+     *   subdirectories will be recursively emptied and removed.  For obvious
+     *   reasons, use caution when using this flag.  If any of the contents
+     *   can't be deleted, the function will stop and throw an error.  Note
+     *   that if this occurs, the function might have successfully deleted
+     *   some of the contents of the directory before encountering the error;
+     *   those deletions won't be undone.
      *   
-     *   If 'removeContents' is omitted or nil, this routine simply calls
-     *   the operating system to remove the directory.  This routine
-     *   doesn't test to see whether the directory is empty or not.  If the
-     *   operating system allows deleting a non-empty directory, the
-     *   directory will be deleted even if it has contents in this case.
-     *   Most operating systems don't allow this, but it's important to be
-     *   aware that specifying 'removeContents' as nil doesn't guarantee
-     *   that a non-empty directory will be preserved - if you want to be
-     *   sure, use getFilesInDir() to explicitly check for contents first.
+     *   If 'removeContents' is omitted or nil, and the directory isn't
+     *   already empty, the method simply returns nil (indicating failure)
+     *   without deleting anything.  This is the default because it helps
+     *   avoid accidentally deleting contents that the application didn't
+     *   explicitly choose to remove.  (Special system files that are always
+     *   present, such as "." and ".." on Unix, don't count when determining
+     *   if the directory is empty.)
      */
     removeDirectory(removeContents?);
 }
@@ -350,3 +348,64 @@ intrinsic class FileName 'filename/030000' : Object
 #define FileTypeParentLink  0x0100
 
 
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   File attribute constants.  These are returned from getFileInfo() in the
+ *   fileAttrs property.  These are bit flags, so test for them using
+ *   (fileAttrs & FileAttrXxx).
+ */
+
+/* 
+ *   Hidden file.  When this attribute is set, the file should be omitted
+ *   from default views in the user interface and from wildcard matches in
+ *   user commands (e.g., "rm *").  On some systems, a naming convention is
+ *   used to mark files as hidden, such as ".xxx" files on Unix; on other
+ *   systems, there's formal file system metadata corresponding to this
+ *   attribute, such as on Windows.  Note that actually hiding files marked
+ *   as hidden is up to the user interface; at a programmatic level, hidden
+ *   files are treated the same as any other file, and in particular they're
+ *   included in listDir() results.  It's up to the caller to decide whether
+ *   or not to filter hidden files out of listDir() results, and if so to do
+ *   the filtering.  The hidden attribute isn't enforced as a security or
+ *   permissions mechanism in the file system; it doesn't prevent a user from
+ *   explicitly viewing or deleting a file.  It's merely designed as a
+ *   convenience for the user, to reduce clutter in normal directory listings
+ *   by filtering out system or application files (such as preference files,
+ *   caches, or indices) that the user doesn't normally access directly.
+ */
+#define FileAttrHidden 0x0001
+
+/*
+ *   System file.  This is a file system attribute on some systems (notably
+ *   Windows) that marks a file as belonging to or being part of the
+ *   operating system.  For practical purposes, system files should be
+ *   treated the same as hidden files; the only reason we distinguish
+ *   "system" as a separate attribute from "hidden" is to allow applications
+ *   to display the two attributes separately when presenting file
+ *   information to the user, who might expect to see both attributes on
+ *   systems where both exist.  There's no equivalent of this attribute on
+ *   most systems other than DOS and Windows; it won't ever appear in a
+ *   file's attributes on systems where there's no equivalent.
+ */
+#define FileAttrSystem 0x0002
+
+/*
+ *   The file is readable by the current process.  If this is set, it means
+ *   that the program has the necessary ownership and access privileges to
+ *   read the file.  It's not guaranteed that a given attempt to read the
+ *   file will actually succeed, since other conditions could arise, such as
+ *   physical media errors or locking by another process that prevents
+ *   concurrent access.
+ */
+#define FileAttrRead   0x0004
+
+/*
+ *   The file is writable by the current process.  If this is set, it means
+ *   that the program has the necessary ownership and access privileges to
+ *   write to the file.  It's not guaranteed that a given attempt to write to
+ *   the file will actually succeed, since other conditions could arise, such
+ *   as insufficient disk space, physical media errors, or locking by another
+ *   process that prevents concurrent access.
+ */
+#define FileAttrWrite  0x0008
