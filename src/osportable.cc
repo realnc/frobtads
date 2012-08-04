@@ -576,11 +576,11 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
     // not be included in the list in our next call.
     int grpSize = getgroups(0, NULL) + 1;
     // Paranoia.
-    if (grpSize > NGROUPS_MAX) {
+    if (grpSize > NGROUPS_MAX or grpSize < 0)
         return false;
-    }
     gid_t* groups = new gid_t[grpSize];
-    getgroups(grpSize, groups + 1);
+    if (getgroups(grpSize, groups + 1) != 0)
+        return false;
     groups[0] = getegid();
     int i;
     for (i = 0; i < grpSize and buf.st_gid != groups[i]; ++i)
