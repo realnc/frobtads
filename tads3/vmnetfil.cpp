@@ -498,7 +498,8 @@ int CVmNetFile::can_write(VMG_ const char *fname, int sfid)
 /*
  *   Get the file mode
  */
-int CVmNetFile::get_file_mode(VMG_ unsigned long *mode, int follow_links)
+int CVmNetFile::get_file_mode(
+    VMG_ unsigned long *mode, unsigned long *attrs, int follow_links)
 {
     /* 
      *   if it's a network file, check with the server to see if the file
@@ -517,7 +518,7 @@ int CVmNetFile::get_file_mode(VMG_ unsigned long *mode, int follow_links)
     else
     {
         /* local file - get the local file mode */
-        ret = osfmode(lclfname, follow_links, mode);
+        ret = osfmode(lclfname, follow_links, mode, attrs);
     }
     
     /* return the result */

@@ -69,6 +69,33 @@ etc.  For changes to the Adv3 library, see
 <a href="../lib/adv3/changes.htm">Recent Library Changes</a>.)
 
 <!------------------------------------------------------------------------>
+<h3>Changes for 3.1.2 (Release date TBD)</h3>
+
+<ul>
+
+<li><a href="sysman/filename.htm#getFileInfo">FileName.getFileInfo()</a>
+returns additional information on the file.  The new fileAttrs property
+of the FileInfo object provides information on file attributes used on
+some operating systems: the "hidden" and "system" attributes, and whether
+the program has read and/or write access to the file.
+
+<li>The documentation for
+<a
+href="sysman/filename.htm#removeDirectory">FileName.removeDirectory()</a>
+has been changed to specify that the method definitely fails if
+<i>deleteContents</i> is nil and the directory to be removed isn't
+already empty.  In the past, the documentation stated that the
+behavior for a non-empty directory varied by platform.  In fact, there
+was no variation in practice - all of the existing platforms already
+failed if a directory was non-empty and <i>deleteContents</i> was nil
+- so the warning about variable behavior was just hedging in case any
+future ports didn't work this way.  However, the internal porting
+interface that implements directory removal now specifies this exact
+behavior, so there's no longer any need for the hedge.
+
+</ul>
+
+<!------------------------------------------------------------------------>
 <h3>Changes for 3.1.1 (July 14, 2012)</h3>
 
 <ul>
@@ -154,8 +181,8 @@ decimal point in the number (e.g., "x = 3000000000.;").
 <p>Integers specified in hex or octal notation (e.g., 0x80000000 or
 040000000000) aren't promoted if they can fit within a 32-bit
 <i>unsigned</i> integer.  Hex and octal are frequently used to enter
-numbers with specific bit patterns, so the compiler assumes you know
-what you're doing with this format.  A hex or octal number that's over
+numbers with specific bit patterns, so the compiler assumes that's
+your intention with these formats.  A hex or octal number that's over
 the 32-bit unsigned limit of 4294967295 will be promoted, though,
 since there's no way to store such a large value in a 32-bit integer
 regardless of its signedness.

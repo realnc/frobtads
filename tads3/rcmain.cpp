@@ -482,7 +482,8 @@ void CRcResList::add_file(const char *fname, const char *alias,
     
     /* check to see if this is a regular file or a directory */
     unsigned long fmode;
-    if (osfmode(fname, TRUE, &fmode) && (fmode & OSFMODE_DIR) != 0)
+    unsigned long fattr;
+    if (osfmode(fname, TRUE, &fmode, &fattr) && (fmode & OSFMODE_DIR) != 0)
     {
         /* 
          *   It's a directory, so add an entry for each file within the
@@ -518,9 +519,16 @@ void CRcResList::add_file(const char *fname, const char *alias,
                 /* add this file name */
                 strcpy(full_url + len, search_file);
 
+                /* get the file mode */
+                if (!osfmode(fullname, TRUE, &fmode, &fattr))
+                    continue;
+
+                /* skip hidden/system files */
+                if ((fattr & (OSFATTR_HIDDEN | OSFATTR_SYSTEM)) != 0)
+                    continue;
+
                 /* check whether we found a file or directory */
-                if (osfmode(fullname, TRUE, &fmode)
-                    && (fmode & OSFMODE_DIR) != 0)
+                if ((fmode & OSFMODE_DIR) != 0)
                 {
                     /* it's a directory - check for special link files */
                     os_specfile_t spec_type = os_is_special_file(search_file);
