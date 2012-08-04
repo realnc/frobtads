@@ -577,30 +577,28 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
             s->attrs |= OSFATTR_READ;
         if (buf.st_mode & S_IWUSR)
             s->attrs |= OSFATTR_WRITE;
-    } else {
-        // Otherwise, check if one of our groups matches the file's
-        // group and if so, check for read/write access.
-        int i;
-        for (i = 0; i < grpSize; ++i) {
-            if (buf.st_gid == groups[i])
-                break;
-        }
-        if (i < grpSize) {
-            if (buf.st_gid == groups[i]) {
-                if (buf.st_mode & S_IRGRP)
-                    s->attrs |= OSFATTR_READ;
-                if (buf.st_mode & S_IWGRP)
-                    s->attrs |= OSFATTR_WRITE;
-            }
-        } else {
-            // We're neither the owner of the file nor do we belong to its
-            // group.  Check whether the file is world readable/writable.
-            if (buf.st_mode & S_IROTH)
-                s->attrs |= OSFATTR_READ;
-            if (buf.st_mode & S_IWOTH)
-                s->attrs |= OSFATTR_WRITE;
-        }
+        return true;
     }
+
+    // Check if one of our groups matches the file's group and if so, check
+    // for read/write access.
+    int i;
+    for (i = 0; i < grpSize and buf.st_gid != groups[i]; ++i)
+        ;
+    if (i < grpSize) {
+        if (buf.st_mode & S_IRGRP)
+            s->attrs |= OSFATTR_READ;
+        if (buf.st_mode & S_IWGRP)
+            s->attrs |= OSFATTR_WRITE;
+        return true;
+    }
+
+    // We're neither the owner of the file nor do we belong to its
+    // group.  Check whether the file is world readable/writable.
+    if (buf.st_mode & S_IROTH)
+        s->attrs |= OSFATTR_READ;
+    if (buf.st_mode & S_IWOTH)
+        s->attrs |= OSFATTR_WRITE;
     return true;
 }
 
