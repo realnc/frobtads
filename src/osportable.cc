@@ -585,6 +585,7 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
     int i;
     for (i = 0; i < grpSize and buf.st_gid != groups[i]; ++i)
         ;
+    delete[] groups;
     if (i < grpSize) {
         if (buf.st_mode & S_IRGRP)
             s->attrs |= OSFATTR_READ;
