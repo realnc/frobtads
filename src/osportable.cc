@@ -560,8 +560,7 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
     }
 
     // If we're the owner, check if we have read/write access.
-    uid_t euid = geteuid();
-    if (buf.st_uid == euid) {
+    if (geteuid() == buf.st_uid) {
         if (buf.st_mode & S_IRUSR)
             s->attrs |= OSFATTR_READ;
         if (buf.st_mode & S_IWUSR)
