@@ -14,7 +14,7 @@
 # Autoconf.
 #
 AC_PREREQ(2.68)
-AC_INIT([FrobTADS],[1.2],[realnc@gmail.com],[frobtads])
+AC_INIT([FrobTADS],[1.2.1],[realnc@gmail.com],[frobtads])
 AC_CONFIG_SRCDIR(src/osfrobtads.h)
 AC_CONFIG_AUX_DIR(config)
 AC_CONFIG_HEADERS(config.h)
@@ -27,7 +27,7 @@ AM_INIT_AUTOMAKE([-Wall foreign])
 # new version of the base code.  Note that this is a string, not a
 # number.
 #
-AC_DEFINE([TADS_OEM_VERSION], ["0"], [Current TADS OEM version.])
+AC_DEFINE([TADS_OEM_VERSION], ["1"], [Current TADS OEM version.])
 
 # The current maintainer of FrobTADS.  Don't include an email address;
 # the email should be specified in the AC_INIT invocation above.
