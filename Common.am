@@ -228,6 +228,7 @@ T2HEADERS = \
     tads2/os.h \
     tads2/osifc.h \
     tads2/osifctyp.h \
+    tads2/osstzprs.h \
     tads2/ply.h \
     tads2/prp.h \
     tads2/prs.h \
