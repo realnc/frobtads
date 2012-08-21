@@ -698,8 +698,16 @@ static size_t http_get_recv(void *ptr, size_t siz, size_t nmemb, void *stream)
         /* cast the stream to our CVmDataSource type */
         CVmDataSource *reply = (CVmDataSource *)stream;
         
-        /* copy the data to the buffer */
-        return reply->write(ptr, siz * nmemb);
+        /* 
+         *   Copy the data to the buffer; if write() returns zero, it means
+         *   we were successful; to indicate success to CURL, return the
+         *   number of bytes written, which equals the number of bytes we
+         *   were asked to write.  If write() returns non-zero, it's an
+         *   error, which we indicate by returning 0 to CURL to say that we
+         *   didn't successfully write any bytes.
+         */
+        size_t bytes = siz * nmemb;
+        return reply->write(ptr, bytes) ? 0 : bytes;
     }
     else
     {
@@ -741,6 +749,18 @@ static size_t http_get_hdr(void *ptr, size_t siz, size_t nmemb, void *stream)
     return siz * nmemb;
 }
 
+
+/*
+ *   curl debug callback - curl invokes this to send us error information if
+ *   anything goes wrong in a curl_easy_perform() call 
+ */
+static int curl_debug(CURL *h, curl_infotype infotyp,
+                      char *info, size_t infolen, void *)
+{
+    if (infotyp == CURLINFO_TEXT)
+        fprintf(stderr, "%.*s\n", (int)infolen, info);
+    return 0;
+}
 
 /*
  *   Send an HTTP request as a client
@@ -955,6 +975,17 @@ int OS_HttpClient::request(int opts,
         /* set the header list in curl */
         curl_easy_setopt(h, CURLOPT_HTTPHEADER, hdr_slist);
     }
+
+    /* 
+     *   To debug problems with CURL, enable the next two lines, which tell
+     *   CURL to call curl_debug() with detailed status information as it
+     *   goes through the curl_easy_perform() call.  The status information
+     *   can be very helpful in tracking down problems.  You can look at the
+     *   status calls to curl_debug() using gdb or by modifying curl_debug()
+     *   (see above) to write to a log file or the like.
+     */
+//    curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
+//    curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, curl_debug);
 
     /* do the transfer */
     if (!curl_easy_perform(h))
