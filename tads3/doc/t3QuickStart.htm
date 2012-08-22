@@ -1,0 +1,1166 @@
+<html>
+<title>TADS 3 Quick Start Guide</title>
+
+
+<style type="text/css">
+<!--
+body {
+    font: 10pt/14pt Verdana, Arial, Helvetica, Sans-Serif;
+}
+h1 {
+    font: 18pt/24pt Georgia, Times New Roman, New York, Times, Serif;
+    color: #400060;
+}
+h2 {
+    font: 14pt/18pt Georgia, Times New Roman, New York, Times, Serif;
+    color: #600060;
+}
+h3 {
+    background: #f0f0f0;
+    border-top: 1px solid #d8d8d8;
+    margin-top: 2.5em;
+    padding: 1ex 1ex 1ex 1ex;
+    font: 12pt/14pt Georgia, Times New Roman, New York, Times, Serif;
+    color: #600060;
+}
+
+div.code {
+    font-family: Courier New, Courier, monospace;
+    white-space: pre;
+    margin-left: 2em;
+    color: #000080;
+}
+
+span.code {
+    font-family: "Courier New", Courier, monospace;
+    color: #000080;
+}
+
+code {
+    font-family: "Courier New", Courier, monospace;
+    color: #000080;
+}
+
+div.cmdline {
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre;
+    margin-left: 2em;
+    color: #006000;
+}
+//-->
+</style>
+
+<body>
+
+<h1>TADS 3 Quick Start Guide</h1>
+<p>Welcome to TADS 3! This Quick Start Guide is designed to get you up and running as quickly as possible. It contains three sections:</p>
+<ol>
+<li>Instructions on <a href="#installing">installing the system</a> and creating and compiling a minimal game (as a basis for further work).</li>
+<li>A guide to the <a href="#documentation">other documentation</a> to help you choose which manual to look at first and which you can leave till later.</li>
+<li>Instructions on creating a <a href="#sample">sample game</a> for people who want to leap right in and try out something hands-on before starting to read the other manuals.</li>
+</ol>
+<p>Enjoy!</p>
+<a name="installing"><h2>1. Installing TADS 3 and Creating a Project</h2>
+
+<h3>1a. Windows Users: Installing and Creating a Project in Windows Workbench</h3>
+<ol>
+<li>If you're using Windows, there's almost nothing to installing TADS 3 &mdash; just download the TADS 3 Author's Kit, which consists of a single .EXE file that installs everything. Open the installer executable (by double-clicking on it from wherever you downloaded it to), and step through the install screens. Everything should be self-explanatory. When the install is finished, you're all set. 
+</li>
+
+<li>If you're using Windows, run TADS 3 Workbench (by selecting it from the "Start" menu group you selected during the installation process). 
+</li>
+
+
+<li>By default, Workbench will show you a "welcome" dialog asking you if you want to open an existing game or create a new one. Click on the button for creating a new game.</li>
+<li>If you've turned off the "welcome" dialog, then select "New Project" from the Workbench "File" menu.</li>
+
+
+<li>In either case, this will display the New Project Wizard. Just step through the wizard screens to tell Workbench the name and location for your new project files. Workbench will automatically create all of the necessary files for your project, and it'll even compile it for you right away.</li> 
+</ol>
+<p>
+The steps you’d typically follow once the wizard is launched would be:<ol>
+<li>Click the ‘Browse’ button on the first page of the Wizard.</li>
+<li>Use the file dialog that appears to create a new folder (e.g. ‘MyNewGame’) in a TADS 3 folder in your My Documents folder.</li>
+<li>Navigate to the new directory you have just created and enter a filename for your new game (e.g. ‘MyNewGame’) into the File Name field of the dialog, and then click the ‘Save’ button.</li>
+<li>Click the ‘Next’ button on the wizard.</li>
+<li>Click the ‘Next’ button again. On the next page of the wizard select the ‘Advanced’ radio button (for the purposes of this Guide you don’t want the ‘Introductory’ option).</li>
+<li>Click the ‘Next’ button again. On the next page of the wizard leave the ‘Standard’ radio button selected (the WebUI is a topic beyond the scope of this Guide).</li>
+<li>Fill in the four fields on the next page of the Wizard. Under ‘Story Title’ put the full name of your game (‘My New Game’ or whatever you want to call it; later on in this Guide it will be ‘The Best Burglar’ for example). Then fill in the next two fields with your own name and email address. The final field can be used to give a brief description of the game (e.g. ‘This is simply a tutorial game I’m using to learn TADS 3 with’).
+<li>Click ‘Next’ and then click ‘Finish’. </li>
+<li>Wait until TADS 3 Workbench has finished created and compiling the new skeleton game (you should see a message saying ‘Build successfully completed' followed by the date and time). In the left-hand pane of Workbench (headed ‘Project’) look for the section (near the top) that says ‘Source Files’ and double-click on the icon representing the file you asked the Wizard to create at Step 3 above (e.g. ‘MyNewGame.t’); it should be the third one down. You will then see your new game source file open in the Workbench editing window.</li>
+<li>To compile the project again when you’ve made changes to it, just press the F7 key. (You can also select the "Compile for Debugging" command on the "Build" menu, or click the equivalent toolbar button.)</li>
+</ol>
+</p>
+
+<h3>1b. Installing the Compiler and Creating a Project Manually (for non-Windows Users)</h4>
+<p>If you're <i>not</i> using Workbench (which at this stage should only be because you're not using Windows), you'll have to create your project files manually. Fortunately, this isn't very hard - you just need to create two files and one subdirectory. 
+</p>
+
+<p>Jim Aikin suggests the following steps for setting up TADS 3 and creating a project on a Macintosh (these should also work for other non-Windows systems with a little adaptation):</p>
+<ol>
+<li>Download FrobTADS, double-click on the .dmg file, and run the installer.<br><br></li>
+<li>Create a directory to hold your projects, and a subdirectory within it to hold your first project. For example, in Documents, create TADS. In TADS, create a MyGame folder.<br><br></li>
+<li>In the folder for your first project, create a folder called obj. This will hold the object files created by the compiler while it's running. You won't need to be concerned about anything in this folder; it will take care of itself.<br><br></li>
+<li>
+Using a text editor (not a word processor), create a .t3m file. For convenience, give the .t3m file the same name as the project, perhaps MyGame.t3m. Copy the following text into your new .t3m file and save the file to the project folder:
+<pre><span class=code>
+     -D LANGUAGE=en_us
+     -D MESSAGESTYLE=neu
+     -Fy obj -Fo obj
+     -o MyGame.t3
+     -lib system
+     -lib&nbsp;adv3/adv3
+     -source&nbsp;MyGame
+</span></pre>
+Replace "MyGame" in the code above with the name of your actual game, if it's different.<br><br>
+</li>
+<li>Open a Terminal window. The Terminal program is located in Applications &gt; Utilities. You may want to make an alias for it and drag it into your Dock.<br><br></li>
+<li>Create a starter game file, again as a text file, and save it to the MyGame directory. Your starter game should look more or less like this:
+<pre><span class=code>
+     #include &lt;adv3.h&gt;
+     #include &lt;en_us.h&gt;
+
+     gameMain: GameMainDef
+       initialPlayerChar&nbsp;=&nbsp;me
+     ;
+
+     versionInfo: GameID
+       name = 'My First Game'
+       byline = 'by Bob Author'
+       authorEmail = 'Bob Author &lt;bob@myisp.com&gt;'
+       desc = 'This is an example of how to start a new game project. '
+       version = '1'
+       IFID = 'b8563851-6257-77c3-04ee-278ceaeb48ac'
+     ;
+
+     firstRoom: Room 'Starting Room'
+       "This is the boring starting room."
+     ;
+
+     +me: Actor
+     ; 
+</span></pre>
+Fill in those quoted parts under the line reading "<span class=code>versionInfo:GameID</span>" with your own information.  Everything should beself-explanatory, except that last line that starts "<span class=code>IFID&nbsp;=</span>". That long, random-looking string of letters and numbers is exactly what it appears to be - a long, random string of letters and numbers. Well, almost: it's actually composed of random "hexadecimal", or base-16, digits, i.e. 0 to 9 plus A to F.  The purpose of this random number is to serve as a unique identifier for your game when you upload it to the IF Archive.  The <i>format</i> is important, but the individual digits should simply be chosen randomly.  For your convenience, tads.org provides an on-line IFID generator at <a href=" http://www.tads.org/ifidgen/ifidgen " TARGET="_top">http://www.tads.org/ifidgen/ifidgen</A>.<br><br> 
+</li>
+<li>In the Terminal, use the cd (change directory) command to navigate to the folder where your game files are stored. For instance, you might type 'cd Documents/TADS/MyGame' and then hit Return.<br><br></li>
+<li>While the Terminal is logged into this directory, you can compile your game using this command:
+<pre>
+     t3make -d -f MyGame
+</pre>
+If all goes well, you should see a string of messages in the Terminal window, and a new file (MyGame.t3) will appear in the MyGame directory. This is your compiled game file. If you've installed an interpreter program that can run TADS games, you'll be able to double-click the .t3 file and launch the game to test your work.<br><br>
+Alternatively, you can run the game directly in the Terminal by typing 'frob MyGame.t3' and hitting Return.<br><br></li>
+<li>Instead of typing the t3make command every time you want to compile your game, you can create a .command file in your project folder and then double-click this file. Double-clicking the .command file will launch Terminal and pass the text in the .command file to Terminal.<br><br>
+
+However, when you try this, the Macintosh is quite likely to object that you don't have permission to execute the .command file. There seems to be no way to fix this using the Info box (which is opened using Cmd-I). You'll have to do it from the Terminal. Navigate, as before, to the directory where your .command file is located, and type this into the Terminal:
+<pre>
+     chmod +x MyGame.command
+</pre>
+Again, substitute the name of your actual .command file. The chmod instruction with a +x flag will make the .command file executable. Now you can double-click it to compile your game, but only if Terminal is already logged into the game's directory. If no Terminal window is open, that won't be the case. To remedy this problem, add a cd line to the beginning of the .command file, so that the .command file looks something like this (substituting the name of your directory and game file):
+<pre>
+     cd Documents/TADS/MyGame
+     t3make -d -f MyGame
+</pre>
+</li>
+</ol>
+
+<h3>1c. Running Your Game</h3>
+<p>If you're running Workbench, once again, this is easy - press the F5 key (or select the "Go" command on the "Debug" menu, or click the equivalent toolbar button). 
+</p>
+
+<p>
+If you're not running Workbench, at your system command prompt, type 
+</p>
+<pre>
+   t3run mygame
+</pre>
+
+<p>But you should check the README file that came with your system's download package - the program name might not be the same everywhere. 
+</p>
+
+<a name="documentation"></a><h2>2. Where to Go Next: Navigating the Documentation</h2>
+<p>TADS 3 comes with a number of different guides and manuals. Which of them should you start with?</p>
+<p>The first thing to be aware of is that three of the manuals are intended as <i>tutorials</i> (for use when learning TADS 3) and three are intended for <i>reference</i> (for use when writing your own games once you've mastered the most common features of TADS 3). There is overlap between the contents of these two groups of manuals, since you may well want to use the reference material to remind you of material you first encountered in a tutorial, but they have quite different functions.</p>
+
+<p>The three <i>tutorial</i> manuals are <a target=_blank href="gsg/index.html" class="title">Getting Started in TADS 3</a>, <a target=_blank href="learning/Learning%20T3.pdf" class="title">Learning TADS 3
+</a>, and <a target=_blank href="tourguide/index.html" class="title">TADS 3 Tour Guide</a>. Only the first two of these are intended as introductory; the <i>TADS 3 Tour Guide</i> is primarily intended as a follow-on to <i>Getting Started in TADS 3</i> for people who want further tutorial material. So your choice of an introductory tutorial is between <i>Getting Started in TADS 3</i> and <i>Learning TADS 3</i>. So why are there two introductory tutorials and which of them should you choose?</p>
+<p>There are two because people have different learning styles and different needs and come to a system like TADS 3 from different backgrounds and with different previous knowledge and experience. Different people will therefore benefit from different approaches.</p>
+
+<p>For most new users the answer to the question "Where do I go next?" is either <a target=_blank href="gsg/index.html" class="title">Getting Started in TADS 3</a> or <a target=_blank href="learning/Learning%20T3.pdf" class="title">Learning TADS 3</a>. If you're still unsure which to start off with, take a quick look (by skimming) through the first couple of chapters of each and then choose the one you feel more comfortable with.</p>
+
+<h3>2a. The Getting Started Guide</h3>
+<p><a target=_blank href="gsg/index.html" class="title">Getting Started in TADS 3</a> walks you through the creation of two TADS 3 games (one very short, one quite a bit bigger), explaining features of the system as it goes along but not presenting them in a particularly systematic fashion (the order of presentation is dictated by the order in which the games are developed). Completing the <i>Getting Started</i> tutorial will introduce you to the process of writing Interactive Fiction in TADS 3 and in doing so will introduce you to many of the features of the system, but not in a very systematic fashion. It is the manual you should begin with if you prefer a hands-on, inductive learning style or if you feel more comfortable being walked through the creation of a couple of games before trying to branch out on your own.</p>
+
+<h3>2b. Learning TADS 3</h3>
+<p><a target=_blank href="learning/Learning%20T3.pdf" class="title">Learning TADS 3</a>, on the other hand, takes a far more systematic approach, and aims to introduce you to all the most commonly-used features of TADS 3. It makes no attempt to walk you through the creation of a game, although it does provide a number of exercises you can try out for yourself (in the form of descriptions of mini-games you can try to write together with heavily-commented sample code you can download to compare with your efforts). This might be the tutorial manual you would choose to begin with if you're reasonably confident about programming or writing Interactive Fiction in another system and you want to see how it's done in TADS 3, or if you prefer to be introduced to the material in an orderly, systematic fashion and you don't particularly need or want to be hand-held through the creation of a couple of tutorial games.</p>
+
+<h3>2c. The Tour Guide</h3>
+<p>The <a target=_blank href="tourguide/index.html" class="title">TADS 3 Tour Guide</a> was originally intended as a sequel to <i>Getting Started in TADS 3</i> for people who want a more systematic and comprehensive tour of the TADS 3 library than <i>Getting Started in TADS 3</i> gives them, though it could also be used as a sequel to <i>Learning TADS 3</i> for someone who wants to work through a substantial tutorial game after mastering (or at least, being introduced to) the principal features of TADS 3 introduced in <i>Learning TADS 3</i>. The <i>TADS 3 Tour Guide</i> is <i>not</i> intended as an <i>introductory</i> tutorial nor is it <i>primarily</i> intended as a reference manual (the <a target=_blank href="libref/index.html" class="title">TADS 3 Library Reference Manual</a> provides the definitive reference to the TADS 3 Library). What the <i>Tour Guide</i> does is to walk you through the creation of a (fairly substantial) game, introducing nearly all the main TADS 3 library features in a reasonably systematic fashion. Many TADS 3 users have found the <i>Tour Guide</i> helpful, but you don't have to use it if you don't want to. You may prefer to try to strike out on your own and start working on your own game once you've completed either <i>Getting Started in TADS 3</i> or <i>Learning TADS 3</i>. You could then come back to the <i>Tour Guide</i> only if and when you felt a further tutorial might be helpful.</p>
+
+<h3>2d. The Reference Manuals</h3>
+<p>The three <i>reference</i> manuals are the <i>TADS 3 System Manual</i>, the <i>TADS 3 Technical Manual</i> and the <i>TADS 3 Library Reference Manual</i>. These are the three manuals you will probably find yourself consulting most frequently once you have mastered the basics of TADS 3 from one or more of the tutorial manuals and are writing your own game(s), but for most people, they are not the best place to start.</p>
+<p>That said, the <a target=_blank href="sysman/cover.htm" class="title">TADS 3 System Manual</a> does contain a lot of material that might be of interest to confident beginners with a strong programming background (whether professional, amateur or hobbyist) who want to see how things are done in TADS 3, and the earlier sections of the <a target=_blank href="techman/cover.htm" class="title">TADS 3 Technical Manual</a> do contain a number of "how-to" articles that might be of interest to beginners. Nevertheless, for most new users of TADS 3 these two reference manuals will not be the best place to start; for one thing in addition to the more basic information they cover, they both contain quite a bit of more advanced and complex information that is likely to be not only unnecessary but also potentially quite confusing to new users of TADS 3; for another while the <i>Technical Manual</i> contains a lot of useful how-to information, it is anything but systematic or comprehensive in the topics it covers, and is much more useful as a reference for reasonably experienced users than as an introduction. You will also find the <a target=_blank href="libref/index.html" class="title">TADS 3 Library Reference Manual</a> an absolutely essential tool once you start working on your own games, and <i>Learning TADS 3</i> will introduce you to its use, but it's certainly not the place to begin. Please be assured that you absolutely do <i>not</i> have to master the material in these three reference manuals in order to start using (or even continue using) TADS 3, although you will eventually find them helpful when you want to achieve something beyond the basics.</p>
+
+<h3>2e. Using the Library Reference Manual</h3>
+<p>When you first gaze upon the <a target=_blank href="libref/index.html" class="title">TADS 3 Library Reference Manual</a> (LRM),
+it may appear to be an impenetrable tangle, but in fact it's an extremely useful resource. To use it, you need to be aware of the
+following basic ideas:</p>
+<ul>
+<li>The introductory page, which opens up when you click on the LRM in the Bookshelf page, contains a good description
+of how to use it.</li>
+<li>The links across the top change the contents of the index pane on the lower left. The most useful links may
+be "Classes" and "all symbols."</li>
+<li>Most TADS classes are derived from other classes, and inherit the properties and methods of those classes.
+For instance, in-game objects ultimately inherit from the Thing class. To see how the LRM works, choose the Classes
+pane (by clicking it in the top menu bar) and scroll down to the Door class in the lower left pane. Click on the word Door. You'll
+see a Superclass List, which shows which classes Door inherits from. A little lower down is an enormous list of
+Properties and Methods. All of these items are links. Clicking on any of them will take you to the place in
+the LRM where the property or method is shown.</li>
+<li>At the bottom of the page for a given class are the properties and methods that are unique to that class (and
+its subclasses). These descriptions are drawn directly from the comments in the TADS library source code.</li>
+<li>To the right of each property or method are two links: to the file in which the property or method is defined,
+and to the specific line on which it is defined. you will usually want to click on the line number, not on the
+filename. </li>
+<li>When you click on the line number, you'll be taken to the spot in the library source where that property or
+method is defined. By inspecting the code, you can often learn a great deal about how the property or method works.</li>
+</ul>
+
+<a name="sample"></a><h2>3. Jumping Right In: A Sample Game</h2>
+
+<p>The sensible and logical thing to do at this point would be to start reading one of the manuals suggested immediately above and, frankly, that's what we recommend. But maybe you're thinking that having got as far as installing TADS 3 and being shown how to compile a minimal game, you'd like to actually try <i>doing</i> something with the system before reading a whole lot of text. So, if you're the sort of person that wants to jump right in, you might want to try entering and compiling the sample game shown below. Few explanations are given &mdash; that's what the manuals are for, after all &mdash; mainly just the source code which you can either copy and paste into the Workbench editor (if you're using Windows) or whatever other text editor/programming editor you're using (if you're not on Windows) and then try compiling and running it.</p>
+
+<p>If you do decide to type the code rather than copying and pasting, be very careful to copy it <i>exactly</i>. (However, feel free to
+ignore the comments in the code when retyping it. The comments are bracketed by the symbols /* and */, and are included here to
+give you a better idea what you're seeing.) TADS 3 isn't too fussy about the amount of white space you use or where you put line breaks, but it can be very fussy about other things, and even the tiniest error can confuse it. In particular:</p>
+
+<ul>
+<li>TADS 3 is <i>case sensitive</i>. That means that orb, ORB, Orb and oRb will all be taken to mean something different. You need to be absolutely sure to copy the precise case (upper or lower) of all the letters and words you type.</li>
+<li>Even the tiniest punctuation mark such as a bracket or a semicolon can be vital to how TADS 3 understands your source code. A single missing semicolon, for example, can confuse the compiler in ways that can be quite baffling to a new user. If you can't get your version to compile, check very closely for things like braces, commas, brackets and semicolons.</li>
+</ul> 
+<p>The sample game given below is given in three versions, each fuller and more sophisticated than the last, so you can start from something very simple and see how it might be built up into something more complex. Don't worry if you don't understand too much of what's going on &mdash; at this point you can hardly expect to, after all &mdash; just try copying and compiling the code and then playing the resulting game to see what happens. You may learn something from this approach, and you should at least start to get some kind of feel for what writing a TADS 3 game looks like. If you find at any stage that this approach is simply confusing and frustrating, then give it up and go and start reading <a target=_blank href="gsg/index.html" class="title">Getting Started in TADS 3</a> or <a target=_blank href="learning/Learning%20T3.pdf" class="title">Learning TADS 3</a> instead. But if you feel you're beginning to deduce how at least some of it works, then feel free to experiment (but don't try anything too ambitious, you're probably not ready for it yet).</p>
+<p>I repeat, there is absolutely no need to carry out any of this exercise at all; it's simply provided for people who are anxious to dive straight in and try something practical before turning to the manuals. For some people this approach may be helpful (as a kind of inductive learning which will then help make the manuals make more sense); for many others it probably won't help at all.</p> 
+
+
+<h3>Version 1</h3>
+
+<p>The plot of the game (such as it is) consists of the player character entering a house, stealing the Orb of Ultimate Satisfaction, and then escaping with it. We start with an absolutely basic bare bones implementation.</p> 
+
+<pre><span class=code>
+#charset "us-ascii"
+#include &lt;adv3.h&gt;
+#include &lt;en_us.h&gt;
+
+/* The header, shown above, tells TADS to include some essential files. */
+
+versionInfo: GameID
+    IFID = '558c20af-6559-477a-9f98-b7b4274cd304'
+    name = 'The Best Burglar'
+    byline = 'by Eric Eve'
+    htmlByline = 'by &lt;a href="mailto:eric.eve@hmc.ox.ac.uk"&gt;
+                  Eric Eve&lt;/a&gt;'
+    version = '1'
+    authorEmail = 'Eric Eve &lt;eric.eve@hmc.ox.ac.uk&gt;'
+    desc = 'You are the world\'s best burglar faced with the greatest challenge
+        of your felonious career.'
+    htmlDesc = 'You are the world\'s best burglar faced with the greatest
+        challenge of your felonious career.'
+;
+
+/* Notice that each object definition, including versionInfo, ends with a semicolon. */
+
+gameMain: GameMainDef
+    /* The initial player character is an object called 'me', which will be defined shortly. */
+    initialPlayerChar = me
+;
+
+/* Objects in the game are created by giving the object a name that can be referred to in
+   your game code, then by stating what class the object is (in the case below, it's an
+   OutdoorRoom), and then giving it a name that will be displayed when the game is running. */
+
+startRoom: OutdoorRoom 'Driveway'
+    "The great house stands before you to the north. "
+    north = hallway
+    
+    roomAfterAction()
+    {
+        if(orb.isIn(me))
+        {
+            "Congratulations! You have just got away with the Orb of Ultimate
+            Satisfaction! ";
+            finishGameMsg(ftVictory, [finishOptionUndo]);
+        }
+    }
+;
+
+/* The plus sign on the first line of an object declaration tells TADS that this object
+   will be located inside of the previous object. */
+
++ me: Actor
+;
+
+/* Another room. Notice how the exits from the room are listed. The text in
+   double-quotes is the description of the room, and will be displayed when the player
+   enters the room or types 'look'. Notice also that text in TADS generally ends with
+   a space after the final period and before the closing quotation mark. */
+
+hallway: Room 'Hallway'
+    "This hall is pretty bare, but there are exits to west and south. "
+    south = startRoom
+    west = study
+;
+
+study: Room 'Study'
+    "This study is much as you would expect. A desk stands in the middle of the
+    room. The way out is to the east. "
+    east = hallway
+;
+
+/* The desk object has two single-quoted strings in its declaration. The first creates
+   some vocabulary words that the player can use to refer to the desk. The second is how
+   the game will refer to it when assembling text to show to the player. */
+
++ desk: Heavy, Platform 'plain wooden desk' 'desk'
+    "It's a plain wooden desk; nothing fancy, just a horizontal surface on legs
+    but no drawers or anything like that. "    
+;
+
+/* Notice that the orb is defined starting with TWO + signs. This will cause it to show
+   up on the desk.
+*/
+
+++ orb: Thing 'ultimate orb/satisfaction' 'Orb of Ultimate Satisfaction'
+    "It's -- well how can you describe such a thing? -- it's simply the most
+    valuable and desirable object in the known universe!"
+;
+</span></pre>
+
+<p>The particular points to note here are the way rooms and other objects are defined, and the way the + sign is used to locate some objects inside others (such as rooms). Note also how the direction properties of rooms (north, south, east, west) are used to provide the interconnections between rooms. If you feel you can deduce how it's done, you could try adding other basic objects and more rooms, with connections between them, but if you don't feel confident about experimenting, then by all means leave it and go on to the next version.</p>
+
+
+<h3>Version 2</h3>
+
+<p>The first version wasn't much of a game. In the second we'll complicate things a little by putting the orb in a locked safe to which the player has to find the combination, and we'll provide the house with a locked front door. While we're at it, we'll also define an object to represent the house from the outside. We'll put the combination in a notebook in a locked desk drawer, which means adding a drawer to the desk and providing a key for it somewhere; we'll hide it in a vase in the hall. We'll also make the hall look a bit more like it belongs in a big house by adding a couple of fake exits that don't go anywhere but look as if they do. And, of course, we need a key to the front door which for now we'll just leave lying around in the drive. Finally, we'll provide a proper introduction to the game and make it so that the game ends (either in success or failure) when the player tries to return to the road.</p>
+
+<p>Once again, if you want to try this version out be very careful to copy everything exactly, or it probably won't work. If you already have some experienced with programming, especially in another IF authoring system, you may be able to work out at least some of what's going on in the code below, but if it totally baffles you it may be time to start reaching for the manuals!</p>
+
+<pre><span class=code>
+#charset "us-ascii"
+#include &lt;adv3.h&gt;
+#include &lt;en_us.h&gt;
+
+versionInfo: GameID
+    IFID = '558c20af-6559-477a-9f98-b7b4274cd304'
+    name = 'The Best Burglar'
+    byline = 'by Eric Eve'
+    htmlByline = 'by &lt;a href="mailto:eric.eve@hmc.ox.ac.uk"&gt;
+                  Eric Eve&lt;/a&gt;'
+    version = '2'
+    authorEmail = 'Eric Eve &lt;eric.eve@hmc.ox.ac.uk&gt;'
+    desc = 'You are the world\'s best burglar faced with the greatest challenge
+        of your felonious career.'
+    htmlDesc = 'You are the world\'s best burglar faced with the greatest
+        challenge of your felonious career.'
+;
+
+gameMain: GameMainDef
+    /* the initial player character is 'me' */
+    initialPlayerChar = me
+    
+    showIntro()
+    {
+        "&lt;b&gt;The Best Burglar&lt;/b&gt;\nWell, you've got this far. Now it's just a
+        quick nip inside the house and out again carrying the Orb of Ultimate
+        Satisfaction, an object that no burglar has ever managed to steal
+        before. If you can pull it off you're sure to win the Burglar of the
+        Year Award, putting you at the pinnacle of your profession.\b";
+    }
+;
+
+/* The asExit line in the room below will cause TADS to interpet the command 'in' exactly
+   as if the player had typed 'north'. */
+
+startRoom: OutdoorRoom 'Driveway'
+    "Here you are in the drive of Number 305 Erehwon Avenue, with the great 
+    house you've come to burgle standing just before you to the north. The
+    drive back to the road where you left your getaway vehicle runs off
+    to the southwest. "
+    north = frontDoor
+    in asExit(north)
+    southwest = drive
+;
+
++ me: Actor
+    pcDesc = "You're Alexis Lightfinger, burglar extraordinaire, the most
+        professional thief in the known universe; but you're on a job now, so
+        you don't have time for the narcissistic indulgence of admiring your own
+        appearance. You're far too professional not to have come fully prepared,
+        so there's no practical need to look yourself over again. "
+;
+
+++ Container 'large white swag bag*bags' 'swag bag'
+    "It's a large white bag with &lt;q&gt;SWAG&lt;/q&gt; printed on it in very large
+    letters. Everyone knows that no real burglar would ever carry such a thing,
+    so by carrying it you know no one will take you for a real burglar. Cunning,
+    eh? "
+;
+
+/* The frontDoor object is in the same location as me and the brassKey. TADS understands
+   that doors are usually scenery, so no special effort is needed to prevent the game from
+   reporting, "You can see a front door here." */
+
++ frontDoor: LockableWithKey, Door 'front door*doors' 'front door'
+    keyList = [brassKey]
+;
+
++ brassKey: Key 'small brass key*keys' 'small brass key'
+    "It's an ordinary enough small brass key. "
+    initSpecialDesc = "A small brass key lies on the ground near the door. "
+;
+
+/* The next object is an anonymous object. That is, it has no in-code name of its own,
+   because the game code never needs to refer to it. The arrow pointing to frontDoor
+   tells TADS where to send the player if he should type 'enter the house'. As you can
+   see from the description, this object is the exterior of the house. */
+   
++ Enterable -&gt; frontDoor 'large tudor house/mansion*houses*buildings' 'house'
+    "It's a large Tudor house with mullioned windows. "
+;
+
++ drive: PathPassage 'drive/path' 'drive'
+    "The drive leading back to the road runs off to the southwest. "
+    
+    dobjFor(TravelVia)
+    {
+        action()
+        {
+            "You retrace your steps back to the road, where your trusty unmarked
+            burglarmobile is still parked, ready for your quick getaway. ";
+            
+            if(orb.isIn(me))
+            {
+                "Congratulations! You have got away with the Orb of Ultimate
+                Satisfaction, a feat never before performed. As you slip the orb
+                onto the back seat of your car and climb into the driver's seat
+                you tell yourself that you're now absolutely certain to win
+                the Burglar of the Year Award!\b";
+                
+                finishGameMsg(ftVictory, [finishOptionUndo]);
+            }
+            else
+            {
+                "It's a shame you didn't manage to steal the orb, though.
+                Without it you'll never win the Burglar of the Year Award
+                now.\b";
+                
+                finishGameMsg(ftFailure, [finishOptionUndo]);
+            }
+        }
+    }
+;
+
+hallway: Room 'Hallway'
+    "This hall is or grand proportions but pretty bare. The front door lies to
+    the south and other exits lead east, north and west. "
+    
+    south = hallDoor
+    out asExit(south)
+    west = study
+    north: FakeConnector { "You're pretty sure that only leads to the kitchen,
+        and you haven't come here to cook a meal. " }
+    
+    east: DeadEndConnector { 'the living room' "You &lt;&lt;one of&gt;&gt;walk through the
+        doorway and find yourself in&lt;&lt;or&gt;&gt;return to&lt;&lt;stopping&gt;&gt; the living room
+        where you take &lt;&lt;one of&gt;&gt; a &lt;&lt;or&gt;&gt;another&lt;&lt;stopping&gt;&gt; quick look around,
+        but &lt;&lt;one of&gt;&gt;&lt;&lt;or&gt;&gt; once again&lt;&lt;stopping&gt;&gt; failing to find anything of
+        interest you quickly return to the hall. "}
+;
+
++ hallDoor: Lockable, Door -&gt; frontDoor 'front door*doors' 'front door'
+;
+
++ table: Surface 'small wooden mahogany side table/legs*tables' 'small table'
+    "It's a small mahogany table standing on four thin legs. "
+    initSpecialDesc = "A small table rests by the east wall. "  
+;
+
+++ vase: Container 'cheap china floral vase/pattern' 'vase'
+    "It's only a cheap thing, made of china but painted in a tasteless floral
+    pattern using far too many primary colours. "    
+;
+
+/* An object of the Hidden class will show up only when the player thinks to search its
+   container. */
+   
++++ silverKey: Hidden, Key 'small silver key*keys' 'small silver key'
+;
+
+study: Room 'Study'
+    "This study is much as you would expect: somewhat spartan. A desk stands in
+    the middle of the room with a chair placed just behind it. The way out is to
+    the east. "
+    east = hallway
+    out asExit(east)
+;
+
++ desk: Heavy, Platform 'plain wooden desk' 'desk'
+    "It's a plain wooden desk with a single drawer. "          
+;
+
+++ drawer: KeyedContainer, Component '(desk) drawer*drawers' 'drawer'
+    "It's an ordinary desk drawer with a small silver lock. "
+    keyList = [silverKey]
+;
+
+/* The notebook object needs some special code for the command 'open notebook'. The
+   dobjFor macro creates some code for the Open action, and the asDobjFor(Read) code
+   causes 'open notebook' to have the same result as 'read notebook. */
+
++++ notebook: Readable 'small bright red notebook/book/cover/pages' 
+    'small red notebook'
+    "It's a small notebook with a bright red cover. "
+    
+    readDesc = "You open the notebook and flick through its pages. The only
+        thing you find of any interest is a page with 1589 scrawled across it.
+        After satisfying yourself that the notebook contains nothing else of
+        any potential relevance you snap it shut again. "
+    
+    dobjFor(Open) asDobjFor(Read)
+    cannotCloseMsg = 'It\'s already closed. '
+;
+
++ CustomImmovable, Chair 'red office swivel chair' 'chair'
+    "It's a typical office swivel chair, covered in red fabric. "
+    cannotTakeMsg = 'You see no reason to burden yourself with such a useless
+        object; that would be quite unprofessional. '
+;
+    
++ safe: CustomFixture, IndirectLockable, OpenableContainer 
+    'sturdy steel safe' 'safe'
+    "It's a sturdy steel safe with a single dial on its door. "
+    specialDesc = "A safe is built into one wall. "
+    cannotTakeMsg = 'It's firmly built into the wall; you can't budge it. '
+;
+
+++ orb: Thing 'ultimate battered dull metal orb/sphere/ball/satisfaction' 
+    'Orb of Ultimate Satisfaction'
+    "It doesn't look much be honest, just a battered sphere made of some dull
+    metal, but you've been told it's the most valuable and desirable object 
+    in the known universe! "
+    
+    aName = (theName)
+;
+
+/* Notice how the double angle brackets are used to let the description of the safe
+   refer to the properties of the object. This is an extremely common and useful
+   technique in TADS. */
+
++ safeDial: NumberedDial, CustomFixture 'dial*dials' 'dial'
+    "The dial can be turned to any number between &lt;&lt;minSetting&gt;&gt; and
+    &lt;&lt;maxSetting&gt;&gt;. It's currently at &lt;&lt;curSetting&gt;&gt;. "
+    
+    minSetting = 0
+    maxSetting = 99
+    curSetting = '35'
+    
+    num1 = 0
+    num2 = 0
+    correctCombination = 1589
+    
+    makeSetting(val)
+    {
+        inherited(val);
+        num2 = num1;
+        num1 = toInteger(val);
+        if(100 * num2 + num1 == correctCombination)
+        {
+            "You hear a slight &lt;i&gt;click&lt;/i&gt; come from the safe door. ";
+            safe.makeLocked(nil);
+        }
+        else if(!safe.isOpen)
+            safe.makeLocked(true);
+    }
+    
+    cannotTakeMsg = 'It's firmly attached to the safe. '
+;
+</span></pre>
+
+<p>There are too many new features to discuss in detail here, but one or two of them are worth briefly pointing out. Note how the front door to the house is implemented as <i>two</i> objects, each representing one side of the door, and how they are linked by having one side point to the other (-&gt; frontDoor). Note also how the north and south properties of the driveway and the hall now point to one or other side of the door. You may also have noticed how objects can be defined as belonging to more than one class (e.g. the safeDial immediately above is both a NumberedDial so we can turn it to a particular number and a CustomFixture so we can't pick it up and walk away with it; likewise making the silverKey a Hidden as well as a Key means the player actually has to look inside the vase to find it). You'll probably have worked out that a Surface is something you can put things on and a Container is something you can put things inside. A Platform is something you can stand, sit or lie on as well (we make the desk a Platform because it's presumably big enough and sturdy enough to get on).</p> 
+
+<p>At this point you may want to experiment with adding or changing a few things to see how they work, or you may think you've had enough of copying code you don't understand (in which case it's probably time to head for the manuals) or you may want to go on and try out the third and final version of "The Best Burglar".</p>
+
+<h3>Version 3</h3>
+
+<p>We'll make the third and final version of <q>The Best Burglar</q> just a <i>little</i> more challenging by hiding the front door key under a flowerpot, hiding the safe behind a picture, and making the clue to the combination in the notebook a bit more cryptic. We'll also make the Orb of Ulimate Satisfaction a tad more interesting by making it do something (albeit not that much) when it's rubbed, which means we'll also need to define a new RUB verb. We'll add a few decoration objects to field commands directed at things mentioned in room descriptions and the like, and we'll tidy up a couple of things, by, for example, defining the bulk and bulk capacity of various objects so the player can't put something obviously bigger inside something obviously smaller, and, for example, by preventing the player picking up the hall table when there's something still on it. Finally, we'll add some scoring and hints to the game.</p>
+
+<pre><span class=code>
+#charset "us-ascii"
+#include &lt;adv3.h&gt;
+#include &lt;en_us.h&gt;
+
+versionInfo: GameID
+    IFID = '558c20af-6559-477a-9f98-b7b4274cd304'
+    name = 'The Best Burglar'
+    byline = 'by Eric Eve'
+    htmlByline = 'by &lt;a href="mailto:eric.eve@hmc.ox.ac.uk"&gt;
+                  Eric Eve&lt;/a&gt;'
+    version = '3'
+    authorEmail = 'Eric Eve &lt;eric.eve@hmc.ox.ac.uk&gt;'
+    desc = 'You are the world\'s best burglar faced with the greatest challenge
+        of your felonious career.'
+    htmlDesc = 'You are the world\'s best burglar faced with the greatest
+        challenge of your felonious career.'
+;
+
+gameMain: GameMainDef
+    /* the initial player character is 'me' */
+    initialPlayerChar = me
+    
+    showIntro()
+    {
+        "&lt;b&gt;The Best Burglar&lt;/b&gt;\nWell, you've got this far. Now it's just a
+        quick nip inside the house and out again carrying the Orb of Ultimate
+        Satisfaction, an object that no burglar has ever managed to steal
+        before. If you can pull it off you're sure to win the Burglar of the
+        Year Award, putting you at the pinnacle of your profession.\b";
+    }
+    
+    showGoodbye()
+    {
+        "Thanks for playing! ";
+    }
+;
+
+startRoom: OutdoorRoom 'Driveway'
+    "The large red-brick Tudor house stands immediately to the north of this end
+    of the driveway, while the drive back to the road where you left your
+    getaway vehicle runs off though a belt of trees to the southwest."
+    
+    roomFirstDesc = "Here you are in the drive of Number 305 Erehwon Avenue,
+        with the great house you've come to burgle standing just before you to
+        the north. The drive back to the road where you left your getaway
+        vehicle runs off though a belt of trees to the southwest."
+    
+    north = frontDoor
+    in asExit(north)
+    southwest = drive    
+;
+
++ me: Actor
+    pcDesc = "You're Alexis Lightfinger, burglar extraordinaire, the most
+        professional thief in the known universe; but you're on a job now, so
+        you don't have time for the narcissistic indulgence of admiring your own
+        appearance. You're far too professional not to have come fully prepared,
+        so there's no practical need to look yourself over again. "
+;
+
+++ Container 'large white swag bag*bags' 'swag bag'
+    "It's a large white bag with &lt;q&gt;SWAG&lt;/q&gt; printed on it in very large
+    letters. Everyone knows that no real burglar would ever carry such a thing,
+    so by carrying it you know no one will take you for a real burglar. Cunning,
+    eh? "
+;
+
++ frontDoor: LockableWithKey, Door 'solid oak front door*doors' 'front door'
+    "The lintel above the front door is carved with the date 1589, presumably
+    the date the house was built. The door itself is made of solid oak. "
+    keyList = [brassKey]
+    
+    makeOpen(stat)
+    {
+        inherited(stat);
+        if(stat)
+            achievement.awardPointsOnce();
+    }
+    
+    achievement: Achievement { +10 "opening the front door" }
+        
+;
+
++ flowerPot: ComplexContainer 'terracotta small flower flowerpot/pot*pots' 
+    'flower pot'
+    "It's a perfectly ordinary small terracota pot, though it looks like no
+    one's got round to putting a plant in it yet. "
+    subContainer: ComplexComponent, Container { bulkCapacity = 3}
+    subUnderside: ComplexComponent, Underside { }
+    
+    initSpecialDesc = "A small flower pot rests on the ground not far from the
+        front door. "
+    
+    bulk = 3
+    bulkCapacity = 3
+;
+
+++ brassKey: Hidden, Key 'small brass key*keys' 'small brass key'
+    "It's an ordinary enough small brass key. " 
+    subLocation = &subUnderside 
+;
+
++ Enterable -&gt; frontDoor 'large red red-brick tudor house/mansion/front
+    *houses*buildings' 'house'
+    "It's a large red-brick Tudor house with mullioned windows, climbing
+    creepers and the date 1589 carved over the door. "
+;
+
+++ Component '(door) carved lintel' 'lintel'
+    "Its most noteworthy feature is the date 1589 carved into it. "
+;
+
++ Decoration 'mullioned windows' 'windows'
+    "They're architecturally attractive, no doubt, but not especially helpful to
+    burglars. "
+    
+    notImportantMsg = 'It\'s a matter of professional pride with you never to
+        mess with windows. '
+    isPlural = true
+;
+
++ Decoration 'green climbing ivy/creepers/creeper' 'creepers'
+    "The front of the house is festooned with green creepers -- ivy, perhaps,
+    but botany was never your strong point since in the main plants aren't
+    worth burgling. "
+    
+    notImportantMsg = 'The creepers can\'t help you burgle the house -- they\'re
+        certainly not strong enough to climb and they\'re certainly not worth
+        stealing -- so you may as well leave them alone. '
+    isPlural = true
+;
+
++ drive: PathPassage 'drive/path/avenue' 'drive'
+    "The drive leading back to the road runs off through a belt of trees to the
+    southwest. "
+    
+    dobjFor(TravelVia)
+    {
+        action()
+        {
+            "You retrace your steps back to the road, where your trusty unmarked
+            burglarmobile is still parked, ready for your quick getaway. ";
+            
+            if(orb.isIn(me))
+            {
+                "Congratulations! You have got away with the Orb of Ultimate
+                Satisfaction, a feat never before performed. As you slip the orb
+                onto the back seat of your car and climb into the driver's seat
+                you tell yourself that you're now absolutely certain to win
+                the Burglar of the Year Award!\b";
+                
+                achievement.awardPointsOnce();
+                
+                finishGameMsg(ftVictory, [finishOptionUndo,
+                    finishOptionFullScore]);
+            }
+            else
+            {
+                "It's a shame you didn't manage to steal the orb, though.
+                Without it you'll never win the Burglar of the Year Award
+                now.\b";
+                
+                finishGameMsg(ftFailure, [finishOptionUndo]);
+            }
+        }
+    }
+    
+    okayRubMsg = 'What -- all of it? That may take a while! '
+    achievement: Achievement { +10 "getting away with the orb" }
+;
+
++ Decoration 'belt/trees' 'trees'
+    "The trees are in full leaf, which is good, because they hide what you're
+    doing from the road. "
+    
+    notImportantMsg = 'The trees are doing a good job of hiding you from the
+        road, so you may as well leave them alone. It\'s not as if they\'re
+        something you could steal, after all. '
+;
+    
+hallway: Room 'Hallway'
+    "This hall is or grand proportions but pretty bare. The front door lies to
+    the south and other exits lead east, north and west. "
+    
+    south = hallDoor
+    out asExit(south)
+    west = study
+    north: FakeConnector { "You're pretty sure that only leads to the kitchen,
+        and you haven't come here to cook a meal. " }
+    
+    east: DeadEndConnector { 'the living room' "You &lt;&lt;one of&gt;&gt;walk through the
+        doorway and find yourself in&lt;&lt;or&gt;&gt;return to&lt;&lt;stopping&gt;&gt; the living room
+        where you take &lt;&lt;one of&gt;&gt; a &lt;&lt;or&gt;&gt;another&lt;&lt;stopping&gt;&gt; quick look around,
+        but &lt;&lt;one of&gt;&gt;&lt;&lt;or&gt;&gt; once again&lt;&lt;stopping&gt;&gt; failing to find anything of
+        interest you quickly return to the hall. "}
+;
+
++ hallDoor: Lockable, Door -&gt; frontDoor 'front door*doors' 'front door'
+;
+
++ table:Surface 'small wooden mahogany side table/legs*tables' 'small table'
+    "It's a small mahogany table standing on four thin legs. "
+    initSpecialDesc = "A small table rests by the east wall. "  
+    bulk = 5
+    
+    dobjFor(Take)
+    {
+        check()
+        {
+            if(contents.length &gt; 0)
+                failCheck('It\'s probably not a very good idea to try picking
+                    up the table while &lt;&lt;contents[1].nameIs&gt;&gt; still on it. ');
+        }
+    }
+;
+
+++ vase: Container 'cheap china floral vase/pattern' 'vase'
+    "It's only a cheap thing, made of china but painted in a tasteless floral
+    pattern using far too many primary colours. "    
+
+    bulk = 3
+    bulkCapacity = 3
+;
+
++++ silverKey: Hidden, Key 'small silver key*keys' 'small silver key'
+;
+
+study: Room 'Study'
+    "This study is much as you would expect: somewhat spartan. A desk stands in
+    the middle of the room with a chair placed just behind it. A &lt;&lt;if
+      picture.moved&gt;&gt;safe is built into &lt;&lt;else&gt;&gt; rather bland painting hangs on
+    &lt;&lt;end&gt;&gt; the west wall. The way out is to the east. "
+    east = hallway
+    out asExit(east)
+;
+
++ desk: Heavy, Platform 'plain wooden desk' 'desk'
+    "It's a plain wooden desk with a single drawer. "    
+    dobjFor(Open) remapTo(Open, drawer)
+    dobjFor(Close) remapTo(Close, drawer)
+    dobjFor(LookIn) remapTo(LookIn, drawer)
+    dobjFor(UnlockWith) remapTo(UnlockWith, drawer, IndirectObject)
+    dobjFor(LockWith) remapTo(LockWith, drawer, IndirectObject)
+    dobjFor(Lock) remapTo(Lock, drawer)
+    dobjFor(Unlock) remapTo(Unlock, drawer)
+;
+
+++ drawer: KeyedContainer, Component '(desk) drawer*drawers' 'drawer'
+    "It's an ordinary desk drawer with a small silver lock. "
+    keyList = [silverKey]
+;
+
++++ notebook: Readable 'small bright red notebook/book/cover/pages' 
+    'small red notebook'
+    "It's a small notebook with a bright red cover. "
+    
+    readDesc = "You open the notebook and flick through its pages. The only
+        thing you find of any interest is a page with &lt;q&gt;SAFE DATE&lt;/q&gt; scrawled
+        across it. After satisfying yourself that the notebook contains nothing
+        else of any potential relevance you snap it shut again. &lt;.reveal
+        safe-date&gt;"
+    
+    dobjFor(Open) asDobjFor(Read)
+    dobjFor(LookIn) asDobjFor(Read)
+    
+    dobjFor(Read)
+    {
+        action()
+        {
+            inherited;
+            achievement.awardPointsOnce();
+        }
+    }
+    
+    cannotCloseMsg = 'It\'s already closed. '
+    achievement: Achievement { +5 "reading the notebook" }
+;
+
++ CustomImmovable, Chair 'red office swivel chair' 'chair'
+    "It's a typical office swivel chair, covered in red fabric. "
+    
+    cannotTakeMsg = 'You see no reason to burden yourself with such a useless
+        object; that would be quite unprofessional. '
+
+;
+    
++ picture: RoomPartItem, Thing 'rather bland picture/painting/landscape' 
+    'picture'
+    "It's a landscape, pleasantly executed enough, but of no great distinction
+    and definitely not worth the bother of stealing. "
+    
+    initNominalRoomPartLocation = defaultWestWall
+    initSpecialDesc = "A rather bland painting hangs on the west wall. "
+    isListed = (moved)
+    
+    bulk = 8
+    
+    dobjFor(LookBehind)
+    {
+        action()
+        {
+            if(moved)
+                inherited;
+            else
+            {
+                safe.discover();
+                "Behind the picture is a safe built into the wall. ";
+            }
+        }
+    }
+    
+    moveInto(newDest)
+    {
+        if(!safe.discovered)
+        {
+            "Removing the painting from the wall reveals a safe behind. ";
+            safe.discover();
+        }
+        inherited(newDest);
+    }
+;
+
++ safe: RoomPartItem, Hidden, CustomFixture, ComplexContainer 
+    'sturdy steel safe' 'safe'
+    "It's a sturdy steel safe with a single dial on its door. "
+    
+    subContainer: ComplexComponent, IndirectLockable, OpenableContainer 
+    { 
+        bulkCapacity = 5 
+        makeOpen(stat)
+        {
+            inherited(stat);
+            if(stat)
+                achievement.awardPointsOnce();
+        }
+        
+        achievement: Achievement { +10 "opening the safe" }        
+    }
+    
+    specialDesc = "A safe is built into the west wall. "
+    specialNominalRoomPartLocation = defaultWestWall
+    cannotTakeMsg = 'It's firmly built into the wall; you can't budge it. '
+    
+    discover()
+    {
+        if(!discovered)
+        {
+            foreach(local cur in allContents)
+                cur.discover();
+            
+            achievement.awardPointsOnce();
+        }
+        inherited();
+    }
+    
+    achievement: Achievement { +5 "finding the safe" }
+;
+
+++ safeDoor:  Hidden, ContainerDoor '(safe) door' 'safe door'
+    "It has a circular dial attached to its centre. "         
+;
+
++++ safeDial: Hidden, Component,  NumberedDial 'circular dial*dials' 'dial'
+    "The dial can be turned to any number between &lt;&lt;minSetting&gt;&gt; and
+    &lt;&lt;maxSetting&gt;&gt;. It's currently at &lt;&lt;curSetting&gt;&gt;. "
+    
+    minSetting = 0
+    maxSetting = 99
+    curSetting = '35'
+    
+    num1 = 0
+    num2 = 0
+    correctCombination = 1589
+    
+    makeSetting(val)
+    {
+        inherited(val);
+        num2 = num1;
+        num1 = toInteger(val);
+        if(100 * num2 + num1 == correctCombination)
+        {
+            "You hear a slight &lt;i&gt;click&lt;/i&gt; come from the safe door. ";
+            safe.makeLocked(nil);
+        }
+        else if(!safe.isOpen)
+            safe.makeLocked(true);
+    }
+;
+
+++ orb: Thing 'ultimate battered dull metal orb/sphere/ball/satisfaction' 
+    'Orb of Ultimate Satisfaction'
+    "It doesn't look much be honest, just a battered sphere made of some dull
+    metal, but you've been told it's the most valuable and desirable object 
+    in the known universe! "
+    
+    aName = (theName)
+    
+    subLocation = &subContainer
+    
+    okayRubMsg = 'As {you/he} rub{s} {the dobj/him} a shimmering djiin suddenly
+        appears in the air before you!\b 
+        &lt;q&gt;Hello, you have reached the automated holographic answering service
+        of Jeannie the Genie,&lt;/q&gt; she announces. &lt;q&gt;I\'m sorry I\'m not
+        available to respond to your rub in person right now, but my hours of
+        activity have been heavily curtailed by the European Working Time
+        Directive. Before making a wish, please make sure that you have
+        conducted a full risk assessment in line with the latest Health and
+        Safety Guidelines. Also, please note that before any wish can be granted
+        you must sign a Form P45/PDQ/LOL indemnifying this wish-granting agency
+        against any consequential loss or damage arising from the fulfilment of
+        your desires. Thank you for rubbing. Have a nice day!&lt;/q&gt;\b
+        Her message complete, the holographic djiin fades away into
+        non-existence. '
+    
+    moveInto(dest)
+    {
+        inherited(dest);
+        if(dest.isOrIsIn(me))
+            achievement.awardPointsOnce();
+    }
+    
+    achievement: Achievement { +10 "taking the orb" }
+;
+
+//------------------------------------------------------------------------------
+
+/* DEFINE A NEW VERB */
+
+DefineTAction(Rub)
+;
+
+VerbRule(Rub)
+    'rub' dobjList
+    : RubAction
+    verbPhrase = 'rub/rubbing (what)'
+;
+
+/* When creating a new verb, you'll want to modify the Thing class so as to provide
+   default handling for the command. The defaults specified here will be used except
+   on objects for which you define explicit handling of the command. */
+   
+modify Thing
+    dobjFor(Rub)
+    {
+        preCond = [touchObj]
+        action() { mainReport(okayRubMsg); }        
+    }
+    
+    okayRubMsg = '{You/he} rub{s} {the dobj/him} but not much happens as a
+        result. '
+    
+    shouldNotBreakMsg = 'Only amateurs go round breaking things unnecessarily. '    
+;
+
+//------------------------------------------------------------------------------
+
+/* HINTS */
+
+TopHintMenu;
+
++ Goal -&gt; (frontDoor.achievement)
+    'How do I get into the house?'
+    [
+        'Well, the windows don\'t seem a good way in. ',
+        'So perhaps you\'d better try the front door. ',
+        'Could someone have left a key around somewhere? ',
+        'Is there anything lying around where someone could have hidden a key? ',
+        'What about that flowerpot? ',
+        'Try looking under the flowerpot. '
+    ]
+    
+    goalState = OpenGoal
+;
+
+/* The closeWhenSeen property of the following Goal object is an example of how to
+   make your hint menu respond dynamically to the player's current situation. */
+    
++ Goal 'Where can I find the orb? '
+    [
+        'Something like that is bound to be kept safe. ',
+        'So it\'s probably inside the house. '              
+    ]
+    
+    goalState = OpenGoal
+    closeWhenSeen = hallway
+;
+
++ Goal 'Where can I find the orb?'
+    [
+        'It\'s sure to be kept somewhere safe. ',
+        'You\'d better hunt around. ',
+        'Somewhere in the study seems the most likely place. ',
+        deskHint,
+        'But it should be safely locked in a safe ',
+        'Where might someone hide a safe in this study? ',
+        'What could be behind that picture on the wall? ',
+        'Try looking behind the picture (or simply taking the picture). '
+    ]
+    
+    openWhenSeen = hallway
+    closeWhenSeen = orb
+;
+
+++ deskHint: Hint 'Have you tried looking in the desk drawer? '
+    [deskGoal]
+;
+
++ deskGoal: Goal 'How do I get the desk drawer open?'
+    [
+        'Have you examined the drawer? ',
+        'What might you need to unlock it? ',
+        'Where might you find such a thing? ',
+        'What have you seen that a small key might be hidden in? ',
+        'How carefully have you searched the hall? ',
+        'What is (or was) on the hall table? ',
+        'What might that vase be for? ',
+        'Try looking in the vase. '
+    ]
+    closeWhenSeen = notebook
+;
+
++ Goal 'How do I get the safe open?'
+    [
+        'How carefully have you examined the safe? ',
+        'Where might someone leave a clue to the combination? ',
+        deskHint,
+        'Make sure you read the notebook. ',
+        'Once you\'ve found the combination you need to use the dial. ',
+        'If the combination is a number larger than 99 you\'ll need to enter it
+        in stages. ',
+        'For example, if the combination were 1234 you\'d first need to turn the
+        dial to 12 and then turn it to 34. '
+    ]
+    
+    openWhenSeen = safe
+    closeWhenAchieved = (safe.subContainer.achievement)
+;
+
++ Goal 'What does the clue in the notebook mean?'
+    [
+        'Well, &lt;q&gt;SAFE&lt;/q&gt; might refer to something you want to open. ',
+        'Have you seen a date round here? ',
+        'When was this house built? ',
+        'Where might you find the year in which this house was built? ',
+        'How carefully have you looked at the front of the house? ',
+        'Did you examine the door? '
+    ]
+    
+    openWhenRevealed = 'safe-date'
+    closeWhenAchieved = (safe.subContainer.achievement)
+;
+
+
++ Goal 'What do I do with the orb now I\'ve got it?'
+    [
+        'Well, you could try rubbing it. ',
+        'But the main thing to do now is to escape with it. '
+    ]
+    openWhenSeen = orb
+;
+</span></pre>
+<p>Doubtless there a great many more things that could be done to improve this game, but it has now served its purpose.</p>
+
+<p>Once again, there are far too many features here to discuss in a Quick Start Guide. One thing in particular to note is the use of the <tt>ComplexContainer</tt> class. We use it for the flowerpot because the pot is something we put the key <i>under</i> but it would also be possible to put things inside. We also use it for the safe &mdash; and this is a more important case &mdash; because we have now made the safe door a Component of the safe and the combination dial a Component of the safe door. If we had left the safe as an OpenableContainer (as in version 2), the safe door and the combination dial would have been locked inside the safe along with the orb, and the safe would have been impossible to open (a mistake it's very easy to make, so this is worth noting). Another thing worth noting is the use of <tt>RemapTo()</tt> to redirect certain actions that the player might reasonably try on the desk to its drawer. Finally it's worth pointing out that there's more than one way we could have implemented many of the things shown above.</p>
+
+<p>There are plenty of other feature of TADS 3 that haven't been introduced yet. In particular this example doesn't even begin to touch on the creation of NPCs (other characters in your game &mdash; the fleeting appearance of Jeannie the Genie doesn't really count). But the three versions of the game shown above should have illustrated quite a few of the most common features of TADS 3 used in developing TADS 3 games, and depending on your background and inclinations you may have learned something by studying the sample code and trying it out. If you feel confident enough to experiment a little more on your own, by all means do so, but at this stage it's getting pretty near the point when you will need to move on to <a target=_blank href="gsg/index.html" class="title">Getting Started in TADS 3</a> or <a target=_blank href="learning/Learning%20T3.pdf" class="title">Learning TADS 3</a>.
+
+<p><i>Eric Eve &mdash; May 2012</i></p>
+<!------------------------------------------------------------------------>
+</body>
+</html>
+
