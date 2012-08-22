@@ -166,11 +166,22 @@ T3_WEBUIRES_FILES = \
     tads3/lib/webuires/warningPopupBkg.gif
 
 T3_DOC_FILES = \
+    tads3/doc/bkg.jpg \
     tads3/doc/getacro.gif \
+    tads3/doc/gsgcover.jpg \
+    tads3/doc/htads_cover.jpg \
     tads3/doc/index.htm \
+    tads3/doc/learning_cover.jpg \
+    tads3/doc/libcover.jpg \
     tads3/doc/nodoc.htm \
     tads3/doc/nolibref.htm \
+    tads3/doc/qstart_cover.jpg \
+    tads3/doc/syscover.jpg \
+    tads3/doc/t3QuickStart.htm \
     tads3/doc/t3changes.htm \
+    tads3/doc/techcover.jpg \
+    tads3/doc/tgcover.jpg \
+    tads3/doc/title.jpg \
     tads3/doc/title2.gif
 
 ## Include all of the above in the "dist" target.
