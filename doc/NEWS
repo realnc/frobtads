@@ -4,6 +4,8 @@ v1.2.1 - 2012/08/22
   - WebUI save/restore functionality was broken in 1.2.  This has been
     fixed.
 
+  - Tads virtual machines and compilers updated to 2.5.15/3.1.2.
+
 
 v1.2 - 2012/07/16
 =================
