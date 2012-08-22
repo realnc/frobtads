@@ -593,7 +593,7 @@ moduleAdv3: ModuleID
     byline = 'by Michael J.\ Roberts'
     htmlByline = 'by <a href="mailto:mjr_@hotmail.com">'
                  + 'Michael J.\ Roberts</a>'
-    version = '3.1.1'
+    version = '3.1.2'
 
     /*
      *   We use a listing order of 50 so that, if all of the other credits

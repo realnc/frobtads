@@ -17,6 +17,7 @@ Modified
 /* system headers */
 #include <pthread.h>
 #include <unistd.h>
+#include <linux/unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -1087,17 +1088,28 @@ public:
 
             /*
              *   Disable the Nagle algorithm for this socket to minimize
-             *   transmit latency.  Nagle's algorithm introduces a small,
-             *   intentional delay when a small packet is sent, so that if
-             *   one or more additional small packets quickly follow, the
-             *   packets can be combined into one larger packet.  This is the
-             *   default behavior on most Unix systems because typical
-             *   applications benefit from the reduction in overhead from
-             *   sending fewer packets.  However, it's detrimental to TADS
-             *   game servers, because they tend to send small packets that
-             *   must be acknowledged in series, which prevents them from
-             *   being coalesced.  The Nagel algorithm's intentional delay in
-             *   this case shows up as latency, without the usual benefits.
+             *   transmit latency.  With the Nagle algorithm in effect,
+             *   whenever the program sends a small packet (via ::send(),
+             *   e.g.), the TCP layer queues the bytes but doesn't send them
+             *   out on the network immediately; instead, it waits a little
+             *   while to see if another ::send() quickly follows, in which
+             *   case the bytes from the first ::send() can be combined with
+             *   those from the second to form one larger packet.  This
+             *   continues until the maximum packet size is reached or a
+             *   timeout expires, at which point the queued bytes are finally
+             *   sent out on the network.  This automatic buffering and
+             *   coalescing behavior is beneficial to many appliations,
+             *   because there's some overhead associated with each packet;
+             *   coalescing multiple small ::send()'s into one large packet
+             *   reduces this packet overhead.  However, it's detrimental to
+             *   programs like TADS that tend to send a series of small
+             *   messages that need to be acknowledged individually before
+             *   the next can be sent.  The Nagle algorithm's delay in this
+             *   case manifests as pure latency, since the additional bytes
+             *   being waited for never arrive, so the original small packet
+             *   must be sent out after all - but not until the Nagle
+             *   algorithm delay expires, whereas with Nagle turned off, it's
+             *   sent out immediately.
              */
             int tcpflag = 1;
             setsockopt(snew, IPPROTO_TCP, TCP_NODELAY,

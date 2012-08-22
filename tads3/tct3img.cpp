@@ -2506,10 +2506,8 @@ void CTcGenTarg::write_global_symbols_to_image(CVmImageWriter *image_writer)
 vm_prop_id_t CTcGenTarg::look_up_prop(const char *propname, int required,
                                       int err_if_undef, int err_if_not_prop)
 {
-    CTcSymbol *sym;
-    
     /* look up the symbol */
-    sym = G_prs->get_global_symtab()->find(propname);
+    CTcSymbol *sym = G_prs->get_global_symtab()->find(propname);
 
     /* check to see if it's defined and of the proper type */
     if (sym == 0)

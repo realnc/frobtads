@@ -1264,11 +1264,16 @@ void os_fprint(osfildef *fp, const char *str, size_t len);
  *   Get a file's mode and attribute flags.  This retrieves information on
  *   the given file equivalent to the st_mode member of the 'struct stat'
  *   data returned by the Unix stat() family of functions, as well as some
- *   extra system-specific attributes.  On success, fills in *mode with the
- *   mode information as a bitwise combination of OSFMODE_xxx values, fills
- *   in *attr with a combination of OSFATTR_xxx attribute flags, and returns
- *   true; on failure, simply returns false.  Failure can occur if the file
- *   doesn't exist, can't be accessed due to permissions, etc.
+ *   extra system-specific attributes.  On success, fills in *mode (if mode
+ *   is non-null) with the mode information as a bitwise combination of
+ *   OSFMODE_xxx values, fills in *attr (if attr is non-null) with a
+ *   combination of OSFATTR_xxx attribute flags, and returns true; on
+ *   failure, simply returns false.  Failure can occur if the file doesn't
+ *   exist, can't be accessed due to permissions, etc.
+ *   
+ *   Note that 'mode' and/or 'attr' can be null if the caller doesn't need
+ *   that information.  Implementations must check these parameters for null
+ *   pointers and skip returning the corresponding information if null.
  *   
  *   If the file in 'fname' is a symbolic link, the behavior depends upon
  *   'follow_links'.  If 'follow_links' is true, the function should resolve

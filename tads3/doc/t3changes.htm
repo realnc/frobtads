@@ -69,12 +69,33 @@ etc.  For changes to the Adv3 library, see
 <a href="../lib/adv3/changes.htm">Recent Library Changes</a>.)
 
 <!------------------------------------------------------------------------>
-<h3>Changes for 3.1.2 (Release date TBD)</h3>
+<h3>Changes for 3.1.2 (August 20, 2012)</h3>
 
 <ul>
 
+<li>New syntax allows defining an object within an expression.  This
+type of object is known as an inline object, and is essentially the
+object analog of an anonymous function.  Methods of inline objects
+behave like anonymous functions in that they can access locals from
+the enclosing scope.  Inline objects are useful for a lot of the same
+coding patterns where anonymous functions are useful, but allow for
+more flexible APIs, since an object is a more general way to express
+context information.  The new syntax also has the side benefit of
+letting you define new objects at run-time with the dynamic compiler:
+if you compile and evaluate an expression containing an inline object
+definition, the result will be an instance of the object defined in
+the expression.
+
+<p>For full details, see <a href="sysman/inlineobj.htm">inline objects</a>
+in the System Manual.
+
+<li>The new String method <a href="sysman/string.htm#match">match()</a>
+complements the <a href="sysman/string.htm#find">find()</a> method by
+checking for a match at a given position in the subject string rather
+than searching for a match.
+
 <li><a href="sysman/filename.htm#getFileInfo">FileName.getFileInfo()</a>
-returns additional information on the file.  The new fileAttrs property
+now returns additional information on the file.  The new fileAttrs property
 of the FileInfo object provides information on file attributes used on
 some operating systems: the "hidden" and "system" attributes, and whether
 the program has read and/or write access to the file.
@@ -92,6 +113,26 @@ failed if a directory was non-empty and <i>deleteContents</i> was nil
 future ports didn't work this way.  However, the internal porting
 interface that implements directory removal now specifies this exact
 behavior, so there's no longer any need for the hedge.
+
+<li>In the past, when <tt>#pragma once</tt> checked to see if the same
+file had been included previously, it was sensitive to case
+differences in the filenames as written in the #include directives.
+The comparison now uses the local file system conventions; on Windows,
+for example, the comparison ignores case differences.
+
+<li>The IANA time zone database included in the release has been updated
+to version 2012e (2012-08-03).
+
+<li>In 3.1.1, the debugger crashed if a run-time error was thrown by
+a non-Adv3 program.  This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000157">bugdb.tads.org #0000157</a>)
+ 
+<li>The UTF-8 character output mapper produced incorrect output when
+mapping a string that ended with a non-ASCII character.  This is
+now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000159">bugdb.tads.org #0000159</a>)
 
 </ul>
 
