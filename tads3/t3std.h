@@ -150,7 +150,7 @@ void os_init_ui_after_load(class CVmBifTable *bif_table,
 #endif
 
 /* for Windows debug builds, add stack trace info to allocation blocks */
-#if defined(T3_DEBUG) && defined(__WIN32__)
+#if defined(T3_DEBUG) && defined(T_WIN32)
 # define OS_MEM_PREFIX \
     struct { \
         DWORD return_addr; \
@@ -727,10 +727,10 @@ inline void *t3mallocnew(size_t siz)
 inline void t3free(void *ptr)
     { t3free(ptr, T3MALLOC_TYPE_MALLOC); }
 
-void *operator new(size_t siz);
-void *operator new[](size_t siz);
-void operator delete(void *ptr);
-void operator delete[](void *ptr);
+void *operator new(size_t siz) throw (std::bad_alloc);
+void *operator new[](size_t siz) throw (std::bad_alloc);
+void operator delete(void *ptr) throw ();
+void operator delete[](void *ptr) throw ();
 
 /*
  *   List all allocated memory blocks - displays heap information on stdout.

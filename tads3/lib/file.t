@@ -19,7 +19,7 @@
  *   File status information.  This is returned from file.getFileInfo().
  */
 class FileInfo: object
-    construct(typ, siz, ctime, mtime, atime, target, ...)
+    construct(typ, siz, ctime, mtime, atime, target, attrs, ...)
     {
         fileType = typ;
         fileSize = siz;
@@ -27,6 +27,7 @@ class FileInfo: object
         fileModifyTime = mtime;
         fileAccessTime = atime;
         fileLinkTarget = target;
+        fileAttrs = attrs;
 
         /* for convenience, note if it's a directory and/or special link */
         isDir = (typ & FileTypeDir) != 0;
@@ -57,9 +58,15 @@ class FileInfo: object
 
     /* 
      *   type of the file, as a combination of FileTypeXxx bit flags (see
-     *   file.h) 
+     *   filename.h) 
      */
     fileType = 0
+
+    /*
+     *   file attributes, as a combination of FileAttrXxx bit flags (see
+     *   filename.h) 
+     */
+    fileAttrs = 0
 
     /* size of the file in bytes */
     fileSize = 0

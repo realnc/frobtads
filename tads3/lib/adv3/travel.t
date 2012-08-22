@@ -4405,7 +4405,11 @@ class Room: Fixture, BasicLocation, RoomAutoConnector
          *   message 
          */
         if (atmosphereList != nil)
+        {
+            /* show visual separation, then the current atmosphere message */
+            "<.commandsep>";
             atmosphereList.doScript();
+        }
     }
 
     /* 

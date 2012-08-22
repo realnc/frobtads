@@ -75,6 +75,7 @@ library.  Changes are listed in reverse chronological order (the most
 recent changes are first).
 
 <ul class=toc>
+<li><a href='#312'>3.1.2</a>
 <li><a href='#311'>3.1.1</a>
 <li><a href='#310'>3.1.0</a>
 <li><a href='#3018a'>3.0.18.1</a>
@@ -110,6 +111,28 @@ recent changes are first).
 <li><a href='#305'>3.0.5</a>
 <li><a href='#304'>3.0.4 and earlier</a>
 </ul>
+
+<!------------------------------- 3.1.2 --------------------------------->
+<div class="sepbar"><a name='312'></a>3.1.2</div>
+<p><b><i>Released August 20, 2012</i></b>
+<p>
+
+<!------------------->
+<div class=firstentry>
+
+In the past, atmosphere messages (via the Room atmosphereList
+property) didn't display a paragraph separator before the message, so
+if whatever item happened to be displayed just before an atmosphere
+message didn't add a paragraph separator at the end, the atmosphere
+message was shown as a continuation of the preceding paragraph.
+Room.roomDaemon() now explicitly adds a &lt;.commandsep&gt; before
+each atmosphere message to ensure that a paragraph break is displayed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000161">bugdb.tads.org #0000161</a>)
+
+
+</div>
+
 
 <!------------------------------- 3.1.1 --------------------------------->
 <div class="sepbar"><a name='311'></a>3.1.1</div>

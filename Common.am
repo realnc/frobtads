@@ -408,6 +408,7 @@ T3HEADERS = \
 ## TADS 3 runtime and compiler sources.
 ##
 T3RCSOURCES = \
+    tads2/ostzposix.c \
     tads3/askf_tx3.cpp \
     tads3/charmap.cpp \
     tads3/derived/vmuni_cs.cpp \

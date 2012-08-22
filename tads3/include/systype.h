@@ -355,7 +355,7 @@ intrinsic class TadsObject 'tads-object/030005': Object
 /*
  *   The native string type. 
  */
-intrinsic class String 'string/030007': Object
+intrinsic class String 'string/030008': Object
 {
     /* get the length of the string */
     length();
@@ -860,6 +860,28 @@ intrinsic class String 'string/030007': Object
      *   match.
      */
     findAll(str, func?);
+
+    /*
+     *   Match the given string or RexPattern object to this string value,
+     *   starting at the start of the string or at the given index, if
+     *   specified.  If 'str' is a string, we check for a match to the
+     *   literal text of the string; if 'str' is a RexPattern, we try to
+     *   match the regular expression.  'idx' is the optional starting
+     *   position (1 is the first character; negative values are from the end
+     *   of the string, with -1 as the last character, -2 as the second to
+     *   last, etc).  If 'idx' is omitted, the default is the start of the
+     *   string.
+     *   
+     *   Returns an integer giving the length of the match found if the
+     *   string matches 'str', or nil if there's no match.
+     *   
+     *   The difference between this method and find() is that this method
+     *   only checks for a match at the given starting position, without
+     *   searching any further in the string, whereas find() searches for a
+     *   match at each subsequent character of the string until a match is
+     *   found or the string is exhausted.
+     */
+    match(str, idx?);
 }
 
 /*

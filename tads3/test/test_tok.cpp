@@ -35,6 +35,7 @@ Modified
 #include "vmrunsym.h"
 #include "vmmeta.h"
 #include "t3test.h"
+#include "tct3drv.h"
 
 
 static void errexit(const char *msg)
@@ -242,3 +243,41 @@ void CTcParser::add_gen_obj_prop_stat(
 {
 }
 
+void CTcParser::set_source_text_group_mode(int)
+{
+}
+
+class CTPNInlineObject *CTcPrsOpUnary::parse_inline_object(int)
+{
+    return 0;
+}
+
+CTPNAnonFunc *CTcPrsOpUnary::parse_anon_func(int, int)
+{
+    return 0;
+}
+
+void CTcPrsSymtab::add_to_global_symtab(CTcPrsSymtab *, CTcSymbol *)
+{
+}
+
+int CTcParser::alloc_ctx_arr_idx()
+{
+    return 0;
+}
+
+void CTcParser::init_local_ctx()
+{
+}
+
+void CTPNStmObjectBase::add_implicit_constructor()
+{
+}
+
+void CTPNStmBase::add_debug_line_rec()
+{
+}
+
+void CTPNStmBase::add_debug_line_rec(CTcTokFileDesc *, long)
+{
+}

@@ -262,9 +262,10 @@ int CVmNetFile::can_write(VMG_ const char *fname, int sfid)
     }
 }
 
-int CVmNetFile::get_file_mode(VMG_ unsigned long *mode, int follow_links)
+int CVmNetFile::get_file_mode(
+    VMG_ unsigned long *mode, unsigned long *attr, int follow_links)
 {
-    return osfmode(lclfname, follow_links, mode);
+    return osfmode(lclfname, follow_links, mode, attr);
 }
 
 int CVmNetFile::get_file_stat(VMG_ os_file_stat_t *stat, int follow_links)
