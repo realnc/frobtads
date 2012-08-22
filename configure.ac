@@ -27,7 +27,7 @@ AM_INIT_AUTOMAKE([-Wall foreign])
 # new version of the base code.  Note that this is a string, not a
 # number.
 #
-AC_DEFINE([TADS_OEM_VERSION], ["1"], [Current TADS OEM version.])
+AC_DEFINE([TADS_OEM_VERSION], ["0"], [Current TADS OEM version.])
 
 # The current maintainer of FrobTADS.  Don't include an email address;
 # the email should be specified in the AC_INIT invocation above.
