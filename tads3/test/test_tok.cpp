@@ -281,3 +281,19 @@ void CTPNStmBase::add_debug_line_rec()
 void CTPNStmBase::add_debug_line_rec(CTcTokFileDesc *, long)
 {
 }
+
+void CTPNObjDef::fold_proplist(CTcPrsSymtab *)
+{
+}
+
+void CTPNStmObjectBase::delete_property(CTcSymProp *)
+{
+}
+
+int CTPNStmObjectBase::parse_nested_obj_prop(CTPNObjProp*&, int*, tcprs_term_info*, CTcToken const*, int)
+{
+}
+
+void CTPNStmObjectBase::add_prop_entry(CTPNObjProp *prop, int replace)
+{
+}
