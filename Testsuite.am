@@ -192,6 +192,7 @@ test_t3pre_SOURCES = tads3/test/test_pre.cpp \
     tads2/osnoui.c \
     tads2/osrestad.c \
     tads2/osstzprs.c \
+    tads2/ostzposix.c \
     $(TARGET_OBJS_NO_LINK)
 
 test_test_utf8_SOURCES = tads3/test/test_utf8.cpp \
@@ -368,7 +369,8 @@ test_test_obj_SOURCES = tads3/test/test_obj.cpp \
     tads2/osifc.c \
     tads2/osnoui.c \
     tads2/osrestad.c \
-    tads2/osstzprs.c
+    tads2/osstzprs.c \
+    tads2/ostzposix.c
 
 test_test_sort_SOURCES = tads3/test/test_sort.cpp \
     tads3/vmsort.cpp
@@ -488,6 +490,7 @@ test_test_exec_SOURCES = tads3/test/test_exec.cpp \
     tads2/osnoui.c \
     tads2/osrestad.c \
     tads2/osstzprs.c \
+    tads2/ostzposix.c \
     $(TARGET_OBJS_NO_LINK)
 
 test_test_tok_SOURCES = tads3/test/test_tok.cpp \
@@ -509,7 +512,6 @@ test_test_tok_SOURCES = tads3/test/test_tok.cpp \
     tads3/tcsrc.cpp \
     tads3/tctok.cpp \
     tads3/tcprs.cpp \
-    tads3/tcprs_d.cpp \
     tads3/tcprsnl.cpp \
     tads3/tcprsnf.cpp \
     tads3/tcgen.cpp \
