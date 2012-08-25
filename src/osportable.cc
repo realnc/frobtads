@@ -578,7 +578,7 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
     if (grpSize > NGROUPS_MAX or grpSize < 0)
         return false;
     gid_t* groups = new gid_t[grpSize];
-    if (getgroups(grpSize, groups + 1) != 0)
+    if (getgroups(grpSize, groups + 1) < 0)
         return false;
     groups[0] = getegid();
     int i;
