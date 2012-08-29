@@ -38,6 +38,9 @@ AC_DEFINE([PACKAGE_MAINTAINER], ["Nikos Chantziaras"], [The person who currently
 #
 m4_include([m4/ax_func_mkdir.m4])
 m4_include([m4/ax_tls.m4])
+m4_include([m4/ax_append_flag.m4])
+m4_include([m4/ax_check_compile_flag.m4])
+m4_include([m4/ax_append_compile_flags.m4])
 
 
 #
@@ -58,14 +61,14 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXX_C_O
 
-# On GNU C++, disable the strict-aliasing optimization since the T3VM
-# crashes with it enabled.
-# Disabled; the macro uses the options even on non-GCC compilers.  We
-# don't want that.  Also, it would be better to be able to differenciate
-# between GCC versions; GCC 4.2 and 4.3 don't seem to need this switch
-# at all.
-#AX_CXXFLAGS_GCC_OPTION(-fno-strict-aliasing)
-
+# Disable strict-aliasing optimization since Tads does type punning on
+# purpose in quite a few places.
+AC_LANG_PUSH(C)
+AX_APPEND_COMPILE_FLAGS([-fno-strict-aliasing])
+AC_LANG_PUSH(C++)
+AX_APPEND_COMPILE_FLAGS([-fno-strict-aliasing])
+AC_LANG_POP(C++)
+AC_LANG_POP(C)
 
 #
 # Checks for libraries.
