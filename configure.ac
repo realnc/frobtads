@@ -41,6 +41,7 @@ m4_include([m4/ax_tls.m4])
 m4_include([m4/ax_append_flag.m4])
 m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_append_compile_flags.m4])
+m4_include([m4/ax_pthread.m4])
 
 
 #
@@ -72,6 +73,13 @@ AC_LANG_POP(C)
 
 #
 # Checks for libraries.
+
+# Check how to compile and link against the POSIX threads library.
+#
+AX_PTHREAD([], [AC_MSG_ERROR([POSIX threads seem to be missing; cannot continue])])
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
 
 # Try to find a curses library.  A curses library always provides the
 # initscr() function, so we check for that.  We favor ncurses; if it
