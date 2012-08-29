@@ -1,10 +1,5 @@
 Known bugs.  Don't report them; fix them! :)
 
-  - On some versions of GCC in combination with certain x86 CPUs, the
-    Tads 3 VM will crash at startup when an optimization level of -O2
-    or higher is used.  This can be fixed by using the
-    "-fno-strict-aliasing" option of g++ (gcc isn't affected).
-
   - When a game has set a timeout for an input, and the terminal the
     interpreter runs in is resized, the timeout will be reset to its
     initial value rather than the remaining time.

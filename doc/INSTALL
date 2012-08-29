@@ -13,20 +13,6 @@ You can find generic and very detailed documentation about the
 configuration script in the file CONFIGURE_DOC.
 
 
-!!!!**** IMPORTANT! ****!!!!
-============================
-
-Some versions of GCC are known to crash the T3 VM on some systems
-(depends on the system's CPU).  If this happens to you and Tads 3
-crashes when loading/compiling a TADS 3 game, then you should manually
-add the "-fno-strict-aliasing" switch to the CXXFLAGS variable and
-re-build.  For example:
-
-  ./configure CXXFLAGS="-O2 -pipe -fno-strict-aliasing"
-  make clean
-  make
-
-
 Requirements
 ============
 
