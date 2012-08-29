@@ -425,6 +425,8 @@ int os_file_stat( const char* fname, int follow_links,
  * that aren't available on all Unix variants.  Eventually these will
  * need to be replaced with more thorough versions that encompass
  * other Unix variants. */
+int asprintf(char **strp, const char *fmt, ...);
+int vasprintf(char **strp, const char *fmt, va_list ap);
 #define os_asprintf asprintf
 #define os_vasprintf vasprintf
 
