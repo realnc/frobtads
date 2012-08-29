@@ -59,6 +59,45 @@ inline void pthread_spin_destroy(OSSpinLock*) {}
 #define pthread_spin_unlock OSSpinLockUnlock
 #endif
 
+/*
+ *   Most compilers provide atomic operation intrinsics, and C++-11 actually
+ *   made them standard.  If we detect C++-11, we use std::atomic.  If not,
+ *   we check for GCC and Clang intrinsic support (both new and legacy.)
+ *   
+ *   Using intrinsics is preferable to using a spinlock, since they translate
+ *   to atomic machine instructions (if supported by the machine) and no
+ *   locking is happening.
+ *   
+ *   It might look a bit redundant to check for the new intrinsics
+ *   (__atomic_*) since they were introduced specifically for C++-11 support;
+ *   if they are available, one would think that std::atomic is too.  But
+ *   that's usually not the case.  In order to get to std::atomic, the
+ *   compiler has to be explicitly told to enable support for C++-11 (through
+ *   a command-line switch, usually "-std=c++11".)  In the future, C++-11
+ *   will be the default in most compilers.  But as of now, it's not; neither
+ *   in GCC nor in Clang.
+ */
+#ifndef __has_builtin
+    /* compatibility with compilers other than Clang */
+    #define __has_builtin(x) 0
+#endif
+#if __cplusplus >= 201103L
+    #include <atomic>
+    #define ATOMIC_TYPE(typ) std::atomic<typ>
+    #define ATOMIC_INC_FETCH(var) (var.fetch_add(1, std::memory_order_relaxed) + 1)
+    #define ATOMIC_DEC_FETCH(var) (var.fetch_sub(1, std::memory_order_relaxed) - 1)
+#elif ((__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)) \
+      || (defined(__clang__) && __has_builtin(__atomic_add_fetch))
+    #define ATOMIC_TYPE(typ) typ
+    #define ATOMIC_INC_FETCH(var) (__atomic_add_fetch((&var), 1, __ATOMIC_RELAXED))
+    #define ATOMIC_DEC_FETCH(var) (__atomic_sub_fetch((&var), 1, __ATOMIC_RELAXED))
+#elif (__GNUC__ == 4 && __GNUC_MINOR__ >= 1) \
+      || (defined(__clang__) && __has_builtin(__sync_add_and_fetch))
+   #define ATOMIC_TYPE(typ) typ
+    #define ATOMIC_INC_FETCH(var) (__sync_add_and_fetch((&var), 1))
+    #define ATOMIC_DEC_FETCH(var) (__sync_sub_and_fetch((&var), 1))
+#endif
+
 /* 
  *   Most Unix variants have at least one of SO_NOSIGPIPE or MSG_NOSIGNAL,
  *   and they seem to serve the same purpose everywhere, so if either is
@@ -94,19 +133,26 @@ class OS_Counter
 {
 public:
     OS_Counter(long c = 1)
+        /*
+         *   Avoid having this default-constructed, as that would complicate
+         *   things in C++-11 (we would need to explicitly call an
+         *   initializer before we can use the atomic type.)
+         */
+        : cnt(c)
     {
-        /* set the initial counter */
-        cnt = c;
-
+#ifndef ATOMIC_TYPE
         /* initialize the system spin lock, for serializing access */
         pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
+#endif
     }
 
+#ifndef ATOMIC_TYPE
     ~OS_Counter()
     {
         /* destroy the system resources for the lock */
         pthread_spin_destroy(&lock);
     }
+#endif
 
     /* get the current counter value */
     long get() const { return cnt; }
@@ -119,6 +165,9 @@ public:
      */
     long inc()
     {
+#ifdef ATOMIC_TYPE
+        return ATOMIC_INC_FETCH(cnt);
+#else
         /* do the inc-and-fetch with a spin lock to make it atomic */
         pthread_spin_lock(&lock);
         long newval = ++cnt;
@@ -126,10 +175,14 @@ public:
 
         /* return the updated value */
         return newval;
+#endif
     }
 
     long dec()
     {
+#ifdef ATOMIC_TYPE
+        return ATOMIC_DEC_FETCH(cnt);
+#else
         /* do the dec-and-fetch with a spin lock to make it atomic */
         pthread_spin_lock(&lock);
         long newval = --cnt;
@@ -137,14 +190,20 @@ public:
 
         /* return the updated value */
         return newval;
+#endif
     }
 
 private:
+#ifdef ATOMIC_TYPE
+    /* reference count */
+    ATOMIC_TYPE(long) cnt;
+#else
     /* reference count */
     long cnt;
 
     /* spin lock to protect the counter against concurrent access */
     pthread_spinlock_t lock;
+#endif
 };
 
 /* ------------------------------------------------------------------------ */
