@@ -1,3 +1,21 @@
+v1.2.2 - 2012/08/29
+===================
+
+  - Embedding resource directories with t3make was broken in version 1.2.1
+    if the files to be embedded belonged to a different user.  This has been
+    fixed.
+
+  - The Tads 3 test suite could not be built in 1.2.1 due to linker errors,
+    and in the case of GCC 4.7, also compiler errors.  This should no longer
+    occur.
+
+  - The configure script will now automatically append -fno-strict-aliasing
+    to the C and C++ compiler options (if the compiler recognizes it).  It's
+    not required anymore to do this manually.
+
+  - A POSIX threads underlinking issue has been fixed.
+
+
 v1.2.1 - 2012/08/22
 ===================
 
