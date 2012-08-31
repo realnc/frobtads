@@ -15,6 +15,7 @@ Modified
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/socket.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/times.h>
