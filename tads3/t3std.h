@@ -124,10 +124,12 @@ Modified
  *   other, so if your compiler doesn't complain, you probably don't need to
  *   worry about this setting.
  */
+#ifndef SYSTHROW
 #ifdef NEW_DELETE_NEED_THROW
 #define SYSTHROW(exc) exc
 #else
 #define SYSTHROW(exc)
+#endif
 #endif
 
 
