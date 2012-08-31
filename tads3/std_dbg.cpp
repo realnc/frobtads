@@ -39,22 +39,22 @@ Modified
 
 #ifdef T3_DEBUG
 
-void *operator new(size_t siz) throw (std::bad_alloc)
+void *operator new(size_t siz) SYSTHROW(throw (std::bad_alloc))
 {
     return t3malloc(siz, T3MALLOC_TYPE_NEW);
 }
 
-void operator delete(void *ptr) throw ()
+void operator delete(void *ptr) SYSTHROW(throw ())
 {
     t3free(ptr, T3MALLOC_TYPE_NEW);
 }
 
-void *operator new[](size_t siz) throw (std::bad_alloc)
+void *operator new[](size_t siz) SYSTHROW(throw (std::bad_alloc))
 {
     return t3malloc(siz, T3MALLOC_TYPE_NEWARR);
 }
 
-void operator delete[](void *ptr) throw ()
+void operator delete[](void *ptr) SYSTHROW(throw ())
 {
     t3free(ptr, T3MALLOC_TYPE_NEWARR);
 }
