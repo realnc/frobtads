@@ -86,7 +86,8 @@ class FrobTadsApplication {
      * is given by the 'vm' argument: 0 for TADS2, non-0 for TADS3.
      */
     int
-    runTads( const char* filename, int vm ) { runTads(filename, vm, 0, 0, 0, 0); }
+    runTads( const char* filename, int vm )
+    { return runTads(filename, vm, 0, 0, 0, 0); }
 
     int
     runTads( const char* filename, int vm, int argc, const char* const* argv,
