@@ -106,7 +106,7 @@ void oss_debug_log(const char *fmt, ...);
  *   will be the default in most compilers.  But as of now, it's not; neither
  *   in GCC nor in Clang.
  */
-#ifndef __has_builtin
+#if !defined(__clang__) && !defined(__has_builtin)
     /* compatibility with compilers other than Clang */
     #define __has_builtin(x) 0
 #endif
@@ -221,8 +221,10 @@ private:
 # undef ATOMIC_INC_FETCH
 # undef ATOMIC_DEC_FETCH
 #endif
-#if __has_builtin == 0
-# undef __has_builtin
+#ifndef __clang__
+# if __has_builtin == 0
+#  undef __has_builtin
+# endif
 #endif
 
 /* ------------------------------------------------------------------------ */
