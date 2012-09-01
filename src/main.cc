@@ -182,9 +182,6 @@ int main( int argc, char** argv )
     // as the host in a client/server setup (-w option).
     class TadsNetConfig* netconfig = 0;
 
-    // We don't have a network storage server session yet.
-    const char* storage_sid = 0;
-
 #ifdef HAVE_SETLOCALE
     // First, initialise locale, if available. We need only
     // LC_CTYPE.  Don't try to mess with numeric formats!
