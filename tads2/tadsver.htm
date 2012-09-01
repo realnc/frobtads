@@ -10,6 +10,7 @@
 
 <h4>Index to Versions</h4>
 <ul>
+<li><a href='#tads2516'><b>Version 2.5.16</b></a><br>
 <li><a href='#tads2515'><b>Version 2.5.15</b></a><br>
 <li><a href='#tads2514'><b>Version 2.5.14</b></a><br>
 <li><a href='#tads2513'><b>Version 2.5.13</b></a><br>
@@ -91,6 +92,24 @@ href='ftp://ftp.ifarchive.org/if-archive/programming/tads2/manuals/'>
 ftp://ftp.ifarchive.org/if-archive/programming/tads2/manuals/</a>
 (note that ftp.ifarchive.org is the new home, effective August 2001,
 of the former ftp.gmd.de archive).
+
+<!------------------------------------------------------------------------>
+<br><br><hr>
+<h3><a name='tads2516'>Version 2.5.16</a></h3>
+<i>Released on August 30, 2012</i>
+
+<ul>
+
+<li>A couple of bugs appeared in version 2.5.15 due to internal
+changes in the file safety mechanism.  In particular, stand-alone
+executable games on Windows could sometimes crash on start-up, and
+compiling a game that accessed files within its preinit function
+sometimes failed due to a spurious file error.  The second problem
+affected games using the gameinfo.t module to create a GameInfo file
+within preinit.  These are now fixed.
+   
+</ul>
+
 
 <!------------------------------------------------------------------------>
 <br><br><hr>
