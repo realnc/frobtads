@@ -474,7 +474,7 @@ public:
              *   notification pipe, so that we'll wake up as soon as our
              *   socket has been closed locally.  
              */
-            pollfd fd[1];
+            pollfd fd[2];
             fd[0].fd = s->s;
             fd[0].events = (s->wouldblock_sending ? POLLOUT : POLLIN | POLLPRI)
                            | POLLHUP;

@@ -59,6 +59,35 @@ inline void pthread_spin_destroy(OSSpinLock*) {}
 #define pthread_spin_unlock OSSpinLockUnlock
 #endif
 
+/* 
+ *   Most Unix variants have at least one of SO_NOSIGPIPE or MSG_NOSIGNAL,
+ *   and they seem to serve the same purpose everywhere, so if either is
+ *   missing just define it away (i.e., define as 0, as these are bit flags).
+ *   This doesn't handle the case where a system lacks *both*, but that seems
+ *   to be rare, and the code necessary to work around it is messy enough
+ *   that we're going to ignore the possibility.
+ */
+#ifdef SO_NOSIGPIPE
+# ifndef MSG_NOSIGNAL
+#   define MSG_NOSIGNAL 0
+# endif
+#else
+# ifdef MSG_NOSIGNAL
+#   define SO_NOSIGPIPE 0
+# endif
+#endif
+
+/* include the base layer headers */
+#include "osifcnet.h"
+
+/* base TADS 3 header */
+#include "t3std.h"
+
+/* debug logging */
+void oss_debug_log(const char *fmt, ...);
+
+
+/* ------------------------------------------------------------------------ */
 /*
  *   Most compilers provide atomic operation intrinsics, and C++-11 actually
  *   made them standard.  If we detect C++-11, we use std::atomic.  If not,
@@ -93,37 +122,11 @@ inline void pthread_spin_destroy(OSSpinLock*) {}
     #define ATOMIC_DEC_FETCH(var) (__atomic_sub_fetch((&var), 1, __ATOMIC_RELAXED))
 #elif (__GNUC__ == 4 && __GNUC_MINOR__ >= 1) \
       || (defined(__clang__) && __has_builtin(__sync_add_and_fetch))
-   #define ATOMIC_TYPE(typ) typ
+    #define ATOMIC_TYPE(typ) typ
     #define ATOMIC_INC_FETCH(var) (__sync_add_and_fetch((&var), 1))
     #define ATOMIC_DEC_FETCH(var) (__sync_sub_and_fetch((&var), 1))
 #endif
 
-/* 
- *   Most Unix variants have at least one of SO_NOSIGPIPE or MSG_NOSIGNAL,
- *   and they seem to serve the same purpose everywhere, so if either is
- *   missing just define it away (i.e., define as 0, as these are bit flags).
- *   This doesn't handle the case where a system lacks *both*, but that seems
- *   to be rare, and the code necessary to work around it is messy enough
- *   that we're going to ignore the possibility.
- */
-#ifdef SO_NOSIGPIPE
-# ifndef MSG_NOSIGNAL
-#   define MSG_NOSIGNAL 0
-# endif
-#else
-# ifdef MSG_NOSIGNAL
-#   define SO_NOSIGPIPE 0
-# endif
-#endif
-
-/* include the base layer headers */
-#include "osifcnet.h"
-
-/* base TADS 3 header */
-#include "t3std.h"
-
-/* debug logging */
-void oss_debug_log(const char *fmt, ...);
 
 /* ------------------------------------------------------------------------ */
 /*
@@ -205,6 +208,22 @@ private:
     pthread_spinlock_t lock;
 #endif
 };
+
+
+/* ------------------------------------------------------------------------ */
+/*
+ *   Remove the ATOMIC_TYPE macros - we only needed them to define the
+ *   OS_Counter class, so we can keep them local to this section of the
+ *   header to avoid any potential name conflicts.
+ */
+#ifdef ATOMIC_TYPE
+# undef ATOMIC_TYPE
+# undef ATOMIC_INC_FETCH
+# undef ATOMIC_DEC_FETCH
+#endif
+#if __has_builtin == 0
+# undef __has_builtin
+#endif
 
 /* ------------------------------------------------------------------------ */
 /*
