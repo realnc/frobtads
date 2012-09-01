@@ -548,7 +548,12 @@ static void trdmain1(errcxdef *ec, int argc, char *argv[],
     myheap = mchalo(ec, heapsiz, "runtime heap");
 
     /* get the absolute path for the input file */
-    os_get_abs_filename(infile_abs, sizeof(infile_abs), infile);
+    if (infile != 0)
+        os_get_abs_filename(infile_abs, sizeof(infile_abs), infile);
+    else if (exefile != 0)
+        os_get_abs_filename(infile_abs, sizeof(infile_abs), exefile);
+    else
+        infile_abs[0] = '\0';
     os_get_path_name(infile_path, sizeof(infile_path), infile_abs);
 
     /* set up execution context */
@@ -794,7 +799,7 @@ int trdmain(int argc, char *argv[], appctxdef *appctx, char *save_ext)
     trdptf("%s - A %s TADS %s Interpreter.\n",
            G_tads_oem_app_name, G_tads_oem_display_mode,
            TADS_RUNTIME_VERSION);
-    trdptf("%sopyright (c) 1993, 2007 by Michael J. Roberts.\n",
+    trdptf("%sopyright (c) 1993, 2012 by Michael J. Roberts.\n",
            G_tads_oem_copyright_prefix ? "TADS c" : "C");
     trdptf("%s\n", G_tads_oem_author);
 #endif
