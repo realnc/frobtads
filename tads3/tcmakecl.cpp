@@ -1458,8 +1458,6 @@ parse_options:
             /* process any exclusion options */
             while (curarg + 1 < argc && strcmp(argv[curarg+1], "-x") == 0)
             {
-                CTcMakeModule *mod;
-                const char *url;
 
                 /* skip to the "-x" */
                 ++curarg;
@@ -1468,8 +1466,8 @@ parse_options:
                 if (curarg + 1 >= argc)
                     goto missing_option_arg;
 
-                /* skip to the -x's argument and retrieve it */
-                url = argv[++curarg];
+                /* skip the -x and get its argument (the URL to exclude) */
+                const char *xurl = argv[++curarg];
 
                 /* 
                  *   Start with the next module after the last module before
@@ -1477,7 +1475,8 @@ parse_options:
                  *   then this library's first module is the first module in
                  *   the entire program,.  
                  */
-                if ((mod = last_pre_lib_mod) != 0)
+                CTcMakeModule *mod = last_pre_lib_mod;
+                if (mod != 0)
                     mod = mod->get_next();
                 else
                     mod = mk->get_first_module();
@@ -1486,7 +1485,7 @@ parse_options:
                 for ( ; mod != 0 ; mod = mod->get_next())
                 {
                     /* if this module has the excluded URL, exclude it */
-                    if (stricmp(mod->get_url(), argv[curarg]) == 0)
+                    if (stricmp(mod->get_url(), xurl) == 0)
                     {
                         /* mark this module as excluded */
                         mod->set_excluded(TRUE);

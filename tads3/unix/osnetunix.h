@@ -103,7 +103,7 @@ void oss_debug_log(const char *fmt, ...);
  *   will be the default in most compilers.  But as of now, it's not; neither
  *   in GCC nor in Clang.
  */
-#if !defined(__clang__) && !defined(__has_builtin)
+#ifndef __has_builtin
     /* compatibility with compilers other than Clang */
     #define __has_builtin(x) 0
 #endif
@@ -218,10 +218,8 @@ private:
 # undef ATOMIC_INC_FETCH
 # undef ATOMIC_DEC_FETCH
 #endif
-#ifndef __clang__
-# if __has_builtin == 0
-#  undef __has_builtin
-# endif
+#if __has_builtin == 0
+# undef __has_builtin
 #endif
 
 /* ------------------------------------------------------------------------ */
@@ -318,23 +316,24 @@ protected:
     {
         /* figure the timeout interval in seconds */
         long sec = timeout / 1000UL;
-
+        
         /* add the timeout to the current time */
         os_time_t cur_sec;
         long cur_nsec;
         os_time_ns(&cur_sec, &cur_nsec);
         cur_sec += sec;
         cur_nsec += (timeout % 1000UL) * 1000000L;
-        if (cur_nsec > 999999999L) {
+        if (cur_nsec > 999999999L)
+        {
             cur_nsec -= 1000000000L;
             cur_sec++;
         }
-
+        
         /* pass back the resulting timeout */
         tm->tv_sec = cur_sec;
         tm->tv_nsec = cur_nsec;
     }
-
+    
     /*
      *   Get the associated event object.  For the unix implementation, all
      *   waitable objects are waitable by virtue of having associated event

@@ -880,24 +880,24 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
                 }
                 else
                 {
-                    CVmFile *sym_file;
-                    ulong siz;
-                    int same_config;
 
                     /* set up the symbol file descriptor */
-                    sym_file = new CVmFile();
+                    CVmFile *sym_file = new CVmFile();
                     sym_file->set_file(fp, 0);
 
                     /* seek to the start of our config data */
-                    siz = CTcParser::
-                          seek_sym_file_build_config_info(sym_file);
+                    ulong siz =
+                        CTcParser::seek_sym_file_build_config_info(sym_file);
 
                     /* compare the configuration */
+                    int same_config;
                     err_try
                     {
                         /* compare the configuration */
-                        same_config = compare_build_config_from_sym_file(
-                            sym_fname, sym_file);
+                        same_config =
+                            (siz != 0
+                             && compare_build_config_from_sym_file(
+                                 sym_fname, sym_file));
                     }
                     err_catch_disc
                     {
@@ -1902,8 +1902,8 @@ void CTcMake::build_object_file(CTcHostIfc *hostifc,
  *   so the file's seek offset might be left in the middle of the
  *   configuration data block on return.  
  */
-int CTcMake::compare_build_config_from_sym_file(const char *sym_fname,
-                                                CVmFile *fp)
+int CTcMake::compare_build_config_from_sym_file(
+    const char *sym_fname, CVmFile *fp)
 {
     CTcMakeDef *def;
     CTcMakePath *path;

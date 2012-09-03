@@ -967,8 +967,8 @@ struct url_param_alo: url_param
     }
 };
 
+#if 0 // not currently used
 /* get the value of an argument */
-#if 0
 static const char *get_arg_val(const char *name, const char *dflt,
                                const url_param *args, int argc)
 {
