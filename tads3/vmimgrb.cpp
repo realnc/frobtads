@@ -93,10 +93,12 @@ static char *write_str_byte_prefix(char *ptr, const char *str, size_t len)
     /* return the pointer to the next byte after the copied data */
     return ptr + len + 1;
 }
+#if 0
 static char *write_str_byte_prefix(char *ptr, const char *str)
 {
     return write_str_byte_prefix(ptr, str, strlen(str));
 }
+#endif
 
 
 /* ------------------------------------------------------------------------ */

@@ -755,6 +755,7 @@ static size_t http_get_hdr(void *ptr, size_t siz, size_t nmemb, void *stream)
  *   curl debug callback - curl invokes this to send us error information if
  *   anything goes wrong in a curl_easy_perform() call 
  */
+#if 0
 static int curl_debug(CURL *h, curl_infotype infotyp,
                       char *info, size_t infolen, void *)
 {
@@ -762,6 +763,7 @@ static int curl_debug(CURL *h, curl_infotype infotyp,
         fprintf(stderr, "%.*s\n", (int)infolen, info);
     return 0;
 }
+#endif
 
 /*
  *   Send an HTTP request as a client
