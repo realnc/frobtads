@@ -227,7 +227,7 @@ ulong CTcParser::seek_sym_file_build_config_info(class CVmFile *fp)
         /* read the size of the block */
         siz = fp->read_uint4();
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* note the error */
         err = TRUE;

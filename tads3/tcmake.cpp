@@ -899,7 +899,7 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
                         same_config = compare_build_config_from_sym_file(
                             sym_fname, sym_file);
                     }
-                    err_catch(exc)
+                    err_catch_disc
                     {
                         /* 
                          *   the configuration information is invalid -
