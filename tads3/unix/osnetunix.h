@@ -23,16 +23,13 @@ Modified
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
-#include <sys/timeb.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <errno.h>
 #include <math.h>
 #include <ctype.h>
-#include <sys/time.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <execinfo.h>
 #include <stdarg.h>
 
 /* true/false */
