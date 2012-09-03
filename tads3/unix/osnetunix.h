@@ -218,8 +218,10 @@ private:
 # undef ATOMIC_INC_FETCH
 # undef ATOMIC_DEC_FETCH
 #endif
-#if __has_builtin == 0
-# undef __has_builtin
+#ifndef __clang__
+# if __has_builtin == 0
+#  undef __has_builtin
+# endif
 #endif
 
 /* ------------------------------------------------------------------------ */
