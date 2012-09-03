@@ -671,7 +671,7 @@ protected:
                 for (p += 2 ; *p != '\0' && is_space(*p) ; ++p) ;
 
                 /* if this was a blank line, we're out of headers */
-                if (*p == '\0' || *p == '\r' && *(p+1) == '\n')
+                if (*p == '\0' || (*p == '\r' && *(p+1) == '\n'))
                     return 0;
 
                 /* this is the next header */
