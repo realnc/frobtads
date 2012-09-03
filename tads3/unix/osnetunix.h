@@ -319,24 +319,23 @@ protected:
      */
     static void figure_timeout(struct timespec *tm, unsigned long timeout)
     {
-        /* figure the timeout interval in seconds and millseconds */
-        long sec = timeout / 1000;
-        long millisec = timeout % 1000;
-            
+        /* figure the timeout interval in seconds */
+        long sec = timeout / 1000UL;
+
         /* add the timeout to the current time */
-        struct timeb tp;
-        ftime(&tp);
-        tp.time += sec;
-        tp.millitm += millisec;
-        if (tp.millitm > 999)
-        {
-            tp.millitm -= 1000;
-            tp.time++;
+        os_time_t cur_sec;
+        long cur_nsec;
+        os_time_ns(&cur_sec, &cur_nsec);
+        cur_sec += sec;
+        cur_nsec += (timeout % 1000UL) * 1000000L;
+        if (cur_nsec > 999999999L) {
+            cur_nsec -= 1000000000L;
+            cur_sec++;
         }
 
-        /* figure the nanosecond time */
-        tm->tv_sec = tp.time;
-        tm->tv_nsec = tp.millitm * 1000000;
+        /* pass back the resulting timeout */
+        tm->tv_sec = cur_sec;
+        tm->tv_nsec = cur_nsec;
     }
 
     /*
