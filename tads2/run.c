@@ -1026,6 +1026,7 @@ startover:
  *   user exit callbacks 
  */
 
+#if 0 // external functions are now obsolete
 static int runuftyp(runuxdef *ctx)
 {
     return(runtostyp(ctx->runuxctx));
@@ -1086,6 +1087,7 @@ static void runuflpu(runuxdef *ctx, int typ)
     val.runstyp = typ;
     runrepush(ctx->runuxctx, &val);
 }
+#endif
 
 
 
