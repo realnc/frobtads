@@ -184,8 +184,8 @@ static void trdmain1(errcxdef *ec, int argc, char *argv[],
     bifcxdef   bifctx;
     voccxdef   vocctx;
     void     (*bif[100])(struct bifcxdef *, int);
-    mcmcxdef  *mctx;
-    mcmcx1def *globalctx;
+    mcmcxdef  *mctx = 0;
+    mcmcx1def *globalctx = 0;
     dbgcxdef   dbg;
     supcxdef   supctx;
     char      *swapname = 0;
@@ -205,7 +205,7 @@ static void trdmain1(errcxdef *ec, int argc, char *argv[],
     char       inbuf[OSFNMAX];
     ulong      cachelimit = 0xffffffff;
     ushort     undosiz = TRD_UNDOSIZ;      /* default undo context size 16k */
-    objucxdef *undoptr;
+    objucxdef *undoptr = 0;
     uint       flags;         /* flags used to write the file we're reading */
     objnum     preinit;         /* preinit object, if we need to execute it */
     uint       heapsiz = TRD_HEAPSIZ;
@@ -669,8 +669,10 @@ static void trdmain1(errcxdef *ec, int argc, char *argv[],
             objuterm(undoptr);
 
         /* release the object cache structures */
-        mcmcterm(mctx);
-        mcmterm(globalctx);
+        if (mctx != 0)
+            mcmcterm(mctx);
+        if (globalctx != 0)
+            mcmterm(globalctx);
     ERRENDCLN(ec)
 
     /* vocctx is going out of scope - forget the global reference to it */
