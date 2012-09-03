@@ -62,8 +62,6 @@ public:
     const char **arr_;
 };
 
-#define countof(arr) (sizeof(arr)/sizeof((arr)[0]))
-
 int main()
 {
     static int ints1[] = { 1, 5, 2, 10, 2, 7, 4, 3, 9 };

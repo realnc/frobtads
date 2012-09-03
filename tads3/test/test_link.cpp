@@ -185,7 +185,7 @@ int main(int argc, char **argv)
     fprintf(stderr,
             "Warnings: %d\n"
             "Errors:   %d\n"
-            "Longest string: %d, longest list: %d\n",
+            "Longest string: %lu, longest list: %lu\n",
             G_tcmain->get_warning_count(),
             G_tcmain->get_error_count() + fatal_error_count,
             G_cg->get_max_str_len(), G_cg->get_max_list_cnt());

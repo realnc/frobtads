@@ -1199,7 +1199,7 @@ void t3free(void *ptr, int alloc_type)
      */
     if (mem->alloc_type != alloc_type)
         fprintf(stderr, "\n--- memory block freed with wrong call type: "
-                "block=%lx, size=%d, id=%lu, alloc type=%d, free type=%d ---\n",
+                "block=%lx, size=%lu, id=%lu, alloc type=%d, free type=%d ---\n",
                 (unsigned long)ptr, mem->siz, mem->id,
                 mem->alloc_type, alloc_type);
 

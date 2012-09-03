@@ -54,7 +54,7 @@ int main()
 
     /* compute the length */
     len = p.lenz();
-    printf("test1: len = %d - %s\n", len,
+    printf("test1: len = %lu - %s\n", len,
            (len == sizeof(test1)/sizeof(test1[0]) - 1) ? "ok" : "ERROR");
 
     /* 
@@ -68,7 +68,7 @@ int main()
         ch = p.getch();
 
         /* check it */
-        printf("ch[%d] = %04x - %s\n", i, ch,
+        printf("ch[%lu] = %04x - %s\n", i, ch,
                (ch == *wp ? "ok" : "ERROR"));
     }
 
@@ -85,7 +85,7 @@ int main()
         ch = p.getch();
 
         /* check it */
-        printf("ch[%d] = %04x - %s\n", i, ch,
+        printf("ch[%lu] = %04x - %s\n", i, ch,
                (ch == *wp ? "ok" : "ERROR"));
     } while (i != 0);
 
