@@ -70,7 +70,7 @@ int main()
     static int ints4[] = { 9, 1 };
     static int ints5[] = { 9, 1, 3 };
     static int ints6[] = { 17, 17, 17, 17, 1 };
-    static char *strs[] =
+    static const char *strs[] =
     {
         "hello",
         "there",
