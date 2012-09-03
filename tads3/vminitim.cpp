@@ -31,6 +31,7 @@ Modified
 void vm_init_in_mem(vm_globals **vmg, const vm_init_options *opts)
 {
     vm_globals *vmg__;
+    (void)vmg__;
 
     /* initialize the base VM structures */
     vm_init_base(vmg, opts);

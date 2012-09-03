@@ -62,6 +62,7 @@ Modified
 void vm_init_base(vm_globals **vmg, const vm_init_options *opts)
 {
     vm_globals *vmg__;
+    (void)vmg__;
     char disp_mapname[32];
     char filename_mapname[32];
     char filecont_mapname[32];
