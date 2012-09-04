@@ -159,7 +159,6 @@ int main(int argc, char **argv)
     osfildef *fpout = 0;
     CVmFile *imgfile = 0;
     ulong next_obj_id = 1;
-    uint next_prop_id = 1;
     int next_local = 0;
     CTcTokFileDesc *desc;
     long linenum;
@@ -414,8 +413,9 @@ int main(int argc, char **argv)
             "Longest string: %lu, longest list: %lu\n",
             G_tcmain->get_warning_count(),
             G_tcmain->get_error_count() + fatal_error_count,
-            G_cg->get_max_str_len(), G_cg->get_max_list_cnt());
-
+            (unsigned long)G_cg->get_max_str_len(),
+            (unsigned long)G_cg->get_max_list_cnt());
+    
     /* delete the disassembler input object */
     delete unas_in;
 

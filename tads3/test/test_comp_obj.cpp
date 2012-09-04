@@ -227,7 +227,8 @@ int main(int argc, char **argv)
             "Longest string: %lu, longest list: %lu\n",
             G_tcmain->get_warning_count(),
             G_tcmain->get_error_count() + fatal_error_count,
-            G_cg->get_max_str_len(), G_cg->get_max_list_cnt());
+            (unsigned long)G_cg->get_max_str_len(),
+            (unsigned long)G_cg->get_max_list_cnt());
 
     /* 
      *   note whether or not the compilation was successful - it succeeded
