@@ -831,7 +831,7 @@ public:
         socklen_t len;
         struct sockaddr_storage addr;
 
-        /* get the peer name */
+        /* get the local socket information */
         len = sizeof(addr);
         getsockname(s, (struct sockaddr *)&addr, &len);
 

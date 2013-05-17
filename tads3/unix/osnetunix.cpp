@@ -126,7 +126,9 @@ void os_net_init(TadsNetConfig *config)
     G_thread_list = new TadsThreadList();
 
     /* if desired, start the watchdog thread */
-    if (config != 0 && config->match("watchdog", "yes"))
+    if (config != 0
+        && (config->match("watchdog", "yes")
+            || config->match("watchdog", "on")))
     {
         /* launch the watchdog thread */
         OSS_Watchdog *wt = new OSS_Watchdog();

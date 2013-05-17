@@ -63,6 +63,16 @@ div.entry {
    border-top: 1px solid #c0c0c0;
 }
 
+#versionIndex {
+   height: 0px;
+   overflow: hidden;
+   transition: height .5s;
+   -webkit-transition: height .5s;
+}
+#versionIndexBtn {
+   margin-top: 1em;
+}
+
 //-->
 </style>
 
@@ -70,11 +80,29 @@ div.entry {
 
 <h1>Recent Changes to the TADS 3 Library</h1>
 
-<p>This is a list of changes to Adv3, the TADS 3 adventure game
+<p>This is a history of changes to Adv3, the TADS 3 adventure game
 library.  Changes are listed in reverse chronological order (the most
 recent changes are first).
 
+<div id="versionIndexBtn">
+<a href="#" onclick="javascript:return toggleVersionIndex(this);">Show version index</a>
+</div>
+<script type="text/javascript">
+function toggleVersionIndex(a)
+{
+    var i = document.getElementById("versionIndex");
+    if (i.clientHeight > 0) {
+        i.style.height = "0px";
+        a.innerHTML = "Show version index";
+    } else {
+        i.style.height = i.querySelector("ul").clientHeight + "px";
+        a.innerHTML = "Hide version index";
+    }
+}
+</script>
+<div id="versionIndex">
 <ul class=toc>
+<li><a href='#313'>3.1.3</a>
 <li><a href='#312'>3.1.2</a>
 <li><a href='#311'>3.1.1</a>
 <li><a href='#310'>3.1.0</a>
@@ -111,6 +139,103 @@ recent changes are first).
 <li><a href='#305'>3.0.5</a>
 <li><a href='#304'>3.0.4 and earlier</a>
 </ul>
+</div>
+
+<!------------------------------- 3.1.3 --------------------------------->
+<div class="sepbar"><a name='313'></a>3.1.3</div>
+<p><b><i>Released May 16, 2013</i></b>
+<p>
+
+<!------------------->
+<div class=firstentry>
+
+A bug in the parser caused a run-time error when a player attempted to
+traverse an AskConnector.  This is now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000169">bugdb.tads.org #0000169</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+For conversational commands such as HELLO, GOODBYE, YES, and NO, the
+parser now sets the sense context to the issuing actor (that is, the
+actor who issued a command, which is usually the player character)
+rather than the target actor (the target in BOB, GOODBYE is Bob).  For
+most commands, the target actor is the one who's meant to carry out
+the command - BOB, GO NORTH asks Bob to go north - so it's appropriate
+to execute most actions in the sense context of the target actor.  In
+the past, the parser did just this, unconditionally for all types of
+actions.  However, this isn't appropriate for conversational commands,
+because the meaning of the target actor is different in these
+commands; the target specifies the person being addressed in the
+conversation rather than the actor carrying out the command.  BOB,
+HELLO doesn't tell Bob to say hello, but rather tells the player
+character to say hello to Bob.  In these types of commands, then, the
+actor actually carrying out the command is the issuer, not the target,
+so the sense context should remain with the issuer.  The parser now
+makes this distinction when setting the sense context.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000190">bugdb.tads.org #0000190</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+A parser bug caused the same object to be matched multiple times in a
+disambiguation query under certain circumstances.  If an object
+defined multiple 'noun' words that all had a common prefix up to the
+truncation limit, and there were two or more objects with the same
+list of similar nouns, and the player entered a noun phrase that
+matched the common leading substring, a normal disambiguation question
+would be triggered.  If the player then answered this question with
+ALL, the parser matched each object multiple times, equal to the
+number of matching (truncated) nouns per object.
+
+<p>The key element to triggering the bug is multiple noun synonyms
+that share a common prefix that's longer than the truncation limit.
+It's rare to find examples of this in English games, but it's common
+in inflected languages where nouns have multiple forms with different
+endings (the bug was discovered in a Czech translation).  Here's a
+somewhat contrived English example.  The kind of compass you use to
+inscribe circles can be called a COMPASS or COMPASSES - it's one of
+those odd English words like "scissors" or "pants" where the plural
+noun form can be used for the singular object, but (unlike scissors or pants)
+the singular form can be used interchangeably.  If you set the TADS
+truncation limit to 6 characters, and then create a red compass and a
+blue compass with COMPASS and COMPASSES as noun synonyms, the bug
+would have caused the following odd interaction:
+
+<pre>
+&gt;x compas
+Which compas do you mean, the red compass or the blue compass?
+
+&gt;all
+red compass: It's an ordinary red compass.
+blue compass: It's an ordinary blue compass.
+blue compass: It's an ordinary blue compass.
+red compass: It's an ordinary red compass.
+</pre>
+
+<p>This is now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000188">bugdb.tads.org #0000188</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+The library showed the wrong default message for the THROW DOWN
+command (that is, the ThrowDir action, when the direction is Down).
+The message used to be the rather non sequitur "You're not carrying
+that"; the message now says "You should just put it down instead."
+
+</div>
+
+
 
 <!------------------------------- 3.1.2 --------------------------------->
 <div class="sepbar"><a name='312'></a>3.1.2</div>

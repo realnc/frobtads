@@ -69,6 +69,189 @@ etc.  For changes to the Adv3 library, see
 <a href="../lib/adv3/changes.htm">Recent Library Changes</a>.)
 
 <!------------------------------------------------------------------------>
+<h3>Changes for 3.1.3 (May 16, 2013)</h3>
+
+<ul>
+
+<li>The compiler now allows nested embedded "&lt;&lt; &gt;&gt;"
+expressions in strings.  Nesting wasn't allowed in the past; the
+compiler now allows nesting up to a depth limit (currently 10
+levels deep).  For example, this is now valid:
+
+<pre>
+   local x = 1;
+   "This is the main string. &lt;&lt;
+      "This is a nested string: x=&lt;&lt;x&gt;&gt."
+   &gt;&gt; Back to the main string.";
+</pre>
+
+<li>In the past, HTML &lt;PRE&gt; blocks were problematic if you
+wanted to use &lt;PRE&gt; for precise indentation.  The complication
+was that the output formatter in the VM pre-filtered the text sent to
+the HTML parser to consolidate each run of whitespace into a single
+space.  If you wanted to use spaces in a &lt;PRE&gt; block for
+alignment purposes, you had to use quoted spaces (<tt>"\ "</tt> sequences)
+to make sure that all of the spaces were sent through to the HTML parser.
+
+<p>Now, the VM formatter layer watches for &lt;PRE&gt; tags.  Within a
+&lt;PRE&gt; block, the VM formatter passes spaces and newlines through
+to the HTML parser without any filtering.  This change addresses
+<a href="http://bugdb.tads.org/view.php?id=0000178">bug #0000178</a>.
+
+<p>Note that there's another slight complication if you're writing
+multi-line preformatted blocks with spacing for indentation.  The
+compiler normally removes the spaces that follow a line break within
+a string.  The new compiler behavior described below gives you more
+precise control over this, as does the new
+<tt>#pragma newline_spacing(preserve)</tt> described later.
+
+<li>In the <tt>#pragma newline(collapse)</tt> and <tt>#pragma
+newline(delete)</tt> modes (see below), you can now override the default
+line break handling for a particular line in a string by writing an
+explicit <tt>\n</tt> sequence at the very end of the line.  When a
+line within a string ends in <tt>\n</tt>, followed by a line break and
+the continuation of the string on the next line, the compiler
+preserves the whitespace at the start of the next line exactly as
+written.  For example, consider the following string definitions,
+assuming that we're in the normal "collapse" mode for newline spacing:
+
+<pre>
+   f()
+   {
+     local a = 'a
+          b';
+     local x = 'x\n
+          y';
+   }
+</pre>
+
+<p>For the first string, the compiler converts the
+line break after the letter "a" and all of the whitespace at the
+start of the next line into a single space, so the string's actual
+contents end up as though you had written <tt>local a = 'a&nbsp;b';</tt>,
+with just one space between the two letters.  But in the second
+string, we've written an explicit <tt>\n</tt> at the end of the line,
+telling the compiler to put an explicit line break into the string
+and to preserve the subsequent whitespace.  This string is equivalent
+to writing <tt>local x = 'x\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y';</tt>,
+with the five spaces at the start of the second line kept intact.
+
+<li>The <tt>#pragma newline_spacing</tt> directive now has three modes:
+
+<ul>
+   <li><tt>collapse</tt> mode (equivalent to the old <tt>on</tt> mode)
+   collapses each line break within a string and any subsequent run
+   of whitespace (at the start of the next line) into a single space.
+
+   <li><tt>delete</tt> mode (equivalent to the old <tt>off</tt> mode)
+   removes each line break and any subsequent run of whitespace,
+   mashing the text of the two lines together without any spacing.
+
+   <li><tt>preserve</tt> mode (new in this version) preserves spacing
+   exactly as written in the source code, with the line break replaced
+   by a <tt>\n</tt> (newline) character, and subsequent whitespace
+   at the start of the next line kept intact.
+</ul>
+
+<p>Existing code that uses the pragma will continue to work without
+any changes, because the former "on" mode is equivalent to the new
+"collapse" mode, and the former "off" mode is equivalent to "delete"
+mode.  The compiler continues to accept the old names, although new
+code should use the new names for better clarity.
+
+<li>The Web UI library code had a bug that prevented dialogs (such
+as the display preferences dialog) from displaying properly on
+Internet Explorer 9 and later.  This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000194">bugdb.tads.org #0000194</a>)
+
+
+<li>The compiler error message for a symbol token containing an
+accented letter or other non-ASCII character has been improved.  In
+the past, the compiler treated a non-ASCII character as though it were
+a symbol delimiter; for example, this had the effect of splitting
+<tt>na&iuml;ve</tt> into three tokens: <tt>na</tt>, <tt>&iuml;</tt>,
+<tt>ve</tt>.  The compiler then reported an "invalid character" error
+for the <tt>&iuml;</tt> character.  The compiler now assumes that any
+non-ASCII character that's adjacent to a character that's valid in a
+symbol (i.e., not separated by any spaces or punctuation marks) is
+meant to be part of the symbol token, so rather than reporting the
+invalid character in isolation, the compiler now reports the error in
+terms of the entire token containing the non-ASCII character.  This
+should make it easier to pinpoint the source location of this type of
+error.  The compiler also displays the numeric Unicode value of the
+non-ASCII character, in case the character can't be displayed in the
+console character set (on many systems, the command line console uses
+a limited character set, such as Latin 1, that can't display the full
+range of Unicode characters that could occur in the source).
+
+(<a href="http://bugdb.tads.org/view.php?id=0000185">bugdb.tads.org #0000185</a>)
+
+
+<li>The IANA time zone database included in the base TADS release has
+been updated to version 2013c (2013-04-20).
+
+<li>On Windows, the interpreter behaved unpredictably (sometimes
+crashing) when certain Date or TimeZone operations were attempted and
+the Windows date/time locale was set to a time zone that uses standard
+time year round (i.e., the time zone doesn't currently make annual
+transitions between standard time and daylight time).  This is now
+fixed.  (There were actually two separate problems contributing to the
+bug, one specific to Windows and one in the portable code; both are
+fixed.)
+
+(<a href="http://bugdb.tads.org/view.php?id=0000171">bugdb.tads.org #0000171</a>)
+
+<li>In HTTPRequest.sendReply(), automatic content detection of the
+MIME type based on a file's contents didn't work properly for files
+shorter than 512 bytes.  This has been fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000187">bugdb.tads.org #0000187</a>)
+
+<li>For Web UI mode, a bug in the HTTPServer class caused the whole
+server to shut down if any individual HTTPServer was terminated,
+either explicitly by calling its shutdown() method, or automatically
+when the object was deleted by the garbage collector.  This prevented
+any more messages from being delivered via getNetEvent(), even if
+other server objects were still listening for connections.  This
+didn't actually affect most games in practice, because most Web UI
+games create one HTTPServer object that listens for connections
+throughout the server lifetime, but it was still incorrect behavior.
+This has been corrected.
+
+<li>The compiler crashed when presented with a "try" statement with an
+empty "finally" block.  This is now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000176">bugdb.tads.org #0000176</a>)
+
+<li>Starting in version 3.1.0, TADS Workbench didn't run under
+Windows 2000 or earlier versions of Windows, due to a dependency
+on a newer Windows feature that didn't exist until Windows XP SP1.
+The dependency has been removed and replaced with code that should
+work on Win 2K as well as newer systems, so Workbench should once
+again be able to run on Win 2K.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000186">bugdb.tads.org #0000186</a>)
+
+<li>The macro preprocessor incorrectly expanded macros containing
+string embeddings in certain complex cases.  In particular, if the
+last macro argument was used within an embedded expression within a
+string within the macro expansion, and another separate embedding
+followed, any subsequent mentions of a macro argument were not
+expanded correctly.  The minimal case was something like this:
+
+<pre>
+#define M(a, b) '&lt;&lt;b&gt;&gt;&lt;&lt;&gt;&gt;' a
+</pre>
+
+<p>This has been corrected. 
+
+(<a href="http://bugdb.tads.org/view.php?id=0000180">bugdb.tads.org #0000180</a>)
+
+</ul>
+
+
+<!------------------------------------------------------------------------>
 <h3>Changes for 3.1.2 (August 20, 2012)</h3>
 
 <ul>

@@ -893,7 +893,7 @@ static prsndef *prsfold(prscxdef *ctx, prsndef *node)
             prsndef  *retval;
             emtledef *ele;
             
-            lst = (emtlidef *)prsbalo(ctx, (uint)(sizeof(emtldef) +
+            lst = (emtlidef *)prsbalo(ctx, (uint)(sizeof(emtlidef) +
                                                  (i - 1) * sizeof(emtledef)));
             t.toktyp = TOKTLIST;
             t.tokofs = ((uchar *)lst) - &ctx->prscxpool[0];

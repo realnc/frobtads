@@ -238,24 +238,23 @@ intrinsic class FileName 'filename/030000' : Object
     renameFile(newname);
 
     /*
-     *   Get a list of files in the directory named by this object.
-     *   Returns a list of strings giving the names of the files.  The file
-     *   names are given as plain file names, without directory paths.  To
-     *   get full paths, simply combine them with this FileName object
-     *   using addToPath() or the "+" operator.
+     *   Get a list of files in the directory named by this object.  Returns
+     *   a list of FileName objects giving the names of the files.
      *   
      *   The file safety settings must allow read access to the directory's
      *   contents.
      *   
-     *   Note that many systems, including Windows and Unix-like systems,
-     *   explicitly include relative directory links for the target
-     *   directory and its parent in the results.  On Unix and Windows,
-     *   these are called "." (for the self link) and ".." (for the
-     *   parent), but you shouldn't assume those names are special, because
-     *   they vary on other systems.  Instead, to test for these special
-     *   links, you should build the full path, and compare the result to
-     *   self (the directory you're listing) and to self.getParent() (or
-     *   more generally, use newpath.isParentOf()).
+     *   On systems where the file system has special directory entries for
+     *   relative links, such as "." and ".." on Windows and Unix-likes, the
+     *   listing that this method returns will include entries for those
+     *   relative links.  Be careful with these when performing recursive
+     *   directory traversals, since recursing into "." or ".." would cause
+     *   an infinite loop.  You can test an entry in the returned list to see
+     *   if it's one of these special links by calling its getFileInfo()
+     *   method, and testing the specialLink property of the returned
+     *   information object.  Not that if you're performing a recursive
+     *   directory traversal, it might be easier to use forEachFile() with
+     *   the 'recurse' argument flag set to true.
      */
     listDir();
 

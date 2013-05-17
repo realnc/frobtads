@@ -36,7 +36,14 @@ intrinsic 'tads-gen/030008'
      *   ObjXxx values, specifying whether classes, instances, or both are
      *   desired.  If this isn't specified, ObjAll is assumed.  This is used
      *   in conjunction with nextObj() to iterate over all objects in memory,
-     *   or all objects of a given class.  
+     *   or all objects of a given class.
+     *   
+     *   Note that firstObj-nextObj loops can retrieve objects that aren't
+     *   otherwise reachable, because unreachable objects are only removed
+     *   from memory when the garbage collector runs, which happens
+     *   intermittently.  If you want to ensure that any currently
+     *   unreachable objects are removed from memory just before a
+     *   firstObj-nextObj loop, you can do so by calling t3RunGC().
      */
     firstObj(cls?, flags?);
 

@@ -302,7 +302,7 @@ struct tokscdef
      && ((len1) == 1 \
          || ((str1)[1] == (str2)[1] \
              && ((len1) == 2 \
-                  || (str1)[2] == (str2)[2]))))
+                 || (str1)[2] == (str2)[2]))))
 #endif /* TOKSCMAX == 3 */
 #ifndef toksceq
 # define toksceq(str1, str2, len) (!memcmp(str1, str2, (size_t)(len)))

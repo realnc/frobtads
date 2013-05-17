@@ -591,6 +591,17 @@ class BasicProd: object
      */
     isSpecialResponseMatch = nil
 
+    /*
+     *   Grammar match objects that come from a GrammarProd.parseTokens()
+     *   call will always have a set of properties indicating which tokens
+     *   from the input matched the grammar rule.  However, we sometimes
+     *   synthesize match trees internally rather than getting them from
+     *   parser input; for synthesized trees, the parser obviously won't
+     *   supply those properties for us, so we need to define suitable
+     *   defaults that synthesized match tree nodes can inherit.
+     */
+    firstTokenIndex = 0
+    lastTokenIndex = 0
 ;
 
 
@@ -3710,16 +3721,18 @@ class NounPhraseWithVocab: NounPhraseProd
             /* if it's not an exact match, check for a stronger match */
             if (!dictMatchIsExact(curFlags))
             {
-                /* scan for a stronger match for this same object */
-                for (local j = 1 ; j < len ; j += 2)
+                /* scan for an equal or stronger match later in the list */
+                for (local j = i + 2 ; j < len ; j += 2)
                 {
                     /* 
-                     *   if entry j is different from entry i, and it's
-                     *   stronger, omit entry i 
+                     *   if entry j is stronger than or identical to the
+                     *   current entry, omit the current entry in favor of
+                     *   entry j
                      */
-                    if (j != i
-                        && lst[j] == curObj
-                        && dictMatchIsStronger(lst[j+1], curFlags))
+                    local jObj = lst[j], jFlags = lst[j+1];
+                    if (jObj == curObj
+                        && (jFlags == curFlags
+                            || dictMatchIsStronger(jFlags, curFlags)))
                     {
                         /* there's a better entry; omit the current one */
                         continue truncScan;
