@@ -223,7 +223,7 @@ void f10()
     {
         tryItOut();
     }
-    err_catch(exc)
+    err_catch_disc
     {
         printf("(catch handler - calling f2)\n");
         f2();

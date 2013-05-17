@@ -227,7 +227,7 @@ ulong CTcParser::seek_sym_file_build_config_info(class CVmFile *fp)
         /* read the size of the block */
         siz = fp->read_uint4();
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* note the error */
         err = TRUE;
@@ -1412,7 +1412,7 @@ CTPNStmTop *CTcParser::parse_grammar(int *err, int replace, int modify)
 
     /* presume we won't find a valid production name */
     CTcToken prod_name;
-    int prod_name_valid = FALSE;
+    prod_name.set_text("?", 1);
     CTcGramProdEntry *prod = 0;
 
     /* presume it will be anonymous (i.e., no name tag) */
@@ -1428,7 +1428,6 @@ CTPNStmTop *CTcParser::parse_grammar(int *err, int replace, int modify)
     {
         /* remember the production name */
         prod_name = *G_tok->copycur();
-        prod_name_valid = TRUE;
 
         /* find or create the 'grammar production' entry */
         prod = declare_gramprod(prod_name.get_text(),
@@ -1676,11 +1675,9 @@ CTcGramProdEntry *CTcSymObjBase::create_grammar_entry(
  */
 CTcGramProdEntry *CTcParser::declare_gramprod(const char *txt, size_t len)
 {
-    CTcSymObj *sym;
-    CTcGramProdEntry *entry;
-
     /* find or define the grammar production object symbol */
-    sym = find_or_def_gramprod(txt, len, &entry);
+    CTcGramProdEntry *entry;
+    (void)find_or_def_gramprod(txt, len, &entry);
 
     /* return the entry */
     return entry;

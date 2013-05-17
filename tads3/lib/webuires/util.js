@@ -3288,11 +3288,9 @@ function setAlpha(ele, pct)
                 ele.style.filter = f;
         }
     }
-    else
-    {
-        // everyone else just uses the 'opacity' style
-        ele.style.opacity = pct/100;
-    }
+
+    // everyone else (including IE9+) uses standard CSS 'opacity'
+    try { ele.style.opacity = "" + pct/100; } catch(exc) { }
 }
 
 // active fader threads

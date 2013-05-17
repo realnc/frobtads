@@ -726,7 +726,7 @@ void CVmObjTads::invoke_finalizer(VMG_ vm_obj_id_t self)
             G_interpreter->get_prop(vmg_ 0, &srcobj_val,
                                     G_predef->obj_destruct, &self_val, 0, &rc);
         }
-        err_catch(exc)
+        err_catch_disc
         {
             /* silently ignore the error */
         }
@@ -1766,7 +1766,7 @@ void CVmObjTads::restore_from_file(VMG_ vm_obj_id_t self,
      *   saved again, even if we're not modified between now and the next
      *   save.
      */
-    hdr->intern_obj_flags |= VMTO_OBJ_MOD;
+    get_hdr()->intern_obj_flags |= VMTO_OBJ_MOD;
 }
 
 /* ------------------------------------------------------------------------ */

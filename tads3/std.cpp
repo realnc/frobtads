@@ -346,11 +346,11 @@ int t3_compare_case_fold_min(
     while (!ap.at_boundary() || !bp.at_boundary());
 
     /* 
-     *   If we made it to a boundary in each string without finding a
-     *   difference, we have a match.  Advance each string past the matched
-     *   text.
+     *   If we got this far, we made it to a boundary in each string without
+     *   finding a difference, so we have a match.  Advance each string past
+     *   the matched text.
      */
-    size_t ainc = ap.getptr() - a;
+    alen -= ap.getptr() - a;
     a = ap.getptr();
 
     blen -= bp.getptr() - b;
@@ -379,8 +379,8 @@ int lib_atoi(const char *str, size_t len)
     for (acc = 0 ; len > 0 && is_digit(*str) ;
          acc *= 10, acc += value_of_digit(*str), ++str, --len) ;
 
-    /* return the result */
-    return acc;
+    /* apply the sign and return the result */
+    return s * acc;
 }
 
 /*
@@ -400,8 +400,8 @@ int lib_atoi_adv(const char *&str, size_t &len)
     for (acc = 0 ; len > 0 && is_digit(*str) ;
          acc *= 10, acc += value_of_digit(*str), ++str, --len) ;
 
-    /* return the result */
-    return acc;
+    /* apply the sign and return the result */
+    return s * acc;
 }
 
 
@@ -1199,8 +1199,9 @@ void t3free(void *ptr, int alloc_type)
      */
     if (mem->alloc_type != alloc_type)
         fprintf(stderr, "\n--- memory block freed with wrong call type: "
-                "block=%lx, size=%d, id=%lu, alloc type=%d, free type=%d ---\n",
-                (unsigned long)ptr, mem->siz, mem->id,
+                "block=%lx, size=%lu, id=%lu, alloc type=%d, free type=%d "
+                "---\n",
+                (unsigned long)ptr, (unsigned long)mem->siz, mem->id,
                 mem->alloc_type, alloc_type);
 
     /* check for a pre-freed block */

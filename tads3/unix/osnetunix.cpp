@@ -32,6 +32,11 @@ Modified
 #include "vmfile.h"
 #include "vmdatasrc.h"
 
+/*
+ *   To enable extra code for libcurl debugging, define this macro 
+ */
+// #define OSNU_CURL_DEBUG
+
 
 /* 
  *   ignore a return value (to suppress superfluous gcc warn_unused_result
@@ -121,7 +126,9 @@ void os_net_init(TadsNetConfig *config)
     G_thread_list = new TadsThreadList();
 
     /* if desired, start the watchdog thread */
-    if (config != 0 && config->match("watchdog", "yes"))
+    if (config != 0
+        && (config->match("watchdog", "yes")
+            || config->match("watchdog", "on")))
     {
         /* launch the watchdog thread */
         OSS_Watchdog *wt = new OSS_Watchdog();
@@ -474,7 +481,7 @@ public:
              *   notification pipe, so that we'll wake up as soon as our
              *   socket has been closed locally.  
              */
-            pollfd fd[1];
+            pollfd fd[2];
             fd[0].fd = s->s;
             fd[0].events = (s->wouldblock_sending ? POLLOUT : POLLIN | POLLPRI)
                            | POLLHUP;
@@ -551,7 +558,7 @@ public:
     void shutdown()
     {
         /* write the notification to the quit pipe */
-        int res = write(qpipe[1], "Q", 1);
+        (void)write(qpipe[1], "Q", 1);
         s->blocked_evt->signal();
     }
 
@@ -755,6 +762,7 @@ static size_t http_get_hdr(void *ptr, size_t siz, size_t nmemb, void *stream)
  *   curl debug callback - curl invokes this to send us error information if
  *   anything goes wrong in a curl_easy_perform() call 
  */
+#ifdef OSNU_CURL_DEBUG
 static int curl_debug(CURL *h, curl_infotype infotyp,
                       char *info, size_t infolen, void *)
 {
@@ -762,6 +770,7 @@ static int curl_debug(CURL *h, curl_infotype infotyp,
         fprintf(stderr, "%.*s\n", (int)infolen, info);
     return 0;
 }
+#endif
 
 /*
  *   Send an HTTP request as a client
@@ -985,8 +994,10 @@ int OS_HttpClient::request(int opts,
      *   status calls to curl_debug() using gdb or by modifying curl_debug()
      *   (see above) to write to a log file or the like.
      */
-//    curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
-//    curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, curl_debug);
+#ifdef OSNU_CURL_DEBUG
+    curl_easy_setopt(h, CURLOPT_VERBOSE, 1);
+    curl_easy_setopt(h, CURLOPT_DEBUGFUNCTION, curl_debug);
+#endif
 
     /* do the transfer */
     if (!curl_easy_perform(h))

@@ -71,7 +71,7 @@ int CVmFormatterLog::open_log_file(VMG_ const char *fname)
         nf = CVmNetFile::open(
             vmg_ fname, 0, NETF_NEW, OSFTLOG, "text/plain");
     }
-    err_catch(exc)
+    err_catch_disc
     {
         nf = 0;
     }
@@ -94,7 +94,7 @@ int CVmFormatterLog::open_log_file(VMG_ const vm_val_t *filespec,
         /* validate file safety */
         CVmObjFile::check_safety_for_open(vmg_ nf, VMOBJFILE_ACCESS_WRITE);
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* if we got a file, it must be a safety exception - rethrow it */
         if (nf != 0)
@@ -200,7 +200,7 @@ int CVmFormatterLog::close_log_file(VMG0_)
         {
             lognf_->close(vmg0_);
         }
-        err_catch(exc)
+        err_catch_disc
         {
             /* flag the error, but otherwise discard the exception */
             err = TRUE;
@@ -407,7 +407,8 @@ void CVmFormatter::write_text(VMG_ const wchar_t *txt, size_t cnt,
 
         case VM_NL_NEWLINE:
             /* write a newline */
-            print_to_os(html_target_ ? "<BR HEIGHT=0>\n" : "\n");
+            print_to_os(html_target_ && html_pre_level_ == 0 ?
+                        "<BR HEIGHT=0>\n" : "\n");
             break;
 
         case VM_NL_OSNEWLINE:
@@ -526,7 +527,7 @@ void CVmFormatter::flush(VMG_ vm_nl_type nl)
          *   this line, or we didn't already just write a newline, write
          *   out a newline now; otherwise, write nothing.  
          */
-        if (linecol_ != 0 || !just_did_nl_)
+        if (linecol_ != 0 || !just_did_nl_ || html_pre_level_ > 0)
         {
             /* add the newline */
             write_nl = VM_NL_NEWLINE;
@@ -561,7 +562,8 @@ void CVmFormatter::flush(VMG_ vm_nl_type nl)
      *   and we didn't just do a newline, since this must mean that we've
      *   flushed a partial line and are just now doing the newline 
      */
-    if (cnt != 0 || (linecol_ != 0 && !just_did_nl_))
+    if (cnt != 0 || (linecol_ != 0 && !just_did_nl_)
+        || html_pre_level_ > 0)
     {
         /* write it out */
         write_text(vmg_ linebuf_, cnt, colorbuf_, write_nl);
@@ -903,7 +905,10 @@ void CVmFormatter::buffer_expchar(VMG_ wchar_t c)
             if (c == '&')
                 html_passthru_state_ = VMCON_HPS_ENTITY_1ST;
             else if (c == '<')
-                html_passthru_state_ = VMCON_HPS_TAG;
+            {
+                html_passthru_tagp_ = html_passthru_tag_;
+                html_passthru_state_ = VMCON_HPS_TAG_START;
+            }
             else
                 html_passthru_state_ = VMCON_HPS_NORMAL;
             break;
@@ -956,10 +961,83 @@ void CVmFormatter::buffer_expchar(VMG_ wchar_t c)
                 html_passthru_state_ = VMCON_HPS_NORMAL;
             break;
 
+        case VMCON_HPS_TAG_START:
+            /* start of a tag, before the name - check for the name start */
+            if (c == '/' && html_passthru_tagp_ == html_passthru_tag_)
+            {
+                /* 
+                 *   note the initial '/', but stay in TAG_START state, so
+                 *   that we skip any spaces between the '/' and the tag name
+                 */
+                *html_passthru_tagp_++ = '/';
+            }
+            else if ((c >= 'a' && c <= 'z')
+                     || (c >= 'A' && c <= 'Z'))
+            {
+                /* start of the tag name */
+                html_passthru_state_ = VMCON_HPS_TAG_NAME;
+                *html_passthru_tagp_++ = (char)c;
+            }
+            else if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
+            {
+                /* 
+                 *   ignore whitespace between '<' and the tag name - simply
+                 *   stay in TAG_START mode 
+                 */
+            }
+            else
+            {
+                /* anything else is invalid - must not be a tag after all */
+                html_passthru_state_ = VMCON_HPS_NORMAL;
+            }
+            break;
+
+        case VMCON_HPS_TAG_NAME:
+            /* tag name - check for continuation */
+            if ((c >= 'a' && c <= 'z')
+                || (c >= 'A' && c <= 'Z'))
+            {
+                /* gather the tag name if it fits */
+                if (html_passthru_tagp_ - html_passthru_tag_ + 1
+                    < sizeof(html_passthru_tag_))
+                    *html_passthru_tagp_++ = (char)c;
+            }
+            else
+            {
+                /* end of the tag name */
+                *html_passthru_tagp_ = '\0';
+                html_passthru_state_ = VMCON_HPS_TAG;
+                goto do_tag;
+            }
+            break;
+
         case VMCON_HPS_TAG:
+            do_tag:
             /* see if we're done with the tag, or entering quoted material */
             if (c == '>')
+            {
+                /* switch to end of markup mode */
                 html_passthru_state_ = VMCON_HPS_MARKUP_END;
+
+                /* note if entering or exiting a PRE tag */
+                if (stricmp(html_passthru_tag_, "pre") == 0)
+                    ++html_pre_level_;
+                else if (stricmp(html_passthru_tag_, "/pre") == 0
+                         && html_pre_level_ != 0)
+                    --html_pre_level_;
+            }
+            else if (c == '/'
+                     && html_passthru_tagp_ != html_passthru_tag_
+                     && *(html_passthru_tagp_ - 1) != '/')
+            {
+                /* add the '/' to the end of the tag name */
+                if (html_passthru_tagp_ - html_passthru_tag_ + 1
+                    < sizeof(html_passthru_tag_))
+                {
+                    *html_passthru_tagp_++ = (char)c;
+                    *html_passthru_tagp_ = '\0';
+                }
+            }
             else if (c == '"')
                 html_passthru_state_ = VMCON_HPS_DQUOTE;
             else if (c == '\'')
@@ -1112,8 +1190,8 @@ void CVmFormatter::buffer_expchar(VMG_ wchar_t c)
                 /* convert it to an ordinary space */
                 c = ' ';
                 
-                /* if we're in obey-whitespace mode, quote this space */
-                qspace = obey_whitespace_;
+                /* if we're in obey-whitespace mode, quote the space */
+                qspace = obey_whitespace_ || html_pre_level_ > 0;
             }
             break;
         }
@@ -1202,9 +1280,11 @@ void CVmFormatter::buffer_expchar(VMG_ wchar_t c)
 
     /*
      *   If this is a space of some kind, we might be able to consolidate it
-     *   with a preceding character. 
+     *   with a preceding character.  If the display layer is an HTML
+     *   renderer, pass spaces through intact, and let the HTML parser handle
+     *   whitespace compression.
      */
-    if (c == ' ')
+    if (c == ' ' && html_pre_level_ == 0)
     {
         /* ignore ordinary whitespace at the start of a line */
         if (linecol_ == 0 && !qspace)
@@ -2128,7 +2208,7 @@ int CVmConsole::open_script_file(VMG_ const char *fname,
         nf = CVmNetFile::open(
             vmg_ fname, 0, NETF_READ, OSFTCMD, "text/plain");
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* failed - no network file */
         nf = 0;
@@ -2153,7 +2233,7 @@ int CVmConsole::open_script_file(VMG_ const vm_val_t *filespec,
         /* validate file safety */
         CVmObjFile::check_safety_for_open(vmg_ nf, VMOBJFILE_ACCESS_READ);
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* if we got a file, it must be a safety exception - rethrow it */
         if (nf != 0)
@@ -2258,7 +2338,7 @@ int CVmConsole::close_script_file(VMG0_)
             /* close the network file */
             e->netfile->close(vmg0_);
         }
-        err_catch(exc)
+        err_catch_disc
         {
             /* 
              *   Ignore any error - since we're reading the file, the chances
@@ -2347,7 +2427,7 @@ int CVmConsole::open_command_log(VMG_ const char *fname, int event_script)
         /* create the network file descriptor */
         nf = CVmNetFile::open(vmg_ fname, 0, NETF_NEW, OSFTCMD, "text/plain");
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* failed - no network file */
         nf = 0;
@@ -2372,7 +2452,7 @@ int CVmConsole::open_command_log(VMG_ const vm_val_t *filespec,
         /* validate file safety */
         CVmObjFile::check_safety_for_open(vmg_ nf, VMOBJFILE_ACCESS_WRITE);
     }
-    err_catch(exc)
+    err_catch_disc
     {
         /* if we got a file, it must be a safety exception - rethrow it */
         if (nf != 0)
@@ -2454,7 +2534,7 @@ int CVmConsole::close_command_log(VMG0_)
         {
             command_nf_->close(vmg0_);
         }
-        err_catch(exc)
+        err_catch_disc
         {
             /* 
              *   ignore any errors - our interface doesn't give us any

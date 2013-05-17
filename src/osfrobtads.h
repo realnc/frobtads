@@ -61,6 +61,9 @@ extern "C++" {
 #define UNIX
 #endif
 
+/* Used by the base code to inhibit "unused parameter" compiler warnings. */
+#define VARUSED(var) (void)var
+
 /* We don't support the Atari 2600. */
 #include "osbigmem.h"
 

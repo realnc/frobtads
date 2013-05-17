@@ -360,7 +360,7 @@ typedef struct tcderrdef tcderrdef;
  */
 static char vsn_major[] = "2";
 static char vsn_minor[] = "5";
-static char vsn_maint[] = "16";
+static char vsn_maint[] = "17";
 
 
 /*

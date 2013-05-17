@@ -876,7 +876,7 @@ function showDialogMain(params)
     // create the canvas
     var canvas = dlgDesc.canvas = document.createElement("div");
     canvas.className = "dialogCanvas";
-    canvas.style.zIndex = z + 1;
+    canvas.style.zIndex = "" + (z + 1);
     document.body.appendChild(canvas);
 
     // create the new dialog division
@@ -884,7 +884,7 @@ function showDialogMain(params)
     dlg.id = dlgID;
     dlg.innerHTML = $("dialogTemplate").innerHTML;
     dlg.className = "dialogDiv";
-    dlg.style.zIndex = z + 1;
+    dlg.style.zIndex = "" + (z + 1);
     dlg.onkeydown = function(ev) { return $kd(ev, dlgKey, dlgDesc); };
     dlg.onkeypress = function(ev) { return $kp(ev, dlgKey, dlgDesc); };
     canvas.appendChild(dlg);
@@ -1015,9 +1015,8 @@ function showDialogMain(params)
         // set the size again
         positionDialog(dlg, true);
 
-        // set it opaque for non-IE browsers
-        if (!BrowserInfo.ie)
-            canvas.style.opacity = "1";
+        // set it opaque
+        setAlpha(canvas, 100);
 
         // set the initial focus
         initDialogFocus();

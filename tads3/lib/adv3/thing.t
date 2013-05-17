@@ -9184,7 +9184,7 @@ class Thing: VocabObject
         verify()
         {
             if (gAction.getDirection() == downDirection)
-                illogicalAlready(&notCarryingMsg);
+                illogicalAlready(&shouldNotThrowAtFloorMsg);
         }
         action()
         {

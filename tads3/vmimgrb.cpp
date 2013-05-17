@@ -93,10 +93,13 @@ static char *write_str_byte_prefix(char *ptr, const char *str, size_t len)
     /* return the pointer to the next byte after the copied data */
     return ptr + len + 1;
 }
+
+#if 0 // not currently needed
 static char *write_str_byte_prefix(char *ptr, const char *str)
 {
     return write_str_byte_prefix(ptr, str, strlen(str));
 }
+#endif
 
 
 /* ------------------------------------------------------------------------ */
@@ -866,14 +869,6 @@ extern "C"
  */
 ulong CVmObjTads::rebuild_image(VMG_ char *buf, ulong buflen)
 {
-    size_t max_size;
-    char *p;
-    char *props;
-    char *props_end;
-    size_t prop_cnt;
-    size_t i;
-    vm_tadsobj_prop *entry;
-    
     /* 
      *   Make sure the buffer is big enough.  Start out with worst-case
      *   assumption that we'll need every allocated property slot; we might
@@ -882,9 +877,9 @@ ulong CVmObjTads::rebuild_image(VMG_ char *buf, ulong buflen)
      *   (UINT2 superclass count, UINT2 property count, UINT2 flags), plus a
      *   UINT4 per superclass, plus a (UINT2 + DATAHOLDER) per property.  
      */
-    max_size = (2 + 2 + 2)
-               + get_sc_count() * 4
-               + (get_hdr()->prop_entry_free * 7);
+    size_t max_size = (2 + 2 + 2)
+                      + get_sc_count() * 4
+                      + (get_hdr()->prop_entry_free * 7);
 
     /* if it's more than we have available, ask for more space */
     if (max_size > buflen)
@@ -897,20 +892,19 @@ ulong CVmObjTads::rebuild_image(VMG_ char *buf, ulong buflen)
     oswp2(buf, get_sc_count());
     oswp2(buf+2, 0);
     oswp2(buf+4, get_li_obj_flags());
-    p = buf + 6;
+    char *p = buf + 6;
 
     /* copy the superclass list */
-    for (i = 0 ; i < get_sc_count() ; ++i, p += 4)
+    for (size_t i = 0 ; i < get_sc_count() ; ++i, p += 4)
         oswp4(p, get_sc(i));
 
     /* remember where the properties start */
-    props = p;
+    char *props = p;
 
     /* copy the non-empty property slots */
-    for (i = get_hdr()->prop_entry_free, entry = get_hdr()->prop_entry_arr,
-         prop_cnt = 0 ;
-         i != 0 ;
-         --i, ++entry)
+    vm_tadsobj_prop *entry = get_hdr()->prop_entry_arr;
+    size_t prop_cnt = 0;
+    for (size_t i = get_hdr()->prop_entry_free ; i != 0 ; --i, ++entry)
     {
         /* if this slot is non-empty, store it */
         if (entry->val.typ != VM_EMPTY)
@@ -926,9 +920,6 @@ ulong CVmObjTads::rebuild_image(VMG_ char *buf, ulong buflen)
             p += 7;
         }
     }
-
-    /* remember where the properties end */
-    props_end = p;
 
     /* fill in actual the property count now that we know it */
     oswp2(buf+2, prop_cnt);

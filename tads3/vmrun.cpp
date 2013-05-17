@@ -1049,7 +1049,7 @@ static inline void int_div(VMG_ vm_val_t *aval, int32_t b)
     if (a != INT32MINVAL || b != -1)
         aval->val.intval = a / b;
     else
-        promote_int_mul(vmg_ aval, b);
+        promote_int_div(vmg_ aval, b);
 }
 
 static void promote_int_neg(VMG_ vm_val_t *aval)
@@ -3900,7 +3900,7 @@ resume_execution:
             /* come here to skip throwing the exception */
             VM_IF_DEBUGGER(skip_throw: );
         }
-        err_catch(exc2)
+        err_catch_disc
         {
             /* 
              *   we got another exception trying to handle the first

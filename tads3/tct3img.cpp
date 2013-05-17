@@ -2861,23 +2861,14 @@ extern "C" {
  */
 size_t CTcGenTarg::sort_object_prop_table(CTcDataStream *os, ulong start_ofs)
 {
-    uint prop_table_size;
-    ulong orig_prop_cnt;
-    uint prop_cnt;
-    ulong prop_ofs;
-    size_t src, dst;
-
     /* read the number of properties from the header */
-    prop_cnt = CTPNStmObject::get_stream_prop_cnt(os, start_ofs);
-
-    /* remember the original property count, in case we delete unused slots */
-    orig_prop_cnt = prop_cnt;
+    uint prop_cnt = CTPNStmObject::get_stream_prop_cnt(os, start_ofs);
 
     /* calculate the property table size */
-    prop_table_size = prop_cnt * TCT3_TADSOBJ_PROP_SIZE;
+    uint prop_table_size = prop_cnt * TCT3_TADSOBJ_PROP_SIZE;
 
     /* get the offset of the first property */
-    prop_ofs = CTPNStmObject::get_stream_first_prop_ofs(os, start_ofs);
+    ulong prop_ofs = CTPNStmObject::get_stream_first_prop_ofs(os, start_ofs);
 
     /* reallocate the sort buffer if necessary */
     if (prop_table_size > sort_buf_size_)
@@ -2902,6 +2893,7 @@ size_t CTcGenTarg::sort_object_prop_table(CTcDataStream *os, ulong start_ofs)
      *   the table.  Scan the table for any such properties and remove
      *   them now.  
      */
+    size_t src, dst;
     for (src = dst = 0, prop_cnt = 0 ; src < prop_table_size ;
          src += TCT3_TADSOBJ_PROP_SIZE)
     {

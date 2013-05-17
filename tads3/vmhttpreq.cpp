@@ -2052,7 +2052,7 @@ struct bodyArg
              *   caller's buffer. 
              */
             datasource->seek(ofs, OSFSK_SET);
-            datasource->read(buf, len);
+            len = datasource->readc(buf, len);
 
             /* adjust the offset for the actual copied size */
             ofs += len;
@@ -2107,6 +2107,10 @@ struct bodyArg
  */
 static int eq_skip_sp(const char *src, size_t len, const char *ref)
 {
+    /* skip leading spaces */
+    utf8_ptr srcp((char *)src);
+    for ( ; len != 0 && is_space(srcp.getch()) ; srcp.inc(&len)) ;
+
     /* keep going until we run out of one string or the other */
     for (utf8_ptr srcp((char *)src) ; len != 0 && *ref != '\0' ; ++ref)
     {
@@ -2669,8 +2673,7 @@ int CVmObjHTTPRequest::common_sendReply(
 
     /* if the request is already completed, this is an error */
     if (req->completed)
-        throw_net_err(
-            vmg_ "request already completed", 0);
+        throw_net_err(vmg_ "request already completed", 0);
 
     /* get the 'body' argument (leave it on the stack for gc protection) */
     bodyArg *body = new bodyArg(vmg_ 0);

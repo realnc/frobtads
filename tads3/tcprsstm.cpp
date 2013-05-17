@@ -3477,9 +3477,12 @@ CTPNStm *CTcParser::parse_try(int *err)
         /* parse the 'finally' statement block */
         fin_body = parse_stm(err, 0, FALSE);
 
-        /* set the 'finally' block's closing position */
-        fin_stm->set_end_pos(fin_body->get_end_desc(),
-                             fin_body->get_end_linenum());
+        /* set the 'finally' block's closing position, if present */
+        if (fin_body != 0)
+        {
+            fin_stm->set_end_pos(
+                fin_body->get_end_desc(), fin_body->get_end_linenum());
+        }
 
         /* restore the enclosing statement */
         set_enclosing_stm(old_enclosing);
@@ -4547,9 +4550,6 @@ void CTcParser::finish_prop_expr(
     /* presume we won't need to create a code body or inline method */
     cb = 0;
     inline_method = 0;
-
-    /* assume we'll need an anonymous function context for inline objects */
-    int need_anon_ctx = is_inline;
 
     /* 
      *   If we have a local context, we have to set up a code body in order
