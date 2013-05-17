@@ -199,6 +199,6 @@ EXTRA_DIST += $(T3_INC_FILES) \
               tads3/samples/gramdisp.t \
               tads3/samples/sample.t \
               tads3/samples/sample.t3m \
-              tads3/samples/starta3.t \
-              tads3/samples/startB3.t \
-              tads3/samples/starti3.t
+              tads3/lib/samples/startB3.t \
+              tads3/lib/adv3/samples/starta3.t \
+              tads3/lib/adv3/samples/starti3.t
