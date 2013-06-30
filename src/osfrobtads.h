@@ -24,6 +24,7 @@ extern "C++" {
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <stdarg.h>
 #ifdef __cplusplus
 }
 #endif
