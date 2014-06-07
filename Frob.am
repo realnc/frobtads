@@ -2,6 +2,10 @@
 
 bin_PROGRAMS += frob
 
+if BUILD_FROBD
+    bin_PROGRAMS += frobd
+endif
+
 ## Sources needed only by the interpreter.
 ##
 FROBSOURCES = \
@@ -56,5 +60,30 @@ T3RSOURCES = \
     tads3/vmnetfil.cpp \
     tads3/vmsa.cpp
 
-frob_SOURCES = $(FROBSOURCES) $(COMMONSOURCES) $(T2HEADERS) $(T2RSOURCES) $(T2RCSOURCES) $(T3HEADERS) $(T3RSOURCES) $(T3RCSOURCES)
+frob_SOURCES = \
+    $(FROBSOURCES) \
+    $(COMMONSOURCES) \
+    $(T2HEADERS) \
+    $(T2RSOURCES) \
+    $(T2RCSOURCES) \
+    $(T3HEADERS) \
+    $(T3RSOURCES) \
+    $(T3RCSOURCES) \
+    $(T3RCSOURCES_ND)
+
+frobd_SOURCES = \
+    $(FROBSOURCES) \
+    $(COMMONSOURCES) \
+    $(T2HEADERS) \
+    $(T2RSOURCES) \
+    $(T2RCSOURCES) \
+    $(T3HEADERS) \
+    $(T3RSOURCES) \
+    $(T3RCSOURCES) \
+    $(T3RCSOURCES_D) \
+    src/debugui.cc \
+    tads3/vmdbg.cpp
+
 frob_CPPFLAGS = -DRUNTIME $(AM_CPPFLAGS)
+
+frobd_CPPFLAGS = -DRUNTIME $(AM_CPPFLAGS) -DVM_DEBUGGER
