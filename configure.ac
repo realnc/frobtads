@@ -634,6 +634,22 @@ AC_ARG_ENABLE(t3-compiler, [  --disable-t3-compiler   Do not build the TADS 3 co
 AM_CONDITIONAL([BUILD_T2_COMPILER], [test x$buildt2compiler = xtrue])
 AM_CONDITIONAL([BUILD_T3_COMPILER], [test x$buildt3compiler = xtrue])
 
+# The debbuger version of frob ("frobd") is not built by default.
+#
+AC_ARG_ENABLE(frobd, [  --enable-frobd          Build frobd, a version of frob usable by debuggers],
+  [case "${enableval}" in
+      yes) buildfrobd=true
+           break ;;
+      no)  buildfrobd=false
+           break ;;
+      *)   AC_MSG_ERROR(bad value ${enableval} for --enable-frobd)
+           break ;;
+  esac],
+  [buildfrobd=false]
+)
+AM_CONDITIONAL([BUILD_FROBD], [test x$buildfrobd = xtrue])
+
+
 # If the system lacks the <wchar.h> header, let Automake know.
 #
 AM_CONDITIONAL([WCHAR_HEADER_MISSING], [test x$wcharheaderfound = xfalse])

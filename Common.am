@@ -407,6 +407,17 @@ T3HEADERS = \
 
 ## TADS 3 runtime and compiler sources.
 ##
+
+## Non-debugger versions.
+T3RCSOURCES_ND = \
+    tads3/vmimg_nd.cpp \
+    tads3/vmini_nd.cpp
+
+## Debugger versions.
+T3RCSOURCES_D = \
+    tads3/vmimg_d.cpp \
+    tads3/vmini_d.cpp
+
 T3RCSOURCES = \
     tads2/ostzposix.c \
     tads3/askf_tx3.cpp \
@@ -469,8 +480,6 @@ T3RCSOURCES = \
     tads3/vmhostsi.cpp \
     tads3/vmhosttx.cpp \
     tads3/vmimage.cpp \
-    tads3/vmimg_nd.cpp \
-    tads3/vmini_nd.cpp \
     tads3/vminit.cpp \
     tads3/vminitim.cpp \
     tads3/vmintcls.cpp \
