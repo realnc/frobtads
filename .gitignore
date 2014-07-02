@@ -2,6 +2,7 @@
 Makefile
 Makefile.in
 /frob
+/frobd
 /t3make
 /tadsc
 /aclocal.m4
