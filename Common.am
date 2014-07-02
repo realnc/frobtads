@@ -410,11 +410,13 @@ T3HEADERS = \
 
 ## Non-debugger versions.
 T3RCSOURCES_ND = \
+    tads3/vmbt3_nd.cpp \
     tads3/vmimg_nd.cpp \
     tads3/vmini_nd.cpp
 
 ## Debugger versions.
 T3RCSOURCES_D = \
+    tads3/vmbt3_d.cpp \
     tads3/vmimg_d.cpp \
     tads3/vmini_d.cpp
 
@@ -452,7 +454,6 @@ T3RCSOURCES = \
     tads3/vmbiftio.cpp \
     tads3/vmbignum.cpp \
     tads3/vmbignumlib.cpp \
-    tads3/vmbt3_nd.cpp \
     tads3/vmbytarr.cpp \
     tads3/vmcfgmem.cpp \
     tads3/vmcoll.cpp \

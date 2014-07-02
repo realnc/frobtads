@@ -1447,6 +1447,19 @@ os_xlat_html4( unsigned int html4_char, char* result, size_t result_buf_len )
 
 /* =====================================================================
  *
+ * Functions needed by the debugger build of frob (frobd).
+ */
+#ifdef VM_DEBUGGER
+/* Print to the debugger console.
+ */
+void
+os_dbg_printf( const char *fmt, ... )
+{ }
+#endif
+
+
+/* =====================================================================
+ *
  * The functions defined below are not needed by the interpreter, or
  * have a curses-specific implementation and are therefore only used
  * when building the compiler (the compiler doesn't use curses, just
