@@ -1,6 +1,6 @@
 ## This file contains Automake rules for the TADS 2 compiler.
 
-bin_PROGRAMS += tadsc
+bin_PROGRAMS += tadsc tadsrsc
 
 AM_CPPFLAGS += -I$(srcdir)/src -I$(srcdir)/tads2
 
@@ -22,8 +22,14 @@ T2CSOURCES = \
     tads2/emt.c \
     tads2/dbg.c
 
-
 tadsc_SOURCES = $(COMMONSOURCES) $(T2HEADERS) $(T2RCSOURCES) $(T2CSOURCES)
+
+tadsrsc_SOURCES = \
+    src/missing.cc \
+    src/osportable.cc \
+    tads2/tadsrsc.c \
+    tads2/osnoui.c \
+    tads2/osterm.c
 
 ## Installs the TADS 2 development library.
 ##
