@@ -538,7 +538,7 @@ const err_msg_t tc_messages_english[] =
     "with whatever is confusing it so badly." },
 
     { TCERR_MODULE_NAME_COLLISION,
-    "module %s the has same name as an existing module",
+    "module %s has the same name as an existing module",
     "The module \"%s\" has the same name as an existing module elsewhere "
     "in the project.  The root filename of each module must be unique, "
     "because the two modules' object files might otherwise overwrite one "
