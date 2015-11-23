@@ -340,7 +340,7 @@ os_strlwr( char* s )
 osfildef*
 os_exeseek( const char*, const char* )
 {
-    return static_cast(osfildef*)(0);
+    return static_cast<osfildef*>(0);
 }
 
 
@@ -640,12 +640,12 @@ os_rand( long* val )
 {
     //assert(val != 0);
     // Use the current time as the first seed.
-    srand(static_cast(unsigned int)(time(0)));
+    srand(static_cast<unsigned int>(time(0)));
 
     // Create the final seed by generating a random number using
     // high-order bits, because on some systems the low-order bits
     // aren't very random.
-    *val = 1 + static_cast(long)(static_cast(long double)(65535) * rand() / (RAND_MAX + 1.0));
+    *val = 1 + static_cast<long>(static_cast<long double>(65535) * rand() / (RAND_MAX + 1.0));
 }
 
 

@@ -83,39 +83,6 @@ extern "C" {
 #define not !
 #endif
 
-/* For casting, C++ code should *not* use X_cast<type>(value) but rather
- * X_cast(type)(value).  If the compiler supports the X_cast keywords,
- * we define the X_cast macros to use the right syntax.  If not, we make
- * them use old-style syntax.
- */
-#ifdef HAVE_STATIC_CAST
-#define static_cast(a) static_cast<a>
-#else
-#define static_cast(a) (a)
-#endif
-
-#ifdef HAVE_DYNAMIC_CAST
-#define dynamic_cast(a) dynamic_cast<a>
-#else
-#define dynamic_cast(a) (a)
-#endif
-
-#ifdef HAVE_REINTERPRET_CAST
-#define reinterpret_cast(a) reinterpret_cast<a>
-#else
-#define reinterpret_cast(a) (a)
-#endif
-
-#ifndef HAVE_BOOL
-/* The C++ compiler lacks "bool".  Define it.  We do not use macros for
- * this; with an enum and typedef we always have the same type-safety as
- * with a compiler that has native bool-support.  Implicit casts to
- * "int" still work as they should.
- */
-enum booleanValues { false, true };
-typedef enum booleanValues bool;
-#endif
-
 #endif /* __cplusplus */
 
 #endif /* COMMON_H */

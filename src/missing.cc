@@ -11,8 +11,8 @@ memicmp( const void* s1, const void* s2, size_t len )
 {
     char* x1 = new char[len];
     char* x2 = new char[len];
-    const char* tmp1 = static_cast(const char*)(s1);
-    const char* tmp2 = static_cast(const char*)(s2);
+    const char* tmp1 = static_cast<const char*>(s1);
+    const char* tmp2 = static_cast<const char*>(s2);
 
     for (size_t i = 0; i < len; ++i) {
         x1[i] = tolower(tmp1[i]);
