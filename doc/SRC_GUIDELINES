@@ -29,10 +29,10 @@ Non-standard compiler features
 ==============================
 
 Don't use compiler-specific non-standard features; not everyone has GCC
-installed.  You should always compile with GCC's "-ansi -pedantic"
-switches (both C and C++).  Note that "-ansi -pedantic" cannot check
-your code for full ANSI correctness; they are only meant to catch
-obvious blunders.
+installed.  You should always compile with g++'s "-std=c++14 -pedantic"
+flags (use "-std=c11" for gcc).  Note that "-pedantic" cannot check your
+code for full ANSI correctness; they are only meant to catch obvious
+blunders.
 
 
 Non-ANSI/ISO functions

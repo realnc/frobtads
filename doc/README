@@ -20,11 +20,10 @@ Platforms
 
 FrobTADS is known to compile and run on various platforms, including:
 
-Linux (all flavors), Mac OS X, various BSDs, old and modern Solaris,
-BeOS and Microsoft Windows.
+Linux (all flavors), Mac OS X, and various BSDs.
 
-If you manage to run FrobTADS on a system not mentioned above, please
-let the maintainer know about it.
+Microsoft Windows when building with mingw might work; it's not actively
+tested.
 
 
 About TADS and FrobTADS

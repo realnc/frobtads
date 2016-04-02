@@ -34,17 +34,9 @@ This is needed for some of the network functionality of TADS 3.
 Compiler
 ........
 
-To compile the package you'll need a C and a C++ compiler.  It shouldn't
-matter what kind of compilers are installed on the system, or how recent
-they are; older compilers should work just as well, as long as they can
-compile a reasonable subset of ANSI C (like function prototypes).
-*Really* old K&R-only compilers will probably not work.  As for C++, the
-code does not use the template library, nor any other "modern" C++
-features like templates and exception handling, and should therefore
-compile on pre-standard C++ compilers.
-
-Among the compilers known to work are GCC 2.x, GCC 3.x, GCC 4.x and
-Intel C/C++.
+To compile the package you'll need a C and a C++ compiler that support the
+C11 and C++14 standards. GCC and Clang are known to work, but others should
+work too as long as they support the respective standards.
 
 
 The quickie
@@ -161,18 +153,17 @@ Note that a subdirectory called "frobtads" will be created automaticly,
 so don't use "--datadir=/opt/frobtads"; just "--datadir=/opt".
 
 You can also pass compiler-flags to 'configure', and they will be passed
-on to the compiler.  For example, to compile the C sources with
-"-O3 -ansi" and the C++ sources with "-O2 -ansi -fno-exceptions", call
-'configure' like this:
+on to the compiler.  For example, to compile the C sources with "-O3" and
+the C++ sources with "-O2 -fno-exceptions", call 'configure' like this:
 
-  ./configure CFLAGS="-O3 -ansi" CXXFLAGS="-O2 -ansi -fno-exceptions"
+  ./configure CFLAGS="-O3" CXXFLAGS="-O2 -fno-exceptions"
 
 (Don't forget to quote the options if they contain spaces, like in the
 above example.)
 
 Even if the shell allows it, please don't use this:
 
-  CFLAGS="-O3 -ansi" ./configure
+  CFLAGS="-O3" ./configure
 
 *Always* specify these variables *after* the "./configure" part.
 
@@ -315,13 +306,6 @@ also apply for OS X.  Don't forget to install the OS X curses/ncurses
 and libcurl development packages first.
 
 
-BeOS
-....
-
-BeOS is supported and Like OS X, there should be no extra steps needed.
-Just make sure you have curses/ncurses and libcurl installed.
-
-
 Microsoft Windows
 .................
 
@@ -344,23 +328,3 @@ cross-compiler is, for example "i586-pc-mingw32-gcc", configure with:
 
 and after "make" you should have your Windows *.exe files.  This is in
 fact supported, tested and known to work.
-
-
-DOS
-...
-
-MS-DOG and other brain damages (grin) aren't supported.  A DOS
-interpreter for TADS games already exists, by the way.
-
-
-Other systems
-.............
-
-No one tried yet to compile FrobTADS in systems like Amiga, Atari, OS2,
-etc.  Or if someone did, we never heard of it.  Any volunteers?
-
-Note that if you run Linux on those systems (there's a Linux for Amigas,
-I think), or some other Unix-like OS, then just follow the normal steps
-like for every other Unix system.  It should build and run just fine.
-MorphOS on newer Amigas for example is known to work.  (At least it did
-in the past.)
