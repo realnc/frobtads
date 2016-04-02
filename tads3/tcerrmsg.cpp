@@ -565,6 +565,11 @@ const err_msg_t tc_messages_english[] =
     "full, or you don't have the necessary permissions or privileges "
     "to create a new file in the parent folder." },
 
+    { TCERR_RUNTIME_ERROR_IN_PREINIT,
+    "unhandled exception during preinit",
+    "An runtime error or other unhandled exception was thrown during "
+    "pre-initialization." },
+
     { TCERR_CONST_DIV_ZERO,
     "divide by zero in constant expression",
     "Division by zero in constant expression.  (The compiler was trying "

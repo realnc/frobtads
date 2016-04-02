@@ -161,7 +161,7 @@ class ModuleID: object
          */
         lst = lst.sort(SortAsc, function(a, b) {
 
-            /* if the listings order differ, sort by listing order */
+            /* if the listings orders differ, sort by listing order */
             if (a.listingOrder != b.listingOrder)
                 return a.listingOrder - b.listingOrder;
 

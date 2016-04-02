@@ -1083,26 +1083,14 @@ class MessageBuilder: OutputFilter, PreinitObject
      */
     generateMessage(orig)
     {
-        local result;
-
         /* we have nothing in the result string so far */
-        result = '';
+        local result = '';
 
         /* keep going until we run out of substitution parameters */
         for (;;)
         {
-            local idx;
-            local paramStr;
-            local paramName;
-            local paramObj;
-            local info;
-            local initCap, allCaps;
-            local targetObj;
-            local newText;
-            local prop;
-
             /* get the position of the next brace */
-            idx = orig.find('{');
+            local idx = orig.find('{');
 
             /* 
              *   if there are no braces, the rest of the string is simply
@@ -1173,10 +1161,10 @@ class MessageBuilder: OutputFilter, PreinitObject
              *   Pull out everything up to the brace as the parameter
              *   text.
              */
-            paramStr = orig.substr(1, idx - 1);
+            local paramStr = orig.substr(1, idx - 1);
 
             /* assume for now that we will have no parameter object */
-            paramObj = nil;
+            local paramObj = nil;
 
             /* 
              *   drop everything up to and including the closing brace,
@@ -1192,8 +1180,8 @@ class MessageBuilder: OutputFilter, PreinitObject
              *   the replacement text.  If they're both capitals, we'll
              *   capitalize the entire replacement text. 
              */
-            initCap = (rexMatch(patUpper, paramStr) != nil);
-            allCaps = (rexMatch(patAllCaps, paramStr) != nil);
+            local initCap = (rexMatch(patUpper, paramStr) != nil);
+            local allCaps = (rexMatch(patAllCaps, paramStr) != nil);
 
             /* lower-case the entire parameter string for matching */
             local origParamStr = paramStr;
@@ -1213,6 +1201,7 @@ class MessageBuilder: OutputFilter, PreinitObject
              *.  id1/id2 obj
              *.  id1 obj/id2
              */
+            local paramName;
             if (rexMatch(patIdObjSlashId, paramStr) != nil)
             {
                 /* we have the id1 obj/id2 format */
@@ -1233,7 +1222,7 @@ class MessageBuilder: OutputFilter, PreinitObject
             }
 
             /* look up our parameter name */
-            info = paramTable_[paramName];
+            local info = paramTable_[paramName];
 
             /*
              *   If we didn't find it, and the parameter name contains a
@@ -1260,8 +1249,8 @@ class MessageBuilder: OutputFilter, PreinitObject
                  *   parameter object.  Try getting the string from the
                  *   action.  
                  */
-                newText = (gAction != nil
-                           ? gAction.getMessageParam(paramName) : nil);
+                local newText = (gAction != nil
+                                 ? gAction.getMessageParam(paramName) : nil);
 
                 /* check what we found */
                 if (dataType(newText) == TypeSString)
@@ -1304,18 +1293,17 @@ class MessageBuilder: OutputFilter, PreinitObject
              *   for the target object value.  Otherwise, use the same
              *   target object as the previous expansion.  
              */
+            local targetObj = nil;
             if (paramObj != nil)
             {
-                /* check for a current action */
+                /* 
+                 *   if there's a current action, get the target object;
+                 *   otherwise there's no target object yet 
+                 */
                 if (gAction != nil)
                 {
                     /* get the target object by name through the action */
                     targetObj = gAction.getMessageParam(paramObj);
-                }
-                else
-                {
-                    /* there's no action, so we don't have a value yet */
-                    targetObj = nil;
                 }
 
                 /* 
@@ -1369,10 +1357,10 @@ class MessageBuilder: OutputFilter, PreinitObject
             }
 
             /* get the property to call on the target */
-            prop = getTargetProp(targetObj, paramObj, info);
+            local prop = getTargetProp(targetObj, paramObj, info);
 
             /* evaluate the parameter's associated property on the target */
-            newText = targetObj.(prop);
+            local newText = targetObj.(prop);
 
             /* apply the appropriate capitalization to the result */
             if (allCaps)

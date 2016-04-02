@@ -69,6 +69,91 @@ etc.  For changes to the Adv3 library, see
 <a href="../lib/adv3/changes.htm">Recent Library Changes</a>.)
 
 <!------------------------------------------------------------------------>
+<h3>Changes for 3.1.4 (Release date TBD)</h3>
+
+<ul>
+
+<li>Accented letters and other non-ASCII characters are now allowed in
+symbol-like tokens during preprocessing, such as when used in
+"stringizing" macro arguments.  In version 3.1.3, the compiler started
+checking for non-ASCII characters within symbol names, showing an
+error message when any such character was encountered.  That change
+had the side effect of making it impossible to use non-ASCII
+characters in stringizing macros.  The preprocessor now allows for
+this case by removing the non-ASCII check during preprocessing (the
+check is still applied, but now happens after preprocessing).
+
+(<a href="http://bugdb.tads.org/view.php?id=0000199">bug #0000199</a>)
+
+<li>The StringComparator class didn't properly match an upper-case
+input string against a lower-case dictionary string if the dictionary
+string included characters that had equivalence mappings.  This has
+been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000202">bug #0000202</a>)
+
+<li>In the standard main entrypoint library code (in lib/_main.t),
+runtime errors during preinit are now propagated to the caller
+(usually the compiler).  In the past, the startup code always caught
+any otherwise unhandled exception, displayed the exception's error
+message on the console, and exited.  With this change, the startup
+code still catches and displays any exception, but if the program is
+running in preinit mode, it then re-throws the exception so that the
+compiler has to catch it.  This allows the compiler to detect that
+preinit failed with an unhandled exception, which in turn causes the
+compiler to return a failure code when it exits.  On most operating
+systems, the shell and other build tools (e.g., "make") can use this
+exit code information to detect whether the build process succeeded or
+failed, which can be useful for deciding whether or not to proceed to
+subsequent build actions.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000207">bug #0000207</a>)
+
+<li>FileName.listDir() incorrectly returned a list of 32 nil elements
+if the directory being listed was empty.  It now returns an empty list
+as you'd expect.
+
+<li>The new t3run -tz option lets you specify a local time zone for
+the session, overriding the system settings.  Normally, the
+interpreter gets the local time zone from the operating system; this
+option overrides that and lets you specify any time zone instead.  The
+time zone should be given as a zoneinfo database ID, such as
+America/Los_Angeles for US Pacific Time, or Europe/Berlin for Central
+European Time.
+
+<li>A bug in the "propset" parser sometimes caused crashes when
+processing propset expansions.  This has been corrected.
+
+<li>The compiler encountered a fatal assertion failure when presented
+with an inline object definition that didn't reference any local
+variables from the enclosing scope.  This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000233">bug #0000233</a>)
+
+</ul>
+
+<li>The Date class's getClockTime() method returned incorrect results
+in past versions: it always returned zero as the first element of the
+result list, and the second and third elements were the hour and minute,
+respectively, instead of the minute and second.  This has been
+corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000225">bug #0000225</a>)
+
+<li>The String splice() method incorrectly calculated the length of
+the result string if any of the deleted characters from the source
+string were outside of the 0-127 ASCII character range.  This resulted
+in invalid string value and sometimes caused interpreter crashes.
+This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000229">bug #0000229</a>)
+
+<li>A bug caused the VM to crash in very rare cases when a RESTART
+command was used.  This only happened when the stars (or, more precisely,
+the layout of memory) aligned in very specific ways, so it was 
+
+
+<!------------------------------------------------------------------------>
 <h3>Changes for 3.1.3 (May 16, 2013)</h3>
 
 <ul>

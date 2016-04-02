@@ -102,6 +102,7 @@ function toggleVersionIndex(a)
 </script>
 <div id="versionIndex">
 <ul class=toc>
+<li><a href='#314'>3.1.4</a>
 <li><a href='#313'>3.1.3</a>
 <li><a href='#312'>3.1.2</a>
 <li><a href='#311'>3.1.1</a>
@@ -140,6 +141,64 @@ function toggleVersionIndex(a)
 <li><a href='#304'>3.0.4 and earlier</a>
 </ul>
 </div>
+
+<!------------------------------- 3.1.4 --------------------------------->
+<div class="sepbar"><a name='314'></a>3.1.4</div>
+<p><b><i>Released TBD</i></b>
+<p>
+
+<!------------------->
+<div class=firstentry>
+
+The parser no longer announces the selected object for an indefinite
+noun phrase if the noun phrase only matches one in-scope object to
+start with.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000200">bugdb.tads.org #0000200</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+If a Room object didn't provide a definition for either 'name' or
+'roomName', printing the room description (by traveling into the room,
+LOOK, etc) triggered a stack overflow error.  The error occurred
+because the definitions of these properties inherited from the library
+reference each other circularly, resulting in infinite recursion if a
+Room instance didn't override one or the other.  The library
+essentially requires each Room to override at least one of the two
+properties, but the stack overflow wasn't helpful when both were
+omitted, so the library now checks for this case and simply returns
+an empty string for each when neither is overridden.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000205">bugdb.tads.org #0000205</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+The NumberedDial class now checks that number settings provided in
+player commands are in range for an integer, and treats out-of-range
+values the same as any other invalid input.  In the past, the class
+tried to convert anything that looked like a sequence of digits to
+integer, so players could trigger a numeric overflow run-time error
+by entering a really large number in a SET DIAL TO VALUE command.
+   
+(<a href="http://bugdb.tads.org/view.php?id=0000230">bugdb.tads.org #0000230</a>)
+
+</div>
+
+<!------------------->
+<div class=entry>
+
+The PAUSE command didn't work properly in Web games.  The command
+was incorrectly waiting for input from the local keyboard (via inputKey())
+rather than from the network (via inputManager.getKey()).  This is now fixed.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000232">bugdb.tads.org #0000232</a>)
+
 
 <!------------------------------- 3.1.3 --------------------------------->
 <div class="sepbar"><a name='313'></a>3.1.3</div>
@@ -19820,8 +19879,8 @@ phrase errors.
 <div class=entry>
 
 Fix command state management for suffixes so that suffixes are always
-generated before the prompt.  (We simply need to display <.commandbegin>
-in intput.t before displaying the prompt.)
+generated before the prompt.  (We simply need to display <.commandbefore>
+in input.t before displaying the prompt.)
 
 </div>
 

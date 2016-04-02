@@ -1402,9 +1402,14 @@ void CTcMake::build(CTcHostIfc *hostifc, int *errcnt, int *warncnt,
             /* make sure the host interface is set up */
             G_hostifc = hostifc;
 
-            /* show the error */
+            /* 
+             *   Show the error.  Since we're counting it as a fatal error,
+             *   use a dummy error counter so that we don't double-count it
+             *   as an ordinary error. 
+             */
+            int dummy_errcnt = 0;
             CTcMain::S_log_error(
-                0, 0, errcnt, warncnt,
+                0, 0, &dummy_errcnt, warncnt,
                 (verbose_ ? TCMAIN_ERR_VERBOSE : 0)
                 | (show_err_numbers_ ? TCMAIN_ERR_NUMBERS : 0)
                 | (show_warnings_ ? TCMAIN_ERR_WARNINGS : 0)

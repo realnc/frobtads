@@ -14,7 +14,7 @@ func2:
 1: func2('abc', 3, 246) stack.t, line 37
 2: func1('abc', 123) stack.t, line 50
 3: main(['stack.t3']) stack.t, line 55
-4: flexcall(main, ['stack.t3']) _main.t, line 209
+4: flexcall(main, ['stack.t3']) _main.t, line 217
 5: _mainCommon(['stack.t3'], nil) _main.t, line 122
 6: _main(['stack.t3']) _main.t, line 31
 
@@ -23,7 +23,7 @@ myObj.prop2:
 2: func2('abc', 3, 246) stack.t, line 45
 3: func1('abc', 123) stack.t, line 50
 4: main(['stack.t3']) stack.t, line 55
-5: flexcall(main, ['stack.t3']) _main.t, line 209
+5: flexcall(main, ['stack.t3']) _main.t, line 217
 6: _mainCommon(['stack.t3'], nil) _main.t, line 122
 7: _main(['stack.t3']) _main.t, line 31
 
@@ -33,7 +33,7 @@ myClass.prop1:
 3: func2('abc', 3, 246) stack.t, line 45
 4: func1('abc', 123) stack.t, line 50
 5: main(['stack.t3']) stack.t, line 55
-6: flexcall(main, ['stack.t3']) _main.t, line 209
+6: flexcall(main, ['stack.t3']) _main.t, line 217
 7: _mainCommon(['stack.t3'], nil) _main.t, line 122
 8: _main(['stack.t3']) _main.t, line 31
 
@@ -41,7 +41,7 @@ func2:
 1: func2('def', 3, 912) stack.t, line 37
 2: func1('def', 456) stack.t, line 50
 3: main(['stack.t3']) stack.t, line 56
-4: flexcall(main, ['stack.t3']) _main.t, line 209
+4: flexcall(main, ['stack.t3']) _main.t, line 217
 5: _mainCommon(['stack.t3'], nil) _main.t, line 122
 6: _main(['stack.t3']) _main.t, line 31
 
@@ -50,7 +50,7 @@ myObj.prop2:
 2: func2('def', 3, 912) stack.t, line 45
 3: func1('def', 456) stack.t, line 50
 4: main(['stack.t3']) stack.t, line 56
-5: flexcall(main, ['stack.t3']) _main.t, line 209
+5: flexcall(main, ['stack.t3']) _main.t, line 217
 6: _mainCommon(['stack.t3'], nil) _main.t, line 122
 7: _main(['stack.t3']) _main.t, line 31
 
@@ -60,7 +60,7 @@ myClass.prop1:
 3: func2('def', 3, 912) stack.t, line 45
 4: func1('def', 456) stack.t, line 50
 5: main(['stack.t3']) stack.t, line 56
-6: flexcall(main, ['stack.t3']) _main.t, line 209
+6: flexcall(main, ['stack.t3']) _main.t, line 217
 7: _mainCommon(['stack.t3'], nil) _main.t, line 122
 8: _main(['stack.t3']) _main.t, line 31
 

@@ -165,6 +165,14 @@ _mainCommon(args, restoreFile)
         
         /* display the unhandled exception */
         "\n<<exc.displayException()>>\n";
+
+        /* 
+         *   if we're in preinit mode, throw any uncaught exception up to
+         *   the compiler, so that the compiler knows that something went
+         *   wrong with the preinitialization 
+         */
+        if (t3GetVMPreinitMode())
+            throw exc;
     }
     finally
     {

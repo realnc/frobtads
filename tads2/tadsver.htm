@@ -11,6 +11,7 @@
 <h4>Index to Versions</h4>
 <ul>
 <!-- {$version-index} -->
+<li><a href='#tads2518'><b>Version 2.5.18</b></a><br>
 <li><a href='#tads2517'><b>Version 2.5.17</b></a><br>
 <li><a href='#tads2516'><b>Version 2.5.16</b></a><br>
 <li><a href='#tads2515'><b>Version 2.5.15</b></a><br>
@@ -96,6 +97,35 @@ ftp://ftp.ifarchive.org/if-archive/programming/tads2/manuals/</a>
 of the former ftp.gmd.de archive).
 
 <!-- {$new-version-insertion-point} -->
+
+<!------------------------------------------------------------------------>
+<br><br><hr>
+<h3><a name='tads2518'>Version 2.5.18</a></h3>
+<i>Released TBD</i>
+
+<ul>
+
+<li>In certain cases, game code was able to cause an interpreter crash
+by using a statement like <tt>switch</tt> or <tt>if</tt> with an
+expression that involved a property call that didn't return any value.
+This only happened under certain conditions, so most such code didn't
+trigger the problem.  This type of game code is basically errant, in
+that it's trying to use the result of an expression that yields no
+result, but even so, the interpreter shouldn't crash even when game
+code has errors.  This has been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000235">bugdb.tads.org #0000235</a>)
+
+
+<li>The change in 2.5.17 that corrected the problem with &lt;PRE&gt;
+tags caused a new problem with &lt;BANNER&gt; tags in HTML-formatted
+games.  This caused some games to display their status lines or other
+banner-based layout elements incorrectly (or not at all).  This has
+been corrected.
+
+(<a href="http://bugdb.tads.org/view.php?id=0000197">bugdb.tads.org #0000197</a>)
+
+</ul>
 
 <!------------------------------------------------------------------------>
 <br><br><hr>

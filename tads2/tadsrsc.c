@@ -38,7 +38,7 @@ static void usage(void)
     rscptf("usage: tadsrsc [fileoptions] <resfile> [operations]\n"
            "   or: tadsrsc [fileoptions] <resfile> @<opfile>"
            " - read ops from <opfile>\n"
-           "If no operations are given, <resfile> contents are listed.\n"
+           "If no operations are given, <resfile>'s contents are listed.\n"
            "File options:\n"
            "  -create      - create a new resource file\n"
            "Operations:\n"

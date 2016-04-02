@@ -27,6 +27,7 @@ Modified
 #include "t3std.h"
 #include "vminit.h"
 #include "vmerr.h"
+#include "tcerrnum.h"
 #include "vmfile.h"
 #include "vmimage.h"
 #include "vmrun.h"
@@ -85,6 +86,17 @@ void vm_run_preinit(CVmFile *origfp, const char *image_fname,
 
         /* save the new image file */
         vm_rewrite_image(vmg_ origfp, newfp, loader->get_static_cs_ofs());
+    }
+    err_catch(exc)
+    {
+        /* 
+         *   if the error is an unhandled runtime error, rethrow it as an
+         *   unhandled preinit error; otherwise just re-throw the same error
+         */
+        if (exc->get_error_code() == VMERR_UNHANDLED_EXC)
+            err_throw(TCERR_RUNTIME_ERROR_IN_PREINIT);
+        else
+            err_rethrow();
     }
     err_finally
     {

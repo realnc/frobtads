@@ -5520,8 +5520,16 @@ class NumberedDial: Dial
         if (rexMatch('<digit>+', val) != val.length())
             return nil;
 
-        /* get the numeric value */
-        num = toInteger(val);
+        try
+        {
+            /* get the numeric value */
+            num = toInteger(val);
+        }
+        catch (Exception exc)
+        {
+            /* it must be out of range for an integer, so it can't be valid */
+            return nil;
+        }
 
         /* it's valid if it's within range */
         return num >= minSetting && num <= maxSetting;

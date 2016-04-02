@@ -850,9 +850,6 @@ DefineSystemAction(Pause)
          */
         elapsed = realTimeManager.getElapsedTime();
 
-        /* show our prompt */
-        gLibMessages.pausePrompt();
-
         /* keep going until we're released */
     waitLoop:
         for (;;)
@@ -862,7 +859,7 @@ DefineSystemAction(Pause)
              *   explicitly do not want to allow any real-time events to
              *   occur, so we simply wait forever without timeout. 
              */
-            switch(inputKey())
+            switch(inputManager.getKey(nil, {: gLibMessages.pausePrompt() }))
             {
             case ' ':
                 /* space key - end the wait */

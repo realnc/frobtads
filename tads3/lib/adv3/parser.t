@@ -2448,17 +2448,26 @@ class IndefiniteNounProd: NounPhraseProd
         lst = filterTruncations(lst, resolver);
 
         /* see what we found */
-        if (lst.length() == 0)
+        switch (lst.length())
         {
-            /* it turned up nothing - note the problem */
+        case 0:
+            /* the noun phrase didn't match anything - note it */
             results.noMatch(resolver.getAction(), np_.getOrigText());
-        }
-        else if (lst.length() > 1)
-        {
+            break;
+
+        case 1:
             /* 
-             *   There are multiple objects, but the phrase is indefinite,
-             *   which means that it doesn't refer to a specific matching
-             *   object but could refer to any of them.  
+             *   There's only one matching object for the noun phrase, so
+             *   the items in the list are effectively all equivalent.
+             */
+            allEquiv = true;
+            break;
+
+        default:
+            /* 
+             *   There are multiple matching objects, but the phrase is
+             *   indefinite and singular, so it refers to any one of the
+             *   matching objects.
              */
 
             /* start by noting if the choices are all equivalent */
@@ -2472,15 +2481,22 @@ class IndefiniteNounProd: NounPhraseProd
             lst = resolver.filterPossRank(lst, 1);
             lst = resolver.filterAmbiguousNounPhrase(lst, 1, self);
             lst = selectFromList(resolver, results, lst);
+            break;
         }
 
         /* 
-         *   Set the "unclear disambiguation" flag on the item we picked -
-         *   our selection was arbitrary, so it's polite to let the player
-         *   know which we chose.  However, don't do this if the possible
-         *   matches were all equivalent to start with, as the player's
-         *   input must already have been as specific as we can be in
-         *   reporting the choice.  
+         *   If any of the objects that matched the noun phrase matches are
+         *   distinguishable from one another, set the "unclear
+         *   disambiguation" flag on the item we picked.  This alerts the
+         *   player that we made an arbitrary choice, and lets them know
+         *   which one we chose.  It's important to alert the player when
+         *   we make such a choice because they might not have realized
+         *   that the noun phrase was ambiguous and might have meant one of
+         *   the other matching objects.  The alert isn't necessary if all
+         *   of the matches were interchangeable to start with - if they
+         *   were, they can't be distinguished by vocabulary, so there's
+         *   nothing we can say in an announcement that doesn't just
+         *   reiterate what the user entered in the command.
          */
         if (lst.length() == 1 && !allEquiv)
             lst[1].flags_ |= UnclearDisambig;

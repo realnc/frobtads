@@ -73,36 +73,28 @@ extern "C" {
  */
 
 /*
+ *   Little-endian processors - 32-bit and 64-bit
+ */
+#if defined _M_LE_C11
+#include "h_le_c11.h"
+
+/*
  *   Intel x86 processors - 32-bit
  */
-#ifdef _M_IX86
+#elif defined _M_IX86
 #include "h_ix86.h"
-#endif
 
 /*
- *   Intel x86 processors - 64-bit 
+ *   Intel x86 processors - 64-bit
  */
-#ifdef _M_IX86_64
+#elif defined _M_IX86_64
 #include "h_ix86_64.h"
-#endif
 
 /*
- *   PowerPC CPU's 
+ *   PowerPC CPU's
  */
-#ifdef _M_PPC
+#elif defined _M_PPC
 #include "h_ppc.h"
-#endif
-
-/*
- *   Qt.  This isn't *truly* a hardware platform, but it looks like one to
- *   us, because it provides its own hardware virtualization scheme.  Rather
- *   than trying to figure out what sort of physical hardware we're
- *   targeting, we can simply define our hardware virtualization macros and
- *   functions in terms of Qt's hardware virtualization APIs, and let Qt take
- *   care of providing the target-specific implementation of those APIs.  
- */
-#ifdef _M_QT
-#include "h_qt.h"
 #endif
 
 /* add others here */
@@ -171,7 +163,7 @@ extern "C" {
 #include "osbeos.h"
 #endif
 
-#ifdef TROLLTECH_QT
+#ifdef QTADS
 /* Qt-specific definitions are in osqt.h */
 #include "osqt.h"
 #endif
@@ -185,6 +177,11 @@ extern "C" {
  *   just care that it provides our osifc implementations.)  
  */
 #include "osfrobtads.h"
+#endif
+
+#ifdef XTADS
+/* Definitions for X TADS */
+#include "osxtads.h"
 #endif
 
 

@@ -2957,7 +2957,27 @@ modify Room
      *   the ordinary name: "You can't eat the Hall of the Ancient Kings."
      *   These cases need to be customized as well.
      */
-    name = (roomName.toLower())
+    name
+    {
+        /*
+         *   Note that Thing defines 'roomName' to return 'name', and we're
+         *   defining 'name' to return 'roomName', with the expectation
+         *   that each Room will override one or the other of these
+         *   properties.  If an individual Room doesn't override either,
+         *   our definitions are circular, which will cause infinite
+         *   recursion leading to a stack overflow.
+         *   
+         *   To cut this off, before we use 'roomName', check to make sure
+         *   it's overridden by something below Room in the class
+         *   hierarchy.  If it's not, just return an empty string.
+         */
+        local cl = propDefined(&roomName, PropDefGetClass);
+        if (cl == Room || !cl.ofKind(Room))
+            return '';
+
+        /* return the lower-case version of the roomName */
+        return roomName.toLower();
+    }
 
     /*
      *   The "destination name" of the room.  This is primarily intended
@@ -4711,13 +4731,23 @@ parseIntTokens(toks)
     try
     {
         /*
-         *   if the first token contains digits, treat it as a numeric
-         *   string value rather than a spelled-out number
+         *   If the first token contains digits, treat it as a numeric
+         *   string value rather than a spelled-out number.
          */
         if (toks.length() != 0
             && rexMatch('<digit>+', getTokOrig(toks[1])) != nil)
-            return toInteger(getTokOrig(toks[1]));
-
+        {
+            try
+            {
+                return toInteger(getTokOrig(toks[1]));
+            }
+            catch (Exception exc)
+            {
+                /* if it can't be parsed as an integer, return failure */
+                return nil;
+            }
+        }
+        
         /* parse it using the spelledNumber production */
         local lst = spelledNumber.parseTokens(toks, cmdDict);
 
