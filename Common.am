@@ -64,29 +64,15 @@ endif
 ## pool is safe.
 ## AM_CPPFLAGS += -DVM_FLAT_POOL
 
-## If the system is little-endian, define _M_IX86_64.  If not, we'll
+## If the system is little-endian, define _M_LE_C11.  If not, we'll
 ## define _M_PPC.  The base code needs one of these macros defined, so
-## that it can decide which version of some endian-dependent routines
-## to use.
-##
-## Note that we define _M_IX86_64 instead of _M_IX86 even though the
-## former is intended for 64-bit platforms.  The reason is that
-## _M_IX86_64 works correctly even for 32-bit systems but not for
-## 16-bit systems.  _M_IX86 works for 32-bit systems as well as for
-## 16-bit systems but not for 64-bit systems.  Since we're only
-## interested in 32 and 64-bit systems and don't support 16-bit systems
-## at all, _M_IX86_64 is what we need.
-##
-## _M_PPC tells the base code to use the PowerPC versions of the
-## endian-related routines.  Despite the name, the PowerPC versions of
-## these routines are generic and useable by both big-endian as well as
-## little-endian machines; they're just a little slower on x86 and
-## x86-64 systems than the ones activated with _M_IX86(_64).
+## that it can decide which version of the platform-dependent byte
+## conversion routines to use.
 ##
 if CPU_IS_BIGENDIAN
   AM_CPPFLAGS += -D_M_PPC
 else
-  AM_CPPFLAGS += -D_M_IX86_64
+  AM_CPPFLAGS += -D_M_LE_C11
 endif
 
 ## If the user does not want the T2 VM to check for errors like stack
@@ -212,8 +198,7 @@ T2HEADERS = \
     tads2/emt.h \
     tads2/err.h \
     tads2/fio.h \
-    tads2/h_ix86_64.h \
-    tads2/h_ix86.h \
+    tads2/h_le_c11.h \
     tads2/h_ppc.h \
     tads2/ler.h \
     tads2/lib.h \

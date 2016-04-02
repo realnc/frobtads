@@ -30,29 +30,9 @@ extern "C++" {
 #endif
 
 /* The base code needs access to the C99 exact-width types (int32_t and
- * friends.)  Those are provided by <stdint.h>, so we simply include that
- * if it's available.  If not, we can typedef them ourselves since our
- * autoconf script provides us with the exact sizes of the standard
- * integer types.
+ * friends.)  Those are provided by <stdint.h>, so we simply include that.
  */
-#ifdef HAVE_STDINT_
-#   include <stdint.h>
-#else
-#   if SIZEOF_SHORT == 2
-        typedef short int16_t;
-        typedef unsigned short uint16_t;
-#   elif SIZEOF_INT == 2
-        typedef int int16_t;
-        typedef unsigned int uint16_t;
-#   endif
-#   if SIZEOF_INT == 4
-        typedef int int32_t;
-        typedef unsigned int uint32_t;
-#   elif SIZEOF_LONG == 4
-        typedef long int32_t;
-        typedef unsigned long uint32_t;
-#   endif
-#endif
+#include <stdint.h>
 
 /* Some parts in the basecode behave differently when UNIX is defined,
  * like using "Makefile.t3m" instead "makefile.t3m" as the default
