@@ -38,10 +38,12 @@ AC_DEFINE([PACKAGE_MAINTAINER], ["Nikos Chantziaras"], [The person who currently
 #
 m4_include([m4/ax_func_mkdir.m4])
 m4_include([m4/ax_tls.m4])
+m4_include([m4/ax_require_defined.m4])
 m4_include([m4/ax_append_flag.m4])
 m4_include([m4/ax_check_compile_flag.m4])
 m4_include([m4/ax_append_compile_flags.m4])
 m4_include([m4/ax_pthread.m4])
+m4_include([m4/ax_cxx_compile_stdcxx.m4])
 
 
 #
@@ -62,6 +64,13 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CXX_C_O
 
+# Require C++14 and C11
+#
+AX_CXX_COMPILE_STDCXX([14], [noext], [mandatory])
+AC_LANG_PUSH(C)
+AX_APPEND_COMPILE_FLAGS([-std=c11])
+AC_LANG_POP(C)
+
 # Disable strict-aliasing optimization since Tads does type punning on
 # purpose in quite a few places.
 AC_LANG_PUSH(C)
@@ -70,6 +79,7 @@ AC_LANG_PUSH(C++)
 AX_APPEND_COMPILE_FLAGS([-fno-strict-aliasing])
 AC_LANG_POP(C++)
 AC_LANG_POP(C)
+
 
 #
 # Checks for libraries.

@@ -65,12 +65,12 @@ AC_DEFUN([AX_FUNC_MKDIR],
 [AC_CHECK_FUNCS([mkdir _mkdir])
 AC_CACHE_CHECK([whether mkdir takes one argument],
                [ac_cv_mkdir_takes_one_arg],
-[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+[AC_TRY_COMPILE([
 #include <sys/stat.h>
 #if HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-]], [[mkdir (".");]])],
+], [mkdir (".");],
 [ac_cv_mkdir_takes_one_arg=yes], [ac_cv_mkdir_takes_one_arg=no])])
 if test x"$ac_cv_mkdir_takes_one_arg" = xyes; then
   AC_DEFINE([MKDIR_TAKES_ONE_ARG], 1,

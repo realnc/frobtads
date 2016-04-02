@@ -44,6 +44,10 @@ AUTOMAKE_OPTIONS = subdir-objects
 ##
 AM_CPPFLAGS = -DFROBTADS -DTC_TARGET_T3 -DTADSNET
 
+## Needed to get POSIX-style stat() and lstat().
+##
+AM_CPPFLAGS += -D_SVID_SOURCE -D_DEFAULT_SOURCE
+
 if NO_TLS
 AM_CPPFLAGS += -DOS_PTHREAD_TLS
 else
