@@ -137,16 +137,14 @@ const char * OptStrTokIter::default_delims = WHITESPACE ;
 
 OptStrTokIter::OptStrTokIter(const char * tokens, const char * delimiters)
    : len(unsigned(strlen(tokens))), str(tokens), seps(delimiters),
-     cur(NULLSTR), tokstr(NULLSTR)
+     cur(NULLSTR)
 {
    if (seps == NULL)  seps = default_delims;
-   tokstr = new char[len + 1];
-   (void) strcpy(tokstr, str);
-   cur = strtok(tokstr, seps);
+   tokstr = std::make_unique<char[]>(len + 1);
+   (void) strcpy(tokstr.get(), str);
+   cur = strtok(tokstr.get(), seps);
 }
 
-
-OptStrTokIter::~OptStrTokIter(void) { delete [] tokstr; }
 
 const char *
 OptStrTokIter::curr(void) { return cur; }
@@ -163,8 +161,8 @@ OptStrTokIter::operator()(void) {
 
 void
 OptStrTokIter::rewind(void) {
-   (void) strcpy(tokstr, str);
-   cur = strtok(tokstr, seps);
+   (void) strcpy(tokstr.get(), str);
+   cur = strtok(tokstr.get(), seps);
 }
 
 // ************************************************************* OptIstreamIter
@@ -178,7 +176,7 @@ OptStrTokIter::rewind(void) {
 const unsigned  OptIstreamIter::MAX_LINE_LEN = 1024 ;
 
    // Constructor
-OptIstreamIter::OptIstreamIter(istream & input) : is(input), tok_iter(NULL)
+OptIstreamIter::OptIstreamIter(istream & input) : is(input)
 {
 #ifdef  USE_STDIO
    fprintf(stderr, "%s: Can't use OptIstreamIter class:\n",
@@ -186,11 +184,6 @@ OptIstreamIter::OptIstreamIter(istream & input) : is(input), tok_iter(NULL)
    fprintf(stderr, "\tOptions(3C++) was compiled with USE_STDIO #defined.\n");
    exit(-1);
 #endif  /* USE_STDIO */
-}
-
-   // Destructor
-OptIstreamIter::~OptIstreamIter(void) {
-   delete  tok_iter;
 }
 
 const char *
@@ -250,8 +243,7 @@ OptIstreamIter::fill(void) {
       char * ptr = buf;
       while (isspace(*ptr)) ++ptr;
       if (*ptr && (*ptr != c_COMMENT)) {
-         delete  tok_iter;
-         tok_iter = new OptStrTokIter(ptr);
+         tok_iter = std::make_unique<OptStrTokIter>(ptr);
          return;
       }
    } while (is);

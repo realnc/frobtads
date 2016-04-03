@@ -61,7 +61,7 @@ getTermSize( unsigned& width, unsigned& height )
 
 
 FrobTadsApplicationCurses::FrobTadsApplicationCurses( const FrobOptions& opts )
-: FrobTadsApplication(opts), fGameWindow(0), fDispBuf(0)
+    : FrobTadsApplication(opts)
 {
     // Before starting curses, we set the LINES and COLUMNS env.
     // variables to a "maximum" value.  This is needed in case we're
@@ -205,25 +205,17 @@ FrobTadsApplicationCurses::~FrobTadsApplicationCurses()
 
     // Flush any pending output so we won't lose any "thanks for
     // playing" messages when "pausing prior to exit" is disabled.
-    if (not this->options.exitPause) this->fGameWindow->flush();
-
-    // Delete our windows, if we have any.
-    if (this->fGameWindow != 0) delete this->fGameWindow;
+    if (not this->options.exitPause)
+        this->fGameWindow->flush();
 
     // Shut down curses.
     endwin();
-
-    // Delete our optimization buffer.
-    delete[] this->fDispBuf;
 }
 
 
 void
 FrobTadsApplicationCurses::init()
 {
-    // Delete the current window, if we have one.
-    if (this->fGameWindow != 0) delete this->fGameWindow;
-
     // Create the main window.  Make it fill the whole terminal.  We
     // initialize the dimensions to 0 in case getTermSize() is
     // unable to detect the actual size, since in curses/ncurses 0
@@ -275,7 +267,7 @@ FrobTadsApplicationCurses::init()
     wclear(stdscr);
 
     // Create the window.
-    this->fGameWindow = new FrobTadsWindow(height, width, 0, 0);
+    this->fGameWindow = std::make_unique<FrobTadsWindow>(height, width, 0, 0);
 
     // Disable scrolling.
     this->fGameWindow->enableScrolling(false);
@@ -288,8 +280,7 @@ FrobTadsApplicationCurses::init()
     this->fGameWindow->input8bit(true);
 
     // Create the buffer that we use to optimize output.
-    if (this->fDispBuf != 0) delete[] this->fDispBuf;
-    this->fDispBuf = new chtype[this->fGameWindow->width() + 1];
+    this->fDispBuf = std::make_unique<chtype[]>(this->fGameWindow->width() + 1);
 
     // Explicitly mark the window as touched, to work around a
     // curses color and screen corruption issue.

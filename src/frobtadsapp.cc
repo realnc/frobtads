@@ -2,10 +2,11 @@
  */
 #include "common.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <signal.h>
+#include <memory>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <csignal>
 
 #include "os.h"
 #include "trd.h"
@@ -109,7 +110,7 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
 {
     // Create the Tads 3 host and client services interfaces.
     CVmMainClientConsole clientifc;
-    CVmHostIfc* hostifc = new CVmHostIfcStdio("");
+    const auto hostifc = std::make_unique<CVmHostIfcStdio>("");
 
     // Set the file I/O safety level.
     hostifc->set_io_safety(this->options.safetyLevelR, this->options.safetyLevelW);
@@ -118,7 +119,7 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
     hostifc->set_net_safety(this->options.netSafetyLevelC, this->options.netSafetyLevelS);
 
     // Set up the VM/program parameters.
-    vm_run_image_params params(&clientifc, hostifc, filename);
+    vm_run_image_params params(&clientifc, hostifc.get(), filename);
     params.prog_argv = argv;
     params.prog_argc = argc;
     params.script_file = this->options.replayFile;
@@ -128,9 +129,6 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
 
     // Invoke the VM to run the program.
     int vmRet = vm_run_image(&params);
-
-    // Done with the host interface object.
-    delete hostifc;
 
     // Return the result from the VM ivocation.
     return vmRet;
@@ -145,27 +143,25 @@ FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char
     // change the current directory.
     size_t filenameLen = strlen(filename);
     char* finalFilenamePtr;
-    char* finalFilename = new char[filenameLen + 1];
-    strcpy(finalFilename, filename);
-    finalFilenamePtr = finalFilename;
+    const auto finalFilename = std::make_unique<char[]>(filenameLen + 1);
+    strcpy(finalFilename.get(), filename);
+    finalFilenamePtr = finalFilename.get();
 
     // We'll try setting the current directory to the game's
     // directory (if the user didn't tell us not to).
     if (this->options.changeDir) {
-        char* gameDirBuf = new char[filenameLen + 1];
+        const auto gameDirBuf = std::make_unique<char[]>(filenameLen + 1);
         gameDirBuf[0] = '\0'; // Paranoia.
-        os_get_path_name(gameDirBuf, filenameLen, filename);
+        os_get_path_name(gameDirBuf.get(), filenameLen, filename);
         // Try changing the current directory.
-        if (this->changeDirectory(gameDirBuf)) {
+        if (this->changeDirectory(gameDirBuf.get())) {
             // Success.  Since we changed the current
             // directory, we must adapt the filename by
             // stripping it from its path.  For this
             // purpose, we'll just store the position of the
             // filename's first character.
-            finalFilenamePtr = os_get_root_name(finalFilename);
+            finalFilenamePtr = os_get_root_name(finalFilename.get());
         }
-        // Done with the directory-name buffer.
-        delete[] gameDirBuf;
     }
 
     // Initialize the screen.
@@ -194,9 +190,6 @@ FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char
     // Run the VM.
     int vmRet = vm == 0 ? this->fRunTads2(finalFilenamePtr)
                         : this->fRunTads3(finalFilenamePtr, argc, argv, savedState, netconfig);
-
-    // Done with the filename.
-    delete[] finalFilename;
 
     // Pause.
     os_expause();

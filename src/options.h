@@ -35,6 +35,8 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
+#include <memory>
+
 class  istream;
 
 class  ostream {
@@ -140,19 +142,16 @@ public:
 //
 class OptStrTokIter : public OptIterRwd {
 private:
-   unsigned     len;        // length of token-string
-   const char * str;        // the token-string
-   const char * seps;       // delimiter-set (separator-characters)
-   const char * cur;        // current token
-   char       * tokstr;     // our copy of the token-string
+   unsigned     len;               // length of token-string
+   const char * str;               // the token-string
+   const char * seps;              // delimiter-set (separator-characters)
+   const char * cur;               // current token
+   std::unique_ptr<char[]> tokstr; // our copy of the token-string
 
    static const char * default_delims;  // default delimiters = whitespace
 
 public:
    OptStrTokIter(const char * tokens, const char * delimiters =0);
-
-   virtual
-   ~OptStrTokIter(void);
 
    virtual const char *
    curr(void);
@@ -196,7 +195,7 @@ public:
 class OptIstreamIter : public OptIter {
 private:
    istream & is ;
-   OptStrTokIter * tok_iter ;
+   std::unique_ptr<OptStrTokIter> tok_iter ;
 
    void
    fill(void);
@@ -205,9 +204,6 @@ public:
    static const unsigned  MAX_LINE_LEN ;
 
    OptIstreamIter(istream & input);
-
-   virtual
-   ~OptIstreamIter(void);
 
    virtual const char *
    curr(void);

@@ -8,10 +8,11 @@
 #include "common.h"
 #include "osstzprs.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
+#include <memory>
+#include <cstdio>
+#include <cstdlib>
+#include <cctype>
+#include <cstring>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -469,42 +470,39 @@ os_mkdir( const char* dir, int create_parents )
     // Copy the directory name to a new string so we can strip any trailing
     // path seperators.
     size_t len = strlen(dir);
-    char* tmp = new char[len + 1];
-    strncpy(tmp, dir, len);
+    const auto tmp = std::make_unique<char[]>(len + 1);
+    strncpy(tmp.get(), dir, len);
     while (tmp[len - 1] == OSPATHCHAR)
         --len;
     tmp[len] = '\0';
 
     // If we're creating intermediate diretories, and the path contains
     // multiple elements, recursively create the parent directories first.
-    if (create_parents and strchr(tmp, OSPATHCHAR) != 0) {
+    if (create_parents and strchr(tmp.get(), OSPATHCHAR) != 0) {
         char par[OSFNMAX];
 
         // Extract the parent path.
-        os_get_path_name(par, sizeof(par), tmp);
+        os_get_path_name(par, sizeof(par), tmp.get());
 
         // If the parent doesn't already exist, create it recursively.
         if (osfacc(par) != 0 and not os_mkdir(par, true)) {
-            delete[] tmp;
             return false;
         }
     }
 
     // Create the directory.
-    int ret =
+    //int ret =
 #if HAVE_MKDIR
-#   if MKDIR_TAKES_ONE_ARG
-             mkdir(tmp);
-#   else
-             mkdir(tmp, S_IRWXU | S_IRWXG | S_IRWXO);
-#   endif
+    #if MKDIR_TAKES_ONE_ARG
+        return mkdir(tmp.get()) == 0;
+    #else
+        return mkdir(tmp.get(), S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+    #endif
 #elif HAVE__MKDIR
-             _mkdir(tmp);
+    return _mkdir(tmp.get()) == 0;
 #else
 #   error "Neither mkdir() nor _mkdir() is available on this system."
 #endif
-    delete[] tmp;
-    return ret == 0;
 }
 
 /* Remove a directory.
@@ -577,16 +575,15 @@ os_file_stat( const char *fname, int follow_links, os_file_stat_t *s )
     // Paranoia.
     if (grpSize > NGROUPS_MAX or grpSize < 0)
         return false;
-    gid_t* groups = new gid_t[grpSize];
-    if (getgroups(grpSize - 1, groups + 1) < 0) {
-        delete[] groups;
+
+    const auto groups = std::make_unique<gid_t[]>(grpSize);
+    if (getgroups(grpSize - 1, groups.get() + 1) < 0) {
         return false;
     }
     groups[0] = getegid();
     int i;
     for (i = 0; i < grpSize and buf.st_gid != groups[i]; ++i)
         ;
-    delete[] groups;
     if (i < grpSize) {
         if (buf.st_mode & S_IRGRP)
             s->attrs |= OSFATTR_READ;
@@ -997,58 +994,56 @@ resolve_path( char *buf, size_t buflen, const char *path )
 
     // make a writable copy of the path to work with
     size_t pathl = strlen(path);
-    char *mypath = new char[pathl + 1];
-    memcpy(mypath, path, pathl + 1);
+    const auto mypath = std::make_unique<char[]>(pathl + 1);
+    memcpy(mypath.get(), path, pathl + 1);
 
     // start at the very end of the path, with no stripped suffix yet
-    char *suffix = mypath + pathl;
+    char *suffix = mypath.get() + pathl;
     char sl = '\0';
 
     // keep going until we resolve something or run out of path
     for (;;)
     {
         // resolve the current prefix, allocating the result
-        char *rpath = realpath(mypath, 0);
+        const std::unique_ptr<char, decltype(&free)>
+                rpath(realpath(mypath.get(), 0), &free);
 
         // un-split the path
         *suffix = sl;
 
         // if we resolved the prefix, return the result
-        if (rpath != 0)
+        if (rpath)
         {
             // success - if we separated a suffix, reattach it
             if (*suffix != '\0')
             {
                 // reattach the suffix (the part after the '/')
                 for ( ; *suffix == '/' ; ++suffix) ;
-                os_build_full_path(buf, buflen, rpath, suffix);
+                os_build_full_path(buf, buflen, rpath.get(), suffix);
             }
             else
             {
                 // no suffix, so we resolved the entire path
-                safe_strcpy(buf, buflen, rpath);
+                safe_strcpy(buf, buflen, rpath.get());
             }
 
-            // done with the resolved path
-            free(rpath);
-
-            // ...and done searching
+            // done searching
             break;
         }
 
         // no luck with realpath(); search for the '/' at the end of the
         // previous component in the path 
-        for ( ; suffix > mypath && *(suffix-1) != '/' ; --suffix) ;
+        for ( ; suffix > mypath.get() && *(suffix-1) != '/' ; --suffix) ;
 
         // skip any redundant slashes
-        for ( ; suffix > mypath && *(suffix-1) == '/' ; --suffix) ;
+        for ( ; suffix > mypath.get() && *(suffix-1) == '/' ; --suffix) ;
 
         // if we're at the root element, we're out of path elements
-        if (suffix == mypath)
+        if (suffix == mypath.get())
         {
             // we can't resolve any part of the path, so just return the
             // original path unchanged
-            safe_strcpy(buf, buflen, mypath);
+            safe_strcpy(buf, buflen, mypath.get());
             break;
         }
 
@@ -1056,9 +1051,6 @@ resolve_path( char *buf, size_t buflen, const char *path )
         sl = *suffix;
         *suffix = '\0';
     }
-
-    // done with our writable copy of the path
-    delete [] mypath;
 }
 
 /* Is the given file in the given directory?
@@ -1183,20 +1175,19 @@ os_get_abs_filename( char* buf, size_t buflen, const char* filename )
 
     // Try getting the canonical path from the OS (allocating the
     // result buffer).
-    char* newpath = realpath(filename, 0);
-    if (newpath != 0) {
+    const std::unique_ptr<char, decltype(&free)>
+            newpath(realpath(filename, nullptr), &free);
+    if (newpath) {
         // Copy the output (truncating if it's too long).
-        safe_strcpy(buf, buflen, newpath);
-        free(newpath);
-        return true;
+        safe_strcpy(buf, buflen, newpath.get());
     }
 
-    // realpath() failed, but that's okay - realpath() only works if the
-    // path refers to an existing file, but it's valid for callers to
-    // pass non-existent filenames, such as names of files they're about
-    // to create, or hypothetical paths being used for comparison
-    // purposes or for future use.  Simply return the canonical path
-    // name we generated above.
+    // realpath() might have failed, but that's okay - realpath() only works
+    // if the path refers to an existing file, but it's valid for callers to
+    // pass non-existent filenames, such as names of files they're about to
+    // create, or hypothetical paths being used for comparison purposes or
+    // for future use.  Simply return the canonical path name we generated
+    // above.
     return true;
 }
 

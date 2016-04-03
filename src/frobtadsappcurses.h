@@ -5,6 +5,7 @@
 
 #include "common.h"
 
+#include <memory>
 #include "frobtadsapp.h"
 #include "tadswindow.h"
 
@@ -12,15 +13,14 @@
 class FrobTadsApplicationCurses: public FrobTadsApplication {
   private:
     // The window we use for I/O.
-    FrobTadsWindow *fGameWindow;
+    std::unique_ptr<FrobTadsWindow> fGameWindow;
 
     // Tads never tries to display a string that is longer than the
     // window's width.  We use this knowledge to optimize output
     // somewhat.  Instead of allocating and deallocating memory each
-    // time we print a string (memory allocation is slow), we use
-    // this small buffer instead and allocate memory only once when
-    // a game window is created.
-    chtype* fDispBuf;
+    // time we print a string, we use this small buffer instead and
+    // allocate memory only once when a game window is created.
+    std::unique_ptr<chtype[]> fDispBuf;
 
   public:
     FrobTadsApplicationCurses( const FrobOptions& opts );
@@ -52,7 +52,7 @@ class FrobTadsApplicationCurses: public FrobTadsApplication {
         for (i = 0; str[i] != '\0'; ++i)
             this->fDispBuf[i] = static_cast<unsigned char>(str[i]) | attrs;
         this->fDispBuf[i] = '\0';
-        this->fGameWindow->printStr(line, column, this->fDispBuf);
+        this->fGameWindow->printStr(line, column, this->fDispBuf.get());
     }
 
     virtual void

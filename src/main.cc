@@ -115,6 +115,7 @@ create_netconfig( TadsNetConfig*& c, const char* const* argv)
     // If we don't have a network config object yet, create it.
     if (c == 0) {
         // Create a new config object.
+        // We don't manage this; the VM will call delete on it.
         c = new TadsNetConfig();
         
         // Get the path to the network config file.
