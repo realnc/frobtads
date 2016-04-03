@@ -1,27 +1,22 @@
 #include "common.h"
-
 #include "missing.h"
 
-#include <ctype.h>
-#include <string.h>
+#include <memory>
+#include <cctype>
+#include <cstring>
 
 #ifndef HAVE_MEMICMP
 int
 memicmp( const void* s1, const void* s2, size_t len )
 {
-    char* x1 = new char[len];
-    char* x2 = new char[len];
-    const char* tmp1 = static_cast<const char*>(s1);
-    const char* tmp2 = static_cast<const char*>(s2);
+    auto x1 = std::make_unique<char[]>(len);
+    auto x2 = std::make_unique<char[]>(len);
 
     for (size_t i = 0; i < len; ++i) {
-        x1[i] = tolower(tmp1[i]);
-        x2[i] = tolower(tmp2[i]);
+        x1[i] = tolower(static_cast<const char*>(s1)[i]);
+        x2[i] = tolower(static_cast<const char*>(s2)[i]);
     }
-    int ret = memcmp(x1, x2, len);
-    delete[] x1;
-    delete[] x2;
-    return ret;
+    return memcmp(x1.get(), x2.get(), len);
 }
 #endif
 
@@ -30,17 +25,14 @@ memicmp( const void* s1, const void* s2, size_t len )
 int
 stricmp( const char* s1, const char* s2 )
 {
-    char* x1 = new char[strlen(s1)];
-    char* x2 = new char[strlen(s2)];
+    auto x1 = std::make_unique<char[]>(strlen(s1));
+    auto x2 = std::make_unique<char[]>(strlen(s2));
 
     for (size_t i = 0; s1[i] != '\0' and s2[i] != '\0'; ++i) {
         x1[i] = tolower(s1[i]);
         x2[i] = tolower(s2[i]);
     }
-    int ret = strcmp(x1, x2);
-    delete[] x1;
-    delete[] x2;
-    return ret;
+    return strcmp(x1.get(), x2.get());
 }
 #endif
 
@@ -49,17 +41,14 @@ stricmp( const char* s1, const char* s2 )
 int
 strnicmp( const char* s1, const char* s2, size_t n )
 {
-    char* x1 = new char[n];
-    char* x2 = new char[n];
+    auto x1 = std::make_unique<char[]>(n);
+    auto x2 = std::make_unique<char[]>(n);
 
     for (size_t i = 0; i < n and s1[i] != '\0' and s2[i] != '\0'; ++i) {
         x1[i] = tolower(s1[i]);
         x2[i] = tolower(s2[i]);
     }
-    int ret = strncmp(s1, s2, n);
-    delete[] x1;
-    delete[] x2;
-    return ret;
+    return strncmp(x1.get(), x2.get(), n);
 }
 #endif
 
