@@ -12,8 +12,7 @@
 /* Standard C headers should never be included from inside an extern "C"
  * block.  However, we are included from tads2/os.h from inside such a
  * block ourselves, so everything we include will be extern "C" too.
- * We need to reverse this or some compilers will bark (Sun C++ 5.9 on
- * Linux, for example.)
+ * We need to reverse this or some compilers might bark.
  */
 #ifdef __cplusplus
 extern "C++" {
@@ -25,14 +24,10 @@ extern "C++" {
 #include <unistd.h>
 #include <dirent.h>
 #include <stdarg.h>
+#include <stdint.h>
 #ifdef __cplusplus
 }
 #endif
-
-/* The base code needs access to the C99 exact-width types (int32_t and
- * friends.)  Those are provided by <stdint.h>, so we simply include that.
- */
-#include <stdint.h>
 
 /* Some parts in the basecode behave differently when UNIX is defined,
  * like using "Makefile.t3m" instead "makefile.t3m" as the default
