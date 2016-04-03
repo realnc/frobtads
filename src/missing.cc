@@ -9,8 +9,8 @@
 int
 memicmp( const void* s1, const void* s2, size_t len )
 {
-    auto x1 = std::make_unique<char[]>(len);
-    auto x2 = std::make_unique<char[]>(len);
+    const auto x1 = std::make_unique<char[]>(len);
+    const auto x2 = std::make_unique<char[]>(len);
 
     for (size_t i = 0; i < len; ++i) {
         x1[i] = tolower(static_cast<const char*>(s1)[i]);
@@ -25,8 +25,8 @@ memicmp( const void* s1, const void* s2, size_t len )
 int
 stricmp( const char* s1, const char* s2 )
 {
-    auto x1 = std::make_unique<char[]>(strlen(s1));
-    auto x2 = std::make_unique<char[]>(strlen(s2));
+    const auto x1 = std::make_unique<char[]>(strlen(s1));
+    const auto x2 = std::make_unique<char[]>(strlen(s2));
 
     for (size_t i = 0; s1[i] != '\0' and s2[i] != '\0'; ++i) {
         x1[i] = tolower(s1[i]);
@@ -41,8 +41,8 @@ stricmp( const char* s1, const char* s2 )
 int
 strnicmp( const char* s1, const char* s2, size_t n )
 {
-    auto x1 = std::make_unique<char[]>(n);
-    auto x2 = std::make_unique<char[]>(n);
+    const auto x1 = std::make_unique<char[]>(n);
+    const auto x2 = std::make_unique<char[]>(n);
 
     for (size_t i = 0; i < n and s1[i] != '\0' and s2[i] != '\0'; ++i) {
         x1[i] = tolower(s1[i]);

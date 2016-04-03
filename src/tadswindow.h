@@ -15,7 +15,7 @@
 class FrobTadsWindow {
   private:
     // The curses window we maintain.
-    std::unique_ptr<WINDOW, decltype(&delwin)> fWin;
+    const std::unique_ptr<WINDOW, decltype(&delwin)> fWin;
 
   public:
     /* Creates a new top-level window with 'lines' height, 'cols'
