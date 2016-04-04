@@ -13,6 +13,7 @@
 #include <climits>
 #include <algorithm>
 #include <functional>
+#include <chrono>
 #include <cstdio>
 #include <ctime>
 #include <cstdlib>
@@ -654,179 +655,28 @@ void os_gen_rand_bytes( unsigned char* buf, size_t len )
 
 
 /* Get the current system high-precision timer.
- *
- * We provide four (4) implementations of this function:
- *
- *   1. clock_gettime() is available
- *   2. gettimeofday() is available
- *   3. ftime() is available
- *   4. Neither is available - fall back to time()
- *
- * Note that HAVE_CLOCK_GETTIME, HAVE_GETTIMEOFDAY and HAVE_FTIME are
- * mutually exclusive; if one of them is defined, the others aren't.  No
- * need for #else here.
- *
- * Although not required by the TADS VM, these implementations will
- * always return 0 on the first call.
  */
-#ifdef HAVE_CLOCK_GETTIME
-// The system has the clock_gettime() function.
 long
 os_get_sys_clock_ms( void )
 {
-    // We need to remember the exact time this function has been
-    // called for the first time, and use that time as our
-    // zero-point.  On each call, we simply return the difference
-    // in milliseconds between the current time and our zero point.
-    static struct timespec zeroPoint;
-
-    // Did we get the zero point yet?
-    static bool initialized = false;
-
-    // Not all systems provide a monotonic clock; check if it's
-    // available before falling back to the global system-clock.  A
-    // monotonic clock is guaranteed not to change while the system
-    // is running, so we prefer it over the global clock.
-    static const clockid_t clockType =
-#ifdef HAVE_CLOCK_MONOTONIC
-        CLOCK_MONOTONIC;
-#else
-        CLOCK_REALTIME;
-#endif
-    // We must get the current time in each call.
-    struct timespec currTime;
-
-    // Initialize our zero-point, if not already done so.
-    if (not initialized) {
-        clock_gettime(clockType, &zeroPoint);
-        initialized = true;
-    }
-
-    // Get the current time.
-    clock_gettime(clockType, &currTime);
-
-    // Note that tv_nsec contains *nano*seconds, not milliseconds,
-    // so we need to convert it; a millisec is 1.000.000 nanosecs.
-    return (currTime.tv_sec - zeroPoint.tv_sec) * 1000
-         + (currTime.tv_nsec - zeroPoint.tv_nsec) / 1000000;
+    using namespace std::chrono;
+    static const auto start = steady_clock::now();
+    return duration_cast<milliseconds>(steady_clock::now() - start).count();
 }
+
 
 /* Get the time since the Unix Epoch in seconds and nanoseconds.
  */
 void
-os_time_ns( os_time_t *seconds, long *nanoseconds )
+os_time_ns( os_time_t* sec, long* ns )
 {
-    // Get the current time.
-    static const clockid_t clockType = CLOCK_REALTIME;
-    struct timespec currTime;
-    clock_gettime(clockType, &currTime);
-
-    // return the data
-    *seconds = currTime.tv_sec;
-    *nanoseconds = currTime.tv_nsec;
+    using namespace std::chrono;
+    // C++ does not guarantee that the system clock's epoch is the same as
+    // the Unix Epoch, but it's the de-facto standard in all compilers.
+    const auto now = system_clock::now().time_since_epoch();
+    *sec = duration_cast<seconds>(now).count();
+    *ns = duration_cast<nanoseconds>(now - seconds(*sec)).count();
 }
-#endif // HAVE_CLOCK_GETTIME
-
-#ifdef HAVE_GETTIMEOFDAY
-// The system has the gettimeofday() function.
-long
-os_get_sys_clock_ms( void )
-{
-    static struct timeval zeroPoint;
-    static bool initialized = false;
-    // gettimeofday() needs the timezone as a second argument.  This
-    // is obsolete today, but we don't care anyway; we just pass
-    // something.
-    struct timezone bogus = {0, 0};
-    struct timeval currTime;
-
-    if (not initialized) {
-        gettimeofday(&zeroPoint, &bogus);
-        initialized = true;
-    }
-
-    gettimeofday(&currTime, &bogus);
-
-    // 'tv_usec' contains *micro*seconds, not milliseconds.  A
-    // millisec is 1.000 microsecs.
-    return (currTime.tv_sec - zeroPoint.tv_sec) * 1000 + (currTime.tv_usec - zeroPoint.tv_usec) / 1000;
-}
-
-/* Get the time since the Unix Epoch in seconds and nanoseconds.
- */
-void
-os_time_ns( os_time_t *seconds, long *nanoseconds )
-{
-    // get the time
-    struct timezone bogus = {0, 0};
-    struct timeval currTime;
-    gettimeofday(&currTime, &bogus);
-
-    // return the data, converting milliseconds to nanoseconds
-    *seconds = currTime.tv_sec;
-    *nanoseconds = currTime.tv_usec * 1000;
-}
-#endif // HAVE_GETTIMEOFDAY
-
-
-#ifdef HAVE_FTIME
-// The system has the ftime() function.  ftime() is in <sys/timeb.h>.
-#include <sys/timeb.h>
-long
-os_get_sys_clock_ms( void )
-{
-    static timeb zeroPoint;
-    static bool initialized = false;
-    struct timeb currTime;
-
-    if (not initialized) {
-        ftime(&zeroPoint);
-        initialized = true;
-    }
-
-    ftime(&currTime);
-    return (currTime.time - zeroPoint.time) * 1000 + (currTime.millitm - zeroPoint.millitm);
-}
-
-/* Get the time since the Unix Epoch in seconds and nanoseconds.
- */
-void
-os_time_ns( os_time_t *seconds, long *nanoseconds )
-{
-    // get the time
-    struct timeb currTime;
-    ftime(&currTime);
-
-    // return the data, converting milliseconds to nanoseconds
-    *seconds = currTime.time;
-    *nanoseconds = (long)currTime.millitm * 1000000;
-}
-#endif // HAVE_FTIME
-
-
-#ifndef HAVE_CLOCK_GETTIME
-#ifndef HAVE_GETTIMEOFDAY
-#ifndef HAVE_FTIME
-// Use the standard time() function from the C library.  We lose
-// millisecond-precision, but that's the best we can do with time().
-long
-os_get_sys_clock_ms( void )
-{
-    static time_t zeroPoint = time(0);
-    return (time(0) - zeroPoint) * 1000;
-}
-
-void
-os_time_ns( os_time_t *seconds, long *nanoseconds )
-{
-    // get the regular time() value in seconds; we have no
-    // higher precision element to return, so return zero
-    *seconds = time();
-    *nanoseconds = 0;
-}
-#endif
-#endif
-#endif
 
 
 /* Get filename from startup parameter, if possible.

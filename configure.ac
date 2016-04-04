@@ -359,51 +359,6 @@ AC_CHECK_FUNC(chdir,
     [AC_DEFINE([HAVE_SETCURRENTDIRECTORY], [1], [Define to 1 if you have SetCurrentDirectory.])])]
 )
 
-# Tads wants a millisecond-precise timer.  The standard C library lacks
-# a function that gets the current time with ms-precision.  Therefore,
-# we search for one of 3 functions that can do that: clock_gettime(),
-# gettimeofday() and ftime(), in that order.
-#
-# clock_gettime() has nanosecond-precision and is listed in SUSv2 and
-# POSIX 1003.1-2001; gettimeofday() has microsecond-precision and is in
-# SVr4, BSD 4.3 and POSIX 1003.1-2001; ftime() has millisecond-precision
-# and is listed in the BSD 4.2 and POSIX 1003.1-2001 standards.
-#
-# clock_gettime() is the modern way of doing things, but is not widely
-# available on older systems.  gettimeofday() should be available
-# almost everywhere, while ftime() is an obsolete function but still
-# does the job most of the time (some implementations are buggy and lack
-# millisecond precision, like in early glibc2 < 2.1.1 libraries, in
-# which case ftime() is no better than time(); no problem though since
-# most such systems provide gettimeofday()).
-#
-# Note that on some systems we must link with the "rt" library to be
-# able to use the clock_gettime() function.
-#
-# If clock_gettime() has been found, we also check if the system
-# supports a monotonic clock (CLOCK_MONOTONIC).
-#
-AC_SEARCH_LIBS(clock_gettime, rt,
-  [
-    AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Define to 1 if you have clock_gettime.])
-    AC_MSG_CHECKING([whether clock_gettime supports CLOCK_MONOTONIC])
-    AC_COMPILE_IFELSE(
-      [AC_LANG_PROGRAM(
-        [[#include <time.h>]],
-        [[clockid_t clockType = CLOCK_MONOTONIC;]]
-      )],
-      [
-        AC_MSG_RESULT(yes)
-        AC_DEFINE([HAVE_CLOCK_MONOTONIC], [1], [Define to 1 if clock_gettime supports CLOCK_MONOTONIC.])
-      ],
-      AC_MSG_RESULT(no)
-    )
-  ],
-  [
-    AC_CHECK_FUNCS([gettimeofday ftime], [break])
-  ]
-)
-
 # Various other functions not available everywhere.
 #
 AC_CHECK_FUNCS([wcslen wcscpy glob])
