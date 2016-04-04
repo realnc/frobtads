@@ -9,6 +9,10 @@
 #include "osstzprs.h"
 
 #include <memory>
+#include <random>
+#include <climits>
+#include <algorithm>
+#include <functional>
 #include <cstdio>
 #include <cstdlib>
 #include <cctype>
@@ -626,23 +630,12 @@ os_resolve_symlink( const char *fname, char *target, size_t target_size )
 
 
 /* Get a suitable seed for a random number generator.
- *
- * We don't just use the system-clock, but build a number as random as
- * the mechanisms of the standard C-library allow.  This is somewhat of
- * an overkill, but it's simple enough so here goes.  Someone has to
- * write a nuclear war simulator in TADS to test this thoroughly.
  */
 void
 os_rand( long* val )
 {
-    //assert(val != 0);
-    // Use the current time as the first seed.
-    srand(static_cast<unsigned int>(time(0)));
-
-    // Create the final seed by generating a random number using
-    // high-order bits, because on some systems the low-order bits
-    // aren't very random.
-    *val = 1 + static_cast<long>(static_cast<long double>(65535) * rand() / (RAND_MAX + 1.0));
+    static std::random_device rdev;
+    *val = rdev();
 }
 
 
@@ -653,13 +646,9 @@ os_rand( long* val )
  */
 void os_gen_rand_bytes( unsigned char* buf, size_t len )
 {
-    // Read bytes from /dev/urandom to fill the buffer (use /dev/urandom
-    // rather than /dev/random, so that we don't block for long periods -
-    // /dev/random can be quite slow because it's designed not to return
-    // any bits until a fairly high threshold of entropy has been reached).
-    int f = open("/dev/urandom", O_RDONLY);
-    read(f, (void*)buf, len);
-    close(f);
+    std::independent_bits_engine
+            <std::default_random_engine, CHAR_BIT, unsigned char> eng;
+    std::generate(buf, buf + len, std::ref(eng));
 }
 
 
