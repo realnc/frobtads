@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <functional>
 #include <cstdio>
+#include <ctime>
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
@@ -634,7 +635,7 @@ os_resolve_symlink( const char *fname, char *target, size_t target_size )
 void
 os_rand( long* val )
 {
-    static std::random_device rdev;
+    static std::default_random_engine rdev(time(0));
     *val = rdev();
 }
 
@@ -647,7 +648,7 @@ os_rand( long* val )
 void os_gen_rand_bytes( unsigned char* buf, size_t len )
 {
     std::independent_bits_engine
-            <std::default_random_engine, CHAR_BIT, unsigned char> eng;
+            <std::random_device, CHAR_BIT, unsigned char> eng;
     std::generate(buf, buf + len, std::ref(eng));
 }
 
