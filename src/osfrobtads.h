@@ -286,6 +286,8 @@ struct os_file_time_t {
 
 /* ============= Functions follow ================ */
 
+#include "osifctyp.h" // for os_filetype_t
+
 /* Allocate a block of memory of the given size in bytes. */
 #define osmalloc malloc
 
