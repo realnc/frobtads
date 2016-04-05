@@ -417,7 +417,12 @@ int vasprintf(char **strp, const char *fmt, va_list ap);
  * network-enabled TADS 3 interpreter.
  */
 #ifdef __cplusplus
-#define OS_DECL_TLS(typ, varname) thread_local typ varname
+    #ifdef __APPLE__
+        // Clang as shipped by XCode does not support thread_local.
+        #define OS_DECL_TLS(typ, varname) __thread typ varname asdasd
+    #else
+        #define OS_DECL_TLS(typ, varname) thread_local typ varname
+    #endif
 #endif
 
 #endif /* OSFROBTADS_H */
