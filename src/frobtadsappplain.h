@@ -3,6 +3,8 @@
 
 #include "common.h"
 
+#include <thread>
+#include <chrono>
 #include "frobtadsapp.h"
 
 
@@ -59,8 +61,11 @@ class FrobTadsApplicationPlain: public FrobTadsApplication {
     { return getchar(); }
 
     virtual void
-    sleep( int )
-    { }
+    sleep( int ms )
+    {
+        flush();
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    }
 
     virtual int
     height() const
