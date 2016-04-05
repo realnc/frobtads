@@ -51,28 +51,3 @@ strnicmp( const char* s1, const char* s2, size_t n )
     return strncmp(x1.get(), x2.get(), n);
 }
 #endif
-
-
-#ifndef HAVE_WCSLEN
-size_t
-wcslen( wchar_t* s )
-{
-    size_t len = 0;
-    while (*s++)
-        ++len;
-    return len;
-}
-#endif
-
-/* Copy a wide character string.
- */
-#ifndef HAVE_WCSCPY
-wchar_t*
-wcscpy( wchar_t* dest, const wchar_t* src )
-{
-    wchar_t *start = dest;
-    while ((*dest++ = *src++) != 0)
-        ;
-    return start;
-}
-#endif

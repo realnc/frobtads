@@ -48,20 +48,6 @@ int
 strnicmp( const char* s1, const char* s2, size_t n );
 #endif
 
-/* Determine the length of a wide character string.
- */
-#if !HAVE_DECL_WCSLEN
-size_t
-wcslen( wchar_t* s );
-#endif
-
-/* Copy a wide character string.
- */
-#if !HAVE_DECL_WCSCPY
-wchar_t*
-wcscpy( wchar_t* dest, const wchar_t* src );
-#endif
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

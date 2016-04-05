@@ -124,10 +124,6 @@ AC_CHECK_HEADERS([sys/time.h])
 #
 AC_HEADER_TIME
 
-# Many systems lack <wchar.h>.
-#
-AC_CHECK_HEADERS([wchar.h], [wcharheaderfound=true], [wcharheaderfound=false])
-
 # <glob.h> (pathname-search using patterns) is only available in POSIX.2.
 #
 AC_CHECK_HEADERS([glob.h])
@@ -220,11 +216,6 @@ fi
 #
 #AX_TLS([], [])
 AX_TLS
-
-# Some systems have the wchar functions (wcslen, wcscpy, etc) in the C
-# library, but <wchar.h> doesn't declare them.
-#
-AC_CHECK_DECLS([wcslen, wcscpy], [], [], [#include <wchar.h>])
 
 # Check if we can ioctl() TIOCGWINSZ.  This is the portable way of
 # getting the terminal size.
@@ -361,7 +352,7 @@ AC_CHECK_FUNC(chdir,
 
 # Various other functions not available everywhere.
 #
-AC_CHECK_FUNCS([wcslen wcscpy glob])
+AC_CHECK_FUNCS([glob])
 
 # Check for use_default_colors(), which is an extension to curses and
 # not available everywhere.
@@ -608,10 +599,6 @@ AC_ARG_ENABLE(frobd, [  --enable-frobd          Build frobd, a version of frob u
 )
 AM_CONDITIONAL([BUILD_FROBD], [test x$buildfrobd = xtrue])
 
-
-# If the system lacks the <wchar.h> header, let Automake know.
-#
-AM_CONDITIONAL([WCHAR_HEADER_MISSING], [test x$wcharheaderfound = xfalse])
 
 # Tell Automake when the compiler doesn't supports TLS.
 #

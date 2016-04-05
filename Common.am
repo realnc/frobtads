@@ -89,12 +89,6 @@ endif
 ##
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_srcdir)/tads2 -I$(top_srcdir)/tads3 -I$(top_srcdir)/tads3/unix
 
-## If the system lacks the wchar.h header, provide our own.
-##
-if WCHAR_HEADER_MISSING
-  AM_CPPFLAGS += -I$(top_srcdir)/src/wchar
-endif
-
 ## These are the paths of various TADS 3 data-files.  We need to know
 ## about them at runtime, so we also define them as macros.
 ##
@@ -179,7 +173,6 @@ COMMONSOURCES = \
     src/osportable.cc \
     src/osunixt.h \
     src/oswin.h \
-    src/wchar/wchar.h \
     tads2/osifc.c \
     tads2/osnoui.c \
     tads2/osstzprs.c \
