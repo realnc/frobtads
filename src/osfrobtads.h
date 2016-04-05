@@ -409,14 +409,13 @@ int vasprintf(char **strp, const char *fmt, va_list ap);
 #define os_asprintf asprintf
 #define os_vasprintf vasprintf
 
-/*
- *   Thread local storage declaration keyword.  This is only needed on
- *   platforms where we implement multithreading, and then only in builds
- *   that actually use threading; at the moment, this is limited to the
- *   network-enabled TADS 3 interpreter.
+/* Thread local storage declaration keyword.  This is only needed on
+ * platforms where we implement multithreading, and then only in builds
+ * that actually use threading; at the moment, this is limited to the
+ * network-enabled TADS 3 interpreter.
  */
-#ifdef OS_DECLARATIVE_TLS
-#define OS_DECL_TLS(typ, varname)  TLS typ varname
+#ifdef __cplusplus
+#define OS_DECL_TLS(typ, varname) thread_local typ varname
 #endif
 
 #endif /* OSFROBTADS_H */

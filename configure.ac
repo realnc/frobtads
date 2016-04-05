@@ -37,7 +37,6 @@ AC_DEFINE([PACKAGE_MAINTAINER], ["Nikos Chantziaras"], [The person who currently
 # Include custom macros we ship ourselves.
 #
 m4_include([m4/ax_func_mkdir.m4])
-m4_include([m4/ax_tls.m4])
 m4_include([m4/ax_require_defined.m4])
 m4_include([m4/ax_append_flag.m4])
 m4_include([m4/ax_check_compile_flag.m4])
@@ -211,11 +210,6 @@ if test x$cpuisbigendian = xtrue; then
 else
   AC_DEFINE([CPU_IS_BIGENDIAN], [0], [Define to 0 if CPU is little endian.])
 fi
-
-# Check how the compiler handles TLS.
-#
-#AX_TLS([], [])
-AX_TLS
 
 # Check if we can ioctl() TIOCGWINSZ.  This is the portable way of
 # getting the terminal size.
@@ -529,11 +523,6 @@ AC_ARG_ENABLE(frobd, [  --enable-frobd          Build frobd, a version of frob u
   [buildfrobd=false]
 )
 AM_CONDITIONAL([BUILD_FROBD], [test x$buildfrobd = xtrue])
-
-
-# Tell Automake when the compiler doesn't supports TLS.
-#
-AM_CONDITIONAL([NO_TLS], [test x$ac_cv_tls = xnone])
 
 
 #

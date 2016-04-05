@@ -42,17 +42,16 @@ AUTOMAKE_OPTIONS = subdir-objects
 ##   TADSNET
 ##     Include the T3 networking layer.
 ##
-AM_CPPFLAGS = -DFROBTADS -DTC_TARGET_T3 -DTADSNET
+##   OS_DECLARATIVE_TLS
+##     We use C++11 thread_local storage duration for declaring thread-local
+##     variables. This tells the T3 base code to use our OS_DECL_TLS macro
+##     when it needs to declare thread-local variares.
+##
+AM_CPPFLAGS = -DFROBTADS -DTC_TARGET_T3 -DTADSNET -DOS_DECLARATIVE_TLS
 
 ## Needed to get POSIX-style stat() and lstat().
 ##
 AM_CPPFLAGS += -D_SVID_SOURCE -D_DEFAULT_SOURCE
-
-if NO_TLS
-AM_CPPFLAGS += -DOS_PTHREAD_TLS
-else
-AM_CPPFLAGS += -DOS_DECLARATIVE_TLS
-endif
 
 if T3_DEBUG_BUILD
 AM_CPPFLAGS += -DT3_DEBUG -DVMGLOB_PARAM
