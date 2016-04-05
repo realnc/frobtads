@@ -259,20 +259,6 @@ fi
 #
 # Checks for library functions.
 
-# Suggested by autoscan.
-#
-# Don't do the malloc() and realloc() checks because they result in a
-# link error during a cross compile and we don't provide the needed
-# fallback functions (rpl_malloc() and rpl_realloc()) anyway (that is,
-# if those checks would fail while not cross-compiling, we would still
-# get a link error.)
-#AC_FUNC_MALLOC
-#AC_FUNC_REALLOC
-AC_FUNC_MEMCMP
-AC_FUNC_STAT
-AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([memmove memset strchr putenv])
-
 # Check for mkdir()/_mkdir() and wether mkdir() only takes one argument.
 AX_FUNC_MKDIR
 
@@ -280,7 +266,7 @@ AX_FUNC_MKDIR
 # It actually isn't.  If the system doesn't provide it, our own
 # implementation will be used.
 #
-AC_CHECK_FUNCS([memicmp])
+AC_CHECK_FUNCS([memicmp putenv])
 
 # Tads uses the functions stricmp() and strnicmp() as if they were
 # standard.  They aren't, but they have BSD 4.4 equivalents called
@@ -368,61 +354,6 @@ ginfo(CODESET).])
 fi
 
 AC_CHECK_FUNCS([setlocale])
-
-
-#
-# Checks for C++ features.
-
-# Switch to C++ before running the tests.
-#
-AC_LANG(C++)
-
-# Check if the compiler supports the 'and', 'or' and 'not' keywords.
-# Note that even some real compilers don't support them, although they
-# are in the standard since 1997.  I'm not talking about VC++ 6; I said
-# *real* compilers :*)
-#
-# If they aren't supported, we define them in common.h.  We don't define
-# them here in order to avoid problems with some C (not C++) compilers
-# that already define them as macros.
-#
-AC_CACHE_CHECK([whether the C++ compiler supports the and keyword], ac_cv_cxx_and_keyword,
-[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = 0 and 1;]])],
-    [ac_cv_cxx_and_keyword=yes],
-    [ac_cv_cxx_and_keyword=no]
-  )
-])
-if test x$ac_cv_cxx_and_keyword = xyes; then
-  AC_DEFINE([HAVE_AND_KEYWORD], [1], [Define to 1 if you have the and keyword.])
-fi
-
-AC_CACHE_CHECK([whether the C++ compiler supports the or keyword], ac_cv_cxx_or_keyword,
-[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = 0 or 1;]])],
-    [ac_cv_cxx_or_keyword=yes],
-    [ac_cv_cxx_or_keyword=no]
-  )
-])
-if test x$ac_cv_cxx_or_keyword = xyes; then
-  AC_DEFINE([HAVE_OR_KEYWORD], [1], [Define to 1 if you have the or keyword.])
-fi
-
-AC_CACHE_CHECK([whether the C++ compiler supports the not keyword], ac_cv_cxx_not_keyword,
-[
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int i;]], [[i = not 1;]])],
-    [ac_cv_cxx_not_keyword=yes],
-    [ac_cv_cxx_not_keyword=no]
-  )
-])
-if test x$ac_cv_cxx_not_keyword = xyes; then
-  AC_DEFINE([HAVE_NOT_KEYWORD], [1], [Define to 1 if you have the not keyword.])
-fi
-
-# Check if the compiler supports the 'bool' datatype.  Some older ones
-# don't, so we'll have to typedef it in our common.h header.
-#
-AC_CHECK_TYPES(bool)
 
 
 #

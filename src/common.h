@@ -64,25 +64,4 @@ extern "C" {
 }
 #endif
 
-#ifdef __cplusplus
-
-/* Define the "and", "or" and "not" keywords if the C++ compiler lacks
- * them.  Normally, if just one of them is available, the others are
- * too.  But there is no harm in checking them individually.  We only
- * define them when compiling C++, since a) these keywords are not valid
- * in C and b) some C compilers define them either for convenience or to
- * support C99.
- */
-#ifndef HAVE_AND_KEYWORD
-#define and &&
-#endif
-#ifndef HAVE_OR_KEYWORD
-#define or ||
-#endif
-#ifndef HAVE_NOT_KEYWORD
-#define not !
-#endif
-
-#endif /* __cplusplus */
-
 #endif /* COMMON_H */
