@@ -3,20 +3,17 @@
 
 ret=0
 cd "$T3_OUT"
-for i in preinit
-do
-    echo "Preinit test: $i"
-    $TESTPROGS/test_prs_top "$T3_DAT/$i.t" "$T3_OUT/$i.t3" > "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
-    cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
-    $TESTPROGS/t3pre "$T3_OUT/$i.t3" "$T3_OUT/${i}_pre.t3" >> "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
-    cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
-    $TESTPROGS/test_exec -cs cp437 "$T3_OUT/${i}_pre.t3" >> "$T3_OUT/$i.log" 2>"$T3_OUT/$i.err"
-    cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
-    rm "$T3_OUT/$i.err"
-    if $SCRIPTS/test_diff.sh "$i"; then
-        :
-    else
-        ret=1
-    fi
-done
+echo "Preinit test: $1"
+$TESTPROGS/test_prs_top "$T3_DAT/$1.t" "$T3_OUT/$1.t3" > "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
+cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
+$TESTPROGS/t3pre "$T3_OUT/$1.t3" "$T3_OUT/${1}_pre.t3" >> "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
+cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
+$TESTPROGS/test_exec -cs cp437 "$T3_OUT/${1}_pre.t3" >> "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
+cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
+rm "$T3_OUT/$1.err"
+if $SCRIPTS/test_diff.sh "$1"; then
+    :
+else
+    ret=1
+fi
 exit $ret

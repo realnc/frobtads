@@ -13,7 +13,7 @@ extern "C" {
 #include <dirent.h>
 }
 
-#ifdef HAVE_GLOB_H
+#if HAVE_GLOB_H
 #include <glob.h>
 #endif
 

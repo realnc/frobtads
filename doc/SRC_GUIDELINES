@@ -44,6 +44,6 @@ some functions in src/missing.[h/cc].  Also look at the implementation
 of os_get_sys_clock_ms() in src/oscurses.cc on how to handle portability
 issues.
 
-Generally, if such a function has equivalent ones in other standards,
-just check for them in "configure.ac" and structure your code to use the
+Generally, if such a function has equivalent ones in other standards, just
+check for them in the appropriate cmake file and structure your code to use the
 information the configuration script detects.

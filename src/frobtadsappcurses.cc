@@ -4,8 +4,8 @@
 
 #include <string.h>
 #include <stdlib.h>
-#if HAVE_TIOCGWINSZ || HAVE_TIOCGSIZE
-# if (!defined(GWINSZ_IN_SYS_IOCTL) || HAVE_TIOCGSIZE) && HAVE_TERMIOS_H
+#if HAVE_TIOCGWINSZ or HAVE_TIOCGSIZE
+# if (not GWINSZ_IN_SYS_IOCTL or HAVE_TIOCGSIZE) and HAVE_TERMIOS_H
 #  include <termios.h>
 # endif
 # if HAVE_SYS_IOCTL_H
@@ -109,7 +109,7 @@ FrobTadsApplicationCurses::FrobTadsApplicationCurses( const FrobOptions& opts )
         start_color();
         // Assign terminal default foreground/background colors
         // to color number -1 / color pair 0.
-#ifdef HAVE_USE_DEFAULT_COLORS
+#if HAVE_USE_DEFAULT_COLORS
         if (opts.defColors) {
             use_default_colors();
         }

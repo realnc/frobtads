@@ -5,7 +5,7 @@
 #include <cctype>
 #include <cstring>
 
-#ifndef HAVE_MEMICMP
+#if not HAVE_MEMICMP
 int
 memicmp( const void* s1, const void* s2, size_t len )
 {
@@ -21,10 +21,13 @@ memicmp( const void* s1, const void* s2, size_t len )
 #endif
 
 
-#if !defined(HAVE_STRICMP) && !defined(HAVE_STRCASECMP)
+#if not HAVE_STRICMP
 int
 stricmp( const char* s1, const char* s2 )
 {
+#if HAVE_STRCASECMP
+    return strcasecmp(s1, s2);
+#else
     const auto x1 = std::make_unique<char[]>(strlen(s1));
     const auto x2 = std::make_unique<char[]>(strlen(s2));
 
@@ -33,14 +36,18 @@ stricmp( const char* s1, const char* s2 )
         x2[i] = tolower(s2[i]);
     }
     return strcmp(x1.get(), x2.get());
+#endif
 }
 #endif
 
 
-#if !defined(HAVE_STRNICMP) && !defined(HAVE_STRNCASECMP)
+#if not HAVE_STRNICMP
 int
 strnicmp( const char* s1, const char* s2, size_t n )
 {
+#if HAVE_STRNCASECMP
+    return strncasecmp(s1, s2, n);
+#else
     const auto x1 = std::make_unique<char[]>(n);
     const auto x2 = std::make_unique<char[]>(n);
 
@@ -49,5 +56,6 @@ strnicmp( const char* s1, const char* s2, size_t n )
         x2[i] = tolower(s2[i]);
     }
     return strncmp(x1.get(), x2.get(), n);
+#endif
 }
 #endif

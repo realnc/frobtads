@@ -10,7 +10,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef HAVE_LOCALE_H
+#if HAVE_LOCALE_H
 #include <locale.h>
 #endif
 
@@ -48,7 +48,7 @@ extern "C"
 
 
 const char versionOutput[] =
-"FrobTADS " PACKAGE_VERSION "\n"
+"FrobTADS " FROB_VERSION "\n"
 "TADS 2 virtual machive v" TADS_RUNTIME_VERSION "\n"
 "TADS 3 virtual machine v" T3VM_VSN_STRING " (" T3VM_IDENTIFICATION ")\n"
 "FrobTADS copyright (C) 2009 Nikos Chantziaras.\n"
@@ -104,7 +104,7 @@ const char helpOutput[] =
 "option that takes an argument is given multiple times the last value is used.\n"
 "Options may be abbreviated: --no-scr will be recognized as --no-scrolling.\n"
 "\n"
-"Report bugs to <" PACKAGE_BUGREPORT ">.\n"
+"Report bugs to <" FROB_BUG_REPORT_EMAIL ">.\n"
 "Please include the output of the --version option with the report.";
 
 
@@ -183,7 +183,7 @@ int main( int argc, char** argv )
     // as the host in a client/server setup (-w option).
     class TadsNetConfig* netconfig = 0;
 
-#ifdef HAVE_SETLOCALE
+#if HAVE_SETLOCALE
     // First, initialise locale, if available. We need only
     // LC_CTYPE.  Don't try to mess with numeric formats!
     setlocale(LC_CTYPE, "");

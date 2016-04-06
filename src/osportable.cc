@@ -24,10 +24,10 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/param.h>
-#ifdef HAVE_LANGINFO_CODESET
+#if HAVE_LANGINFO_CODESET
 #include <langinfo.h>
 #endif
-#ifdef HAVE_GLOB_H
+#if HAVE_GLOB_H
 #include <glob.h>
 #endif
 
@@ -497,14 +497,9 @@ os_mkdir( const char* dir, int create_parents )
     }
 
     // Create the directory.
-    //int ret =
 #if HAVE_MKDIR
-    #if MKDIR_TAKES_ONE_ARG
-        return mkdir(tmp.get()) == 0;
-    #else
-        return mkdir(tmp.get(), S_IRWXU | S_IRWXG | S_IRWXO) == 0;
-    #endif
-#elif HAVE__MKDIR
+    return mkdir(tmp.get(), S_IRWXU | S_IRWXG | S_IRWXO) == 0;
+#elif HAVE_UNDERSCORE_MKDIR
     return _mkdir(tmp.get()) == 0;
 #else
 #   error "Neither mkdir() nor _mkdir() is available on this system."

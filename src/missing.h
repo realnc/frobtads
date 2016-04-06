@@ -20,17 +20,14 @@ extern "C" {
  * This function always compares 'len' characters, regardless if a '\0'
  * character has been detected.
  */
-#ifndef HAVE_MEMICMP
+#if !HAVE_MEMICMP
 int
 memicmp( const void* s1, const void* s2, size_t len );
 #endif
 
 /* Case-insensitive string comparison.
- *
- * We only use this implemention if neither stricmp() nor strcasecmp()
- * are available.
  */
-#if !defined HAVE_STRICMP && !defined HAVE_STRCASECMP
+#if !HAVE_STRICMP
 int
 stricmp( const char* s1, const char* s2 );
 #endif
@@ -39,11 +36,8 @@ stricmp( const char* s1, const char* s2 );
  *
  * This function compares at most `n' characters, or until a '\0'
  * character has been detected.
- *
- * We only use this implemention if neither strnicmp() nor strncasecmp()
- * are available.
  */
-#if !defined HAVE_STRNICMP && !defined HAVE_STRNCASECMP
+#if !HAVE_STRNICMP
 int
 strnicmp( const char* s1, const char* s2, size_t n );
 #endif

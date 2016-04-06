@@ -1,3 +1,11 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+The instructions provided here are outdated. Consult the INSTALL file on how to
+build FrobTADS from source on OS X, since CMake is now used to configure and
+build the package, meaning there is no "./configure" script anymore.
+
+The parts that don't deal with compilation might still be relevant.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 How to install Frobtads on a Mac running OSX
 So that you too can write TADS games!!!
 

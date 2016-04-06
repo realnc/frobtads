@@ -55,7 +55,7 @@ winResizeHandler( int )
 
     // Not sure why, but on some systems the handler has to be
     // installed over and over again after the signal is handled.
-#ifdef HAVE_SIGWINCH
+#if HAVE_SIGWINCH
     signal(SIGWINCH, winResizeHandler);
 #endif
 }
@@ -68,7 +68,7 @@ FrobTadsApplication::FrobTadsApplication( const FrobOptions& opts )
     globalApp = this;
 
     // Install our window-resize signal handler.
-#ifdef HAVE_SIGWINCH
+#if HAVE_SIGWINCH
     signal(SIGWINCH, winResizeHandler);
 #endif
 }
@@ -207,20 +207,20 @@ FrobTadsApplication::runTads( const char* filename, int vm, int argc, const char
  * <unistd.h>, the latter in <windows.h>.  If the system lacks both,
  * we'll always return false to indicate failure.
  */
-#ifdef HAVE_CHDIR
+#if HAVE_CHDIR
 #include <unistd.h>
 #endif
-#ifdef HAVE_SETCURRENTDIRECTORY
+#if HAVE_SETCURRENTDIRECTORY
 #include <windows.h>
 #endif
 bool
 FrobTadsApplication::changeDirectory( const char* dir )
 {
-#ifdef HAVE_CHDIR
+#if HAVE_CHDIR
     if (chdir(dir) == 0) return true;
     return false;
 #else
-#ifdef HAVE_SETCURRENTDIRECTORY
+#if HAVE_SETCURRENTDIRECTORY
     return SetCurrentDirectory(dir);
 #else
     return false;

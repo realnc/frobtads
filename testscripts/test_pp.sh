@@ -1,22 +1,19 @@
 #! /bin/sh
 
 # Preprocessor tests
-rm -rf $T3_OUT
-mkdir $T3_OUT
+rm -f "$T3_OUT/$1.*"
+mkdir -p $T3_OUT
 
 ret=0
 cd "$T3_OUT"
-for i in ansi circ circ2 embed define ifdef concat varmacpp
-do
-    echo "Preprocessor test: $i"
-    $TESTPROGS/test_tok -I"$T3_DAT" -I"$T3_INCDIR" -P "$T3_DAT/$i.c" > "$T3_OUT/$i.log" 2> "$T3_OUT/$i.err"
-    cat "$T3_OUT/$i.err" >> "$T3_OUT/$i.log"
-    rm "$T3_OUT/$i.err"
-    if $SCRIPTS/test_diff.sh "$i"; then
-        :
-    else
-        ret=1
-    fi
-done
+echo "Preprocessor test: $1"
+$TESTPROGS/test_tok -I"$T3_DAT" -I"$T3_INCDIR" -P "$T3_DAT/$1.c" > "$T3_OUT/$1.log" 2> "$T3_OUT/$1.err"
+cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
+rm "$T3_OUT/$1.err"
+if $SCRIPTS/test_diff.sh "$1"; then
+    :
+else
+    ret=1
+fi
 
 exit $ret

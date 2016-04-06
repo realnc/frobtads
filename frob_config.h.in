@@ -1,0 +1,51 @@
+#pragma once
+
+#define FROB_VERSION "@FROB_VERSION@"
+#define FROB_MAINTAINER "@FROB_MAINTAINER@"
+#define FROB_BUG_REPORT_EMAIL "@FROB_BUG_REPORT_EMAIL@"
+#define TADS_OEM_VERSION "@TADS_OEM_VERSION@"
+
+#define T3_INC_DIR "@T3_INC_DIR@"
+#define T3_LIB_DIR "@T3_LIB_DIR@"
+#define T3_RES_DIR "@T3_RES_DIR@"
+#define T3_LOG_FILE "@T3_LOG_FILE@"
+
+#cmakedefine01 CPU_IS_BIGENDIAN
+#cmakedefine01 ARCH_IS_BIG_ENDIAN
+
+#cmakedefine HAVE_MKDIR (1)
+#cmakedefine HAVE_UNDERSCORE_MKDIR (1)
+#cmakedefine HAVE_MEMICMP (1)
+#cmakedefine HAVE_PUTENV (1)
+#cmakedefine HAVE_STRICMP (1)
+#cmakedefine HAVE_STRNICMP (1)
+#cmakedefine HAVE_STRCASECMP (1)
+#cmakedefine HAVE_STRNCASECMP (1)
+#cmakedefine HAVE_CHDIR (1)
+#cmakedefine HAVE_SETCURRENTDIRECTORY (1)
+#cmakedefine HAVE_USE_DEFAULT_COLORS (1)
+#cmakedefine HAVE_SETLOCALE (1)
+#cmakedefine HAVE_TERMIOS_H (1)
+#cmakedefine HAVE_SYS_IOCTL_H (1)
+#cmakedefine GWINSZ_IN_SYS_IOCTL (1)
+#cmakedefine HAVE_TIOCGWINSZ (1)
+#cmakedefine HAVE_TIOCGSIZE (1)
+#cmakedefine HAVE_SYS_TIME_H (1)
+#cmakedefine TIME_WITH_SYS_TIME (1)
+#cmakedefine CURSES_HAVE_CURSES_H (1)
+#cmakedefine CURSES_HAVE_NCURSES_H (1)
+#cmakedefine CURSES_HAVE_NCURSES_CURSES_H (1)
+#cmakedefine CURSES_HAVE_NCURSES_NCURSES_H (1)
+#cmakedefine HAVE_GLOB_H (1)
+#cmakedefine HAVE_LOCALE_H (1)
+#cmakedefine HAVE_LANGINFO_CODESET (1)
+#cmakedefine HAVE_SIGWINCH (1)
+#cmakedefine HAVE_SYS_TYPES_H (1)
+#cmakedefine HAVE_C_UCHAR (1)
+#cmakedefine HAVE_C_USHORT (1)
+#cmakedefine HAVE_C_UINT (1)
+#cmakedefine HAVE_C_ULONG (1)
+#cmakedefine HAVE_CXX_UCHAR (1)
+#cmakedefine HAVE_CXX_USHORT (1)
+#cmakedefine HAVE_CXX_UINT (1)
+#cmakedefine HAVE_CXX_ULONG (1)

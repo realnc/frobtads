@@ -1,13 +1,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "frob_config.h"
 
 /* ushort, uint, and ulong are usually in <sys/types.h>
  */
-#ifdef HAVE_SYS_TYPES_H
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
@@ -15,29 +13,29 @@
  * the appropriate OS_*_DEFINED macros.
  */
 #ifdef __cplusplus
-#ifdef CXX_UCHAR_DEFINED
+#if HAVE_CXX_UCHAR
 #define OS_UCHAR_DEFINED
 #endif
-#ifdef CXX_USHORT_DEFINED
+#if HAVE_CXX_USHORT
 #define OS_USHORT_DEFINED
 #endif
-#ifdef CXX_UINT_DEFINED
+#if HAVE_CXX_UINT
 #define OS_UINT_DEFINED
 #endif
-#ifdef CXX_ULONG_DEFINED
+#if HAVE_CXX_ULONG
 #define OS_ULONG_DEFINED
 #endif
 #else /* !__cplusplus */
-#ifdef C_UCHAR_DEFINED
+#if HAVE_C_UCHAR
 #define OS_UCHAR_DEFINED
 #endif
-#ifdef C_USHORT_DEFINED
+#if HAVE_C_USHORT
 #define OS_USHORT_DEFINED
 #endif
-#ifdef C_UINT_DEFINED
+#if HAVE_C_UINT
 #define OS_UINT_DEFINED
 #endif
-#ifdef C_ULONG_DEFINED
+#if HAVE_C_ULONG
 #define OS_ULONG_DEFINED
 #endif
 #endif /* __cplusplus */

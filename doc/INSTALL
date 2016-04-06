@@ -1,16 +1,25 @@
-For impatient people who don't like to read through INSTALL files prior
-to installing software on their system:
+For impatient people who don't like to read through INSTALL files prior to
+installing software on their system:
 
-Enter the directory where you unpacked this package (for example,
-"cd ~/downloads/frobtads-1.0").  Type: "./configure" followed by
-"make", then "make install".  Play TADS games:
-"frob ~/games/tads/arrival.gam".  Get a list of command-line options:
-"frob --help".
+Enter the directory where you unpacked this package. For example:
+
+  cd ~/downloads/frobtads-1.0
+
+Then:
+
+  cmake .
+  cmake --build .
+  cmake --build . --target install
+
+Play TADS games:
+
+  frob ~/games/tads/arrival.gam
+
+Get a list of command-line options:
+
+  frob --help
 
 If you want some more information, read through the rest of this file.
-
-You can find generic and very detailed documentation about the
-configuration script in the file CONFIGURE_DOC.
 
 
 Requirements
@@ -19,16 +28,26 @@ Requirements
 Libraries
 .........
 
-FrobTADS requires a curses compatible library along with its <curses.h>
-or <ncurses.h> header file (that means you have to install a curses
-development package, not only the runtime package).  ncurses, plain old
-curses as well as PDCurses are supported.
+FrobTADS requires a curses compatible library along with its <curses.h> or
+<ncurses.h> header file (that means you have to install a curses development
+package, not only the runtime package). Ncurses, plain old curses as well as
+PDCurses are supported.
 
-If no curses library is found, you can still build and use the
-compilers, since only the interpreter needs curses.
+If no curses library is found, you can still build and use the compilers, since
+only the interpreter needs curses.
 
-In additon, you will need libcurl and its development files installed.
-This is needed for some of the network functionality of TADS 3.
+In additon, you will need libcurl and its development files installedss. This
+is needed for some of the network functionality of TADS 3.
+
+
+CMake
+.....
+
+The cmake tool is used to configure and build FrobTADS. Make sure you have it
+installed. Every Linux distro has it available in their package repositories.
+Same for *BSD systems. On other systems, you can find downloads here:
+
+  https://cmake.org
 
 
 Compiler
@@ -39,258 +58,88 @@ C11 and C++14 standards. GCC and Clang are known to work, but others should
 work too as long as they support the respective standards.
 
 
-The quickie
-===========
+Installation
+============
 
 Compile and install:
 
-  ./configure [options]
+  cmake [options] .
+  cmake --build .
+  cmake --build . --target install
+
+You are not required to build in the same directory where you unpacked the
+source package. For example, you can do something like this:
+
+  mkdir build
+  cd build
+  cmake [options] ..
+  cmake --build .
+  cmake --build . --target install
+
+Note that on Unix systems, cmake will by default generate a Makefile and thus
+you can also use "make" to build and install:
+
+  cmake .
   make
   make install
 
-You are not required to build in the same directory where you unpacked
-the source package.  For example, you can do something like this:
+Some options you can use when calling cmake:
 
-  mkdir ~/build
-  cd ~/build
-  ../downloads/frobtads-0.10/configure
-  make
-  make install
+  -DCMAKE_INSTALL_PREFIX=<directory>
 
-Not all versions of Make support this though; check if your version of
-Make supports the VPATH feature (GNU Make does, by the way).
+    Top-level installation directory. Default is "/usr/local".
 
-Some 'configure' options (cAsE sENsiTiVe):
+  -DENABLE_INTERPRETER=<YES|NO> (default is YES)
 
-  --help           Lists every supported option.
-  --help=short     Lists only FrobTADS specific options.
-  --prefix=PATH    Top-level installation directory.  Default is
-                    "/usr/local".
-  --bindir=PATH    Exact installion point of the binaries.  Default is
-                    "PREFIX/bin".
-  --datadir=PATH   Installation directory for the various data-files.
-                    Default is "PREFIX/share".  Note that a subdirectory
-                    called "frobtads" will be created automaticly.
-  --enable-t3debug Will build the debug version of the T3VM.  This
-                    results in slower code, but is useful for people who
-                    want to make changes to the source code.  This will
-                    also enable the TADS 3 test suite.
-  --disable-t2-compiler
-  --disable-t3-compiler These options disable the building of the TADS 2
-                    and TADS 3 compiler respectively.
+    Build "frob", the command-line TADS interpreter.
 
-If you don't intent to hack around in the interpreter's source code, you
-can also specify this option:
+  -DENABLE_T2_COMPILER=<YES|NO> (default is YES)
 
-  --disable-dependency-tracking
+    Build "tadsc", the TADS 2 compiler.
 
-This will result in a faster compile.  But if you make changes to the
-source code, a "make" won't be able to always tell which source files
-changed.
+  -DENABLE_T3_COMPILER=<YES|NO> (default is YES)
+
+    Build "t3make", the TADS 3 compiler.
+
+  -DENABLE_T3_DEBUG=<YES|NO> (default is NO)
+
+    Will build the debug version of the T3VM. This results in slower code, but
+    is useful for people who want to make changes to the source code. This will
+    also enable the TADS 3 test suite.
 
 You may specify your own C and C++ compiler flags like so:
 
-  ./configure CFLAGS="-O3 -pipe -march=pentium4" CXXFLAGS="-O3 -pipe -march=pentium4"
+  CFLAGS="-O3 -pipe -march=native" CXXFLAGS="-O3 -pipe -march=native" cmake .
 
-If you used the "--enable-t3debug" configure option, you can run the test
-suite with:
+If you used -DENABLE_T3_DEBUG=YES, you can run the test suite with:
 
-  make check
+  ctest
 
-You are *not* required to do a "make install" prior to running the test
-suite.
+Or:
 
-Play Tads games:
+  make test
 
-  frob [sometadsgame]
-
-The file extension (.gam or .t3) is optional.
-
-
-
-Detailed instructions
-=====================
-
-To install FrobTADS, you'll have to compile it first, and to compile it
-you'll have to configure it.  The procedure is very easy and is
-described in detail below.
-
-
-Configuration
-.............
-
-First, the package has to find out some information about your system.
-Then, a "makefile" has to be created, since the "make" utility is used
-for building FrobTADS.  Both steps are accomplished by entering the
-following command:
-
-  ./configure
-
-If you want to build the debug version of TADS 3:
-
-  ./configure --enable-t3debug
-
-This will result in slower code (as it performs additional checks in
-this mode) and is not recommended for production builds.  This will also
-enable the TADS 3 test suite (see below).
-
-You can specify where FrobTADS will be installed by passing arguments to
-'configure'.  For example, if you want the executable(s) to be installed
-in "/usr/bin" and the data-files in "/usr/share", you can call
-'configure' like this:
-
-  ./configure --prefix=/usr
-
-If you don't specify a prefix-directory, "/usr/local" will be used.
-
-You can fine-tune the installation points of the various files.  For
-example, if you want the executable(s) to be installed in "/usr/bin",
-but the various data-files in "/opt", you can do:
-
-  ./configure --bindir=/usr/bin --datadir=/opt
-
-Note that a subdirectory called "frobtads" will be created automaticly,
-so don't use "--datadir=/opt/frobtads"; just "--datadir=/opt".
-
-You can also pass compiler-flags to 'configure', and they will be passed
-on to the compiler.  For example, to compile the C sources with "-O3" and
-the C++ sources with "-O2 -fno-exceptions", call 'configure' like this:
-
-  ./configure CFLAGS="-O3" CXXFLAGS="-O2 -fno-exceptions"
-
-(Don't forget to quote the options if they contain spaces, like in the
-above example.)
-
-Even if the shell allows it, please don't use this:
-
-  CFLAGS="-O3" ./configure
-
-*Always* specify these variables *after* the "./configure" part.
-
-If you're using GCC, you should add -fno-exceptions to the C++ options,
-since FrobTADS doesn't make use of C++ exceptions.  You'll save some RAM
-and get a smaller executable, which is a Good Thing on low-end systems.
-You may want to check out the GCC docs to see what optimization options
-are available; typing "info gcc" on the console should get you started.
-
-With GCC, if you want FrobTADS to be compiled with optimized code that
-is tailored to your system's CPU, use the "-march=CPU" option.  Recent
-GCC versions allow you to use "-march=native", in which case the
-compiler will detect your CPU and optimize the code accordingly.  For
-GCC versions that do not support "native", you have to specify your CPU
-by name.  A few examples for the CPU value on PCs:
-
-  i386, i486, pentium, pentium-mmx, pentiumpro, pentium2, pentium3,
-  pentium4, prescott, nocona (that's the 64bit P4; what, you have one?)
-  core2, athlon, athlon-4, athlon-xp, athlon64
-
-For example: "-march=pentium4" of you have a Pentium4 or Celeron D.
-
-Note that older GCC versions don't support all of the above.  For the
-full list of CPUs, type:
-
-  info gcc invoking submodel
-
-To find out the GCC version you have, type
-
-  gcc --version
-
-
-Compilation
-...........
-
-Now that the makefile has been created, you can compile the package with
-the following command:
-
-  make
-
-The compilation should finish without errors (although there might be
-warning messages; you can usually ignore them).  If compilation aborts
-with an error-message, send a bug report to the maintainer (include the
-error-message, the name and version of your compiler, and details about
-your system).
-
-If you've built the debug version of TADS 3, you can run the test suite
-by typing:
-
-  make check
-
-This will build the test programs and then run some test scripts.  If
-not all of the tests succeed, there's something wrong.  Contact the
-maintainer in this case.
-
-You don't need to install the package prior to running the test suite.
-
-Since running the test suite requires you to build the debug version of
-the T3VM, you should do a
-
-  make clean
-
-to delete the debug version and then configure and compile the package
-again without the "--enable-t3debug" option.  Installing and using the
-debug version for regular work is not recommended.
+This will build the test programs and then run some test scripts. If not all of
+the tests succeed, there's something wrong. Contact the maintainer in this
+case.
 
 If you want to do a sanity-check on the TADS 3 compiler, you can type:
 
   make sample
 
-This will compile the TADS 3 library sample game.  It will be placed in
-the "samples" subdirectory of the build directory.  You can run it with:
+This will compile the TADS 3 library sample game. It will be placed in the
+"samples" subdirectory of the build directory. You can run it with:
 
   ./frob ./samples/sample.t3
 
-"make sample" does not require the debug-version of T3, so it's always a
-good idea to try it out before installing the package.
+"make sample" does not require the debug-version of T3, so it's always a good
+idea to try it out before installing the package.
 
+To play Tads games, use frob:
 
-Installation
-............
+  frob [sometadsgame]
 
-To install the package, type:
-
-  make install
-
-You'll probably have to login as root first, if you're installing in a
-directory where you don't have write-access.  If you're installing
-everything in your own home-directory, you don't have to be root.  On
-most systems, you can use the "sudo" command to execute the above as
-root:
-
-  sudo make install
-
-You will be prompted to enter root's password (or your own if you're on
-Ubuntu).
-
-This will install FrobTADS on your system and you're ready to play all
-those Tads games.  The TADS compilers will be installed too, along with
-their data files and development libraries, as long as you didn't disable
-them during the ./configure step.
-
-If the above procedure doesn't work for you, contact the maintainer.
-See the README file for an email address.  Or type:
-
-  ./configure --help
-
-This will print the maintainer's email address as the last line.
-
-
-Usage
-.....
-
-To play a Tads game, just pass the game's filename as an argument to
-'frob', like this:
-
-  frob /usr/local/games/tads/zebulon.gam
-
-The extension ".gam" (or ".t3" for Tads 3 games) is optional.  Typing:
-
-  frob --help
-
-will list the supported command-line options.
-
-If you also installed the compilers, look at their documentation on how
-to use them.  For starters, take a look at the COMPILERS file.
-
+The file extension (.gam or .t3) is optional.
 
 
 Operating systems
@@ -300,10 +149,10 @@ Operating systems
 Mac OS X
 ........
 
-OS X should work just like "regular" Unix.  Nothing special is required
-to build the interpreter on OS X, and therefore the above instructions
-also apply for OS X.  Don't forget to install the OS X curses/ncurses
-and libcurl development packages first.
+OS X should work just like "regular" Unix. Nothing special is required to build
+the interpreter on OS X, and therefore the above instructions also apply for OS
+X. Don't forget to install the OS X curses/ncurses and libcurl development
+packages first.
 
 
 Microsoft Windows
@@ -313,18 +162,18 @@ Microsoft Windows
 ** on Windows with MinGW/MSYS.  The last known version to build on
 ** Windows is 1.0.  It might be possible to build using Cygwin.
 
-Yes, you can compile FrobTADS even in Windows.  If you're using
-MinGW/MSYS or cygwin, just configure and compile like in Unix.  Of
-course, you must have a curses or ncurses library installed in a place
-where the compiler and linker can find it (PDCurses is known to work).
+Yes, you can compile FrobTADS even in Windows. If you're using MinGW/MSYS or
+cygwin, just configure and compile like in Unix. Of course, you must have a
+curses or ncurses library installed in a place where the compiler and linker
+can find it (PDCurses is known to work).
 
 Note that the TADS 3 test suite won't work in Windows, because of the
 difference in text line terminators.
 
-You can also cross-compile from Unix to Windows.  If your
-cross-compiler is, for example "i586-pc-mingw32-gcc", configure with:
+You can also cross-compile from Unix to Windows. If your cross-compiler is, for
+example "i586-pc-mingw32-gcc", configure with:
 
   ./configure --host=i586-pc-mingw32
 
-and after "make" you should have your Windows *.exe files.  This is in
-fact supported, tested and known to work.
+and after "make" you should have your Windows *.exe files. This is in fact
+supported, tested and known to work.

@@ -47,7 +47,7 @@ extern "C++" {
 #include "missing.h"
 
 /* Our Tads OEM identifier. */
-#define TADS_OEM_NAME PACKAGE_MAINTAINER " <" PACKAGE_BUGREPORT ">"
+#define TADS_OEM_NAME FROB_MAINTAINER " <" FROB_BUG_REPORT_EMAIL ">"
 
 /* We assume that the C-compiler is mostly ANSI compatible. */
 #define OSANSI
@@ -283,6 +283,21 @@ struct os_file_time_t {
 #define OSFSK_CUR SEEK_CUR /* Set position relative to the current file position. */
 #define OSFSK_END SEEK_END /* Set position relative to the end of the file. */
 
+/* Thread local storage declaration keyword.  This is only needed on
+ * platforms where we implement multithreading, and then only in builds
+ * that actually use threading; at the moment, this is limited to the
+ * network-enabled TADS 3 interpreter.
+ */
+#ifdef __cplusplus
+    #define OS_DECLARATIVE_TLS
+    #ifdef __APPLE__
+        // Clang as shipped by XCode does not support thread_local.
+        #define OS_DECL_TLS(typ, varname) __thread typ varname asdasd
+    #else
+        #define OS_DECL_TLS(typ, varname) thread_local typ varname
+    #endif
+#endif
+
 
 /* ============= Functions follow ================ */
 
@@ -410,19 +425,5 @@ int asprintf(char **strp, const char *fmt, ...);
 int vasprintf(char **strp, const char *fmt, va_list ap);
 #define os_asprintf asprintf
 #define os_vasprintf vasprintf
-
-/* Thread local storage declaration keyword.  This is only needed on
- * platforms where we implement multithreading, and then only in builds
- * that actually use threading; at the moment, this is limited to the
- * network-enabled TADS 3 interpreter.
- */
-#ifdef __cplusplus
-    #ifdef __APPLE__
-        // Clang as shipped by XCode does not support thread_local.
-        #define OS_DECL_TLS(typ, varname) __thread typ varname asdasd
-    #else
-        #define OS_DECL_TLS(typ, varname) thread_local typ varname
-    #endif
-#endif
 
 #endif /* OSFROBTADS_H */
