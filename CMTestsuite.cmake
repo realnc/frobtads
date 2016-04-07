@@ -9,7 +9,7 @@ set(T3_INCDIR "${CMAKE_CURRENT_SOURCE_DIR}/tads3/include")
 set(T3_LIBDIR "${CMAKE_CURRENT_SOURCE_DIR}/tads3/lib")
 set(SCRIPTS "${CMAKE_CURRENT_SOURCE_DIR}/testscripts")
 set(TESTPROGS "${CMAKE_CURRENT_BINARY_DIR}/test")
-set(T3_MAKE "${CMAKE_CURRENT_BINARY_DIR}/t3make")
+set(T3_MAKE "$<TARGET_FILE:t3make>")
 
 macro(set_test_env test)
 set_tests_properties(${test} PROPERTIES ENVIRONMENT

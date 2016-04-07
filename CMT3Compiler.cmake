@@ -55,7 +55,7 @@ add_custom_target(
     COMMAND "${CMAKE_COMMAND}" -E remove_directory samples
     COMMAND "${CMAKE_COMMAND}" -E make_directory samples/obj
     COMMAND "${CMAKE_COMMAND}" -E copy "${CMAKE_CURRENT_SOURCE_DIR}/tads3/samples/sample.t3m" samples
-    COMMAND "${CMAKE_COMMAND}" -E chdir samples "${CMAKE_CURRENT_BINARY_DIR}/t3make" -a -al
+    COMMAND "${CMAKE_COMMAND}" -E chdir samples "$<TARGET_FILE:t3make>" -a -al
             -f sample.t3m
             -FL "${CMAKE_CURRENT_SOURCE_DIR}/tads3/lib"
             -FI "${CMAKE_CURRENT_SOURCE_DIR}/tads3/include"
