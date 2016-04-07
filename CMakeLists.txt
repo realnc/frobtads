@@ -63,6 +63,10 @@ include(CheckSymbolExists)
 include(CheckCXXSourceCompiles)
 include(CheckTypeSize)
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX
         OR CMAKE_C_COMPILER_ID MATCHES "Clang"
         OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
