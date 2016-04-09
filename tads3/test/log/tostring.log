@@ -1,0 +1,36 @@
+	Files to build: 8
+	symbol_export _main.t -> _main.t3s
+	symbol_export tostring.t -> tostring.t3s
+	symbol_export reflect.t -> reflect.t3s
+	compile _main.t -> _main.t3o
+	compile tostring.t -> tostring.t3o
+	compile reflect.t -> reflect.t3o
+	link -> tostring.t3p
+	preinit -> tostring.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+toString(&prop1) = prop1
+toString(&prop2) = prop2
+toString(&main) = main
+toString(&_main) = _main
+toString(obj1) = obj1
+toString(obj2) = obj2
+toString(obj3) = alpha<three>
+toString(obj4) = alpha<four>
+toString(enum1) = enum1
+toString(enum2) = enum2
+toString(&toString) = toString
+toString(&toInteger) = toInteger
+toString(&tadsSay) = tadsSay
+toString(new Date('9-oct-2011')) = 2011-10-09 00:00:00
+toString(new FileName('foo/bar.txt')) = foo/bar.txt
+toString(new TimeZone('america/los_angeles')) = America/Los_Angeles
+toString(new obj1()) = {obj:obj1}
+toString([obj1, &prop1, enum1, 111, obj2, &prop2, enum2, 222.222]) =
+obj1,prop1,enum1,111,obj2,prop2,enum2,222.222
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

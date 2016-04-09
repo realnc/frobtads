@@ -1,0 +1,16 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export nested_embed_err.t -> nested_embed_err.t3s
+nested_embed_err.t(40): error: embedded expressions in strings are nested too deeply
+nested_embed_err.t(40): error: embedded expressions in strings are nested too deeply
+Errors:   2
+Warnings: 0
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+VM Error: file not found
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

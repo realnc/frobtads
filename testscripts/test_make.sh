@@ -2,8 +2,22 @@
 
 # Make and execute tests
 
+cd "$T3_OUT"
+
 CHARSET=$1
 shift
+
+skiprun="NO"
+if [ $1 == "-norun" ]; then
+    skiprun="YES"
+    shift
+fi
+
+tstscript=""
+if [ $1 == "-script" ]; then
+    tstscript="YES"
+    shift
+fi
 
 case "$1" in
     -nodef)
@@ -28,10 +42,16 @@ case "$1" in
 esac
 cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
 
-echo "'Make' test: $1"
+if [ $skiprun == "NO" ]; then
+    echo "'Make' test: $1"
+    if [ $tstscript == "YES" ]; then
+        $TESTPROGS/test_exec -I "$T3_DAT/$1.in" -cs $CHARSET -norand "$T3_OUT/$1.t3" >> "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
+    else
+        $TESTPROGS/test_exec -cs $CHARSET -norand "$T3_OUT/$1.t3" >> "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
+    fi
+    cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
+fi
 
-$TESTPROGS/test_exec -cs $CHARSET -norand "$T3_OUT/$1.t3" >> "$T3_OUT/$1.log" 2>"$T3_OUT/$1.err"
-cat "$T3_OUT/$1.err" >> "$T3_OUT/$1.log"
 rm "$T3_OUT/$1.err"
 $SCRIPTS/test_diff.sh "$1"
 exit $?

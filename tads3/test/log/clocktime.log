@@ -1,0 +1,15 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export clocktime.t -> clocktime.t3s
+	compile _main.t -> _main.t3o
+	compile clocktime.t -> clocktime.t3o
+	link -> clocktime.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+2014-06-23 15:30:45.getClockTime = 15, 30, 45, 678
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

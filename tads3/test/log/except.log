@@ -1,0 +1,32 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export except.t -> except.t3s
+	compile _main.t -> _main.t3o
+	compile except.t -> except.t3o
+	link -> except.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+f1...
+Caught in test: Runtime error: intrinsic class exception: prohibited file
+access
+
+f2...
+Caught in f2: Runtime error: intrinsic class exception: prohibited file access
+
+f3...
+Caught in f3: Runtime error: intrinsic class exception: prohibited file access
+
+f4...
+Caught in f4: Runtime error: intrinsic class exception: prohibited file access
+Back from createDirectory (okay)
+
+f5...
+Caught in test: Runtime error: intrinsic class exception: prohibited file
+access
+
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

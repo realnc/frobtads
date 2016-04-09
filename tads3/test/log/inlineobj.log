@@ -1,0 +1,61 @@
+	Files to build: 8
+	symbol_export _main.t -> _main.t3s
+	symbol_export inlineobj.t -> inlineobj.t3s
+	symbol_export dynfunc.t -> dynfunc.t3s
+	compile _main.t -> _main.t3o
+	compile inlineobj.t -> inlineobj.t3o
+	compile dynfunc.t -> dynfunc.t3o
+	link -> inlineobj.t3p
+	preinit -> inlineobj.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+statobj: name=statobj, desc=This is object statobj with class Thing
+[type=code], val=1000 [type=int], className=Thing
+x: name=x, desc=This is object x [type=dstring], val=987 [type=int], className=
+y: name=y, desc=This is object y with class Thing [type=code], val=10
+[type=int], className=Thing
+z: name=z, desc=This is object z, with class Thing; i++=123 [type=code],
+val=242 [type=int], className=Thing, and now i=124
+z: name=z, desc=This is object z, with class Thing; i++=124 [type=code],
+val=242 [type=int], className=Thing, and now i=125
+w: name=w, desc=This is object w, with class Thing; i++=125 [type=code],
+val=321 [type=int], className=Thing, and now i=126, j=322
+w: name=w, desc=This is object w, with class Thing; i++=126 [type=code],
+val=321 [type=int], className=Thing, and now i=127, j=322
+w2: name=w2, desc=This is object w2, with class Thing; i++=127 [type=code],
+val=322 [type=code], className=Thing, and now i=128, j=323
+w2: name=w2, desc=This is object w2, with class Thing; i++=128 [type=code],
+val=323 [type=code], className=Thing, and now i=129, j=324
+w3: name=w3, desc=This is object w2, with class Thing; i++=129 [type=code],
+val=324 [type=code], className=Thing, and now i=130, j=325
+w3: name=w3, desc=This is object w2, with class Thing; i++=130 [type=code],
+val=325 [type=code], className=Thing, and now i=131, j=326
+v: name=v, desc=This is object v, with class Item; i++=7 [type=code], val=14
+[type=int], className=Item, and now i=131
+v: name=v, desc=This is object v, with class Item; i++=8 [type=code], val=14
+[type=int], className=Item, and now i=131
+v2: name=v2, desc=This is object v2, with class Item; i++=7 [type=code], val=14
+[type=int], className=Item, and now i=131
+v2: name=v2, desc=This is object v2, with class Item; i++=8 [type=code], val=14
+[type=int], className=Item, and now i=131
+usub: name=u.subobj, desc=This is u.subobj with class Item, val=131, valii=456,
+ii++=457 [type=code], val=131 [type=int], className=Item, and now i=132
+usub: name=u.subobj, desc=This is u.subobj with class Item, val=131, valii=456,
+ii++=458 [type=code], val=131 [type=int], className=Item, and now i=132
+tsub: name=tsub, desc=This is t.subobj with class , val=132, i++=133
+[type=code], val=132 [type=int], className=, and now i=134
+tsub: name=tsub, desc=This is t.subobj with class , val=132, i++=134
+[type=code], val=132 [type=int], className=, and now i=135
+tsub: name=tsub, desc=This is t.subobj with class , val=132, i++=135
+[type=code], val=132 [type=int], className=, and now i=136
+t2sub: name=t2sub, desc=This is t2.subobj with class Thing, val=136, i++=137
+[type=code], val=136 [type=int], className=Thing, and now i=138
+t2sub: name=t2sub, desc=This is t2.subobj with class Thing, val=136, i++=138
+[type=code], val=136 [type=int], className=Thing, and now i=139
+dyn: name=dyn, desc=This is dyn with class Thing!!! [type=code], val=777
+[type=int], className=Thing
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

@@ -1,0 +1,17 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export embedfmt.t -> embedfmt.t3s
+	compile _main.t -> _main.t3o
+	compile embedfmt.t -> embedfmt.t3o
+	link -> embedfmt.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+x=1.2345, x(%.2f)=1.23, x*3(%.2f)=3.70
+x in currency is $***1.23
+y in hex is 64, octal 144, decimal 100
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

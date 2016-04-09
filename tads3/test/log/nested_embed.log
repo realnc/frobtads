@@ -1,0 +1,25 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export nested_embed.t -> nested_embed.t3s
+	compile _main.t -> _main.t3o
+	compile nested_embed.t -> nested_embed.t3o
+	link -> nested_embed.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+This the outer string. This is the first inner string. This is the second inner
+string. This is the third inner string. a=1, b=2 That's it for the third. And
+for the second. And the first. And back to the outer.
+
+Another test, this time with all dquote strings. First inner. Second inner.
+Third inner: a=1, b=2. End of second. End of first. End of outer.
+
+The regrigerator door is closed.
+The regrigerator door is closed.
+The regrigerator door is open.
+The regrigerator door is open and the light inside is on.
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

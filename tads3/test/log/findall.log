@@ -1,0 +1,42 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export findall.t -> findall.t3s
+	compile _main.t -> _main.t3o
+	compile findall.t -> findall.t3o
+	link -> findall.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+one two three four five.findAll(R'<alpha>+') = [one,two,three,four,five]
+one 1 two 22 three 333 four 4444 five 55555.findAll(R'%d+') =
+[1,22,333,4444,55555]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1
+{1},bravo22 {1},charlie333 {1},delta444 {1}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1, 1
+{2},bravo22, 7 {2},charlie333, 15 {2},delta444, 26 {2}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa {3},bravo22, 7, bravo {3},charlie333, 15, charlie {3},delta444, 26,
+delta {3}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa, 1 {4},bravo22, 7, bravo, 22 {4},charlie333, 15, charlie, 333
+{4},delta444, 26, delta, 444 {4}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa, 1, {5},bravo22, 7, bravo, 22, {5},charlie333, 15, charlie, 333,
+{5},delta444, 26, delta, 444, {5}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, [alfa,1] {4},bravo22, 7, [bravo,22] {4},charlie333, 15, [charlie,333]
+{4},delta444, 26, [delta,444] {4}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa, [1] {4},bravo22, 7, bravo, [22] {4},charlie333, 15, charlie, [333]
+{4},delta444, 26, delta, [444] {4}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa, 1, [] {4},bravo22, 7, bravo, 22, [] {4},charlie333, 15, charlie, 333,
+[] {4},delta444, 26, delta, 444, [] {4}]
+alfa1 bravo22 charlie333 delta444.findAll(R'(<alpha>+)(%d+)', func) = [alfa1,
+1, alfa, 1, , [] {5},bravo22, 7, bravo, 22, , [] {5},charlie333, 15, charlie,
+333, , [] {5},delta444, 26, delta, 444, , [] {5}]
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

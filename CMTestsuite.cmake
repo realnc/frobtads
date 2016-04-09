@@ -55,6 +55,11 @@ macro(run_preinit_test test)
     run_test(PreinitTest ${test} test_pre.sh ${test})
 endmacro()
 
+macro(run_run_test test)
+    run_test(RunTest ${test} test_run.sh ${ARGV1} ${ARGV2} ${ARGV3} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7}
+        ${ARGV8} ${ARGV9})
+endmacro()
+
 add_test (
     NAME ObjectSubsystem
     COMMAND test_obj
@@ -74,11 +79,22 @@ foreach(test asi anon anonfunc anonobj anonvarg badnest bignum bignum2 findrepla
         ifnil inh_next isin join lclprop listprop lookup lookup2 lookup3 lookupdef multidyn nested newprop
         objloop opoverload propaddr propptr rexassert rexreplace setsc shr spec2html spec2text split sprintf
         strcomp2 strbuf substr unicode varmac vector vector2 vector3 testaddr2 testaddr3 testaddr4 strtpl
-        listminmax packstr packarr)
+        listminmax packstr packarr except propset rand3 findall constregex datatypexlat embedfmt clocktime
+        testov vecmod listmod idxov newline_spacing nested_embed nested_embed_err inlineobj1 inlineobj2
+        # date datefmt dateprs
+        # hashes
+        )
     run_make_test(${test} cp437 ${test} ${test})
 endforeach()
 
+#call %tstbat%\testmake -cp latin1 datelocale datelocale
+#call %tstbat%\testmake -norun -pre datesave datesave
+#call %tstbat%\testrun datesave_s datesave save
+#call %tstbat%\testrun datesave_r datesave restore
+
 run_make_test(strcomp3 latin1 strcomp3 strcomp3)
+run_make_test(bytarr cp1252 -pre bytarr bytarr)
+run_make_test(bytarr2 cp1252 -pre bytarr2 bytarr2)
 
 foreach(test catch save html addlist listpar arith)
     run_make_test(${test} cp437 -nodef ${test} ${test})
@@ -95,18 +111,13 @@ foreach(test extern objmod)
 endforeach()
 
 run_make_test(gram2 cp437 -nodef gram2 tok gram2)
-
 run_make_test(rand cp437 -nodef rand rand)
-
 run_make_test(stack cp437 -debug stack stack reflect)
-
 run_make_test(targprop cp437 -pre targprop targprop reflect)
-
 run_make_test(clone cp437 -pre clone clone reflect)
-
 run_make_test(printexpr cp437 -pre printexpr printexpr dynfunc)
-
 run_make_test(dynctx cp437 -pre dynctx dynctx dynfunc)
+run_make_test(inkey cp437 -script -nodef inkey inkey)
 
 foreach(test vec_pre symtab enumprop modtobj undef undef2 newembed newembederr triplequote optargs
         optargs_err optargs_err2)
@@ -119,24 +130,34 @@ endforeach()
 #              -DMULTMETH_STATIC_INHERITED multimethod multmeth)
 
 run_make_test(multimethod_dynamic2 cp437 -pre multimethod_dynamic2 multimethod multimethod2 multmeth)
-
 run_make_test(multimethod_static2 cp437 -pre multimethod_static2 -DMULTMETH_STATIC_INHERITED
     multimethod multimethod2 multmeth)
-
 run_make_test(namedparam cp437 -pre namedparam namedparam multmeth)
-
 run_make_test(bifptr cp437 -pre bifptr bifptr dynfunc)
-
 run_make_test(setmethod cp437 -pre setmethod setmethod dynfunc)
-
 run_make_test(lclvars cp437 -pre lclvars lclvars lclvars2 reflect dynfunc)
-
 run_make_test(dynamicGrammar cp437 -pre dynamicGrammar dynamicGrammar tok dynfunc gramprod)
-
 run_make_test(iter cp437 iter iter)
 run_restore_test(iter iter2 iter)
+run_make_test(dyncomp cp437 -norun -pre dyncomp dyncomp dynfunc)
+run_make_test(testaddr1 cp437 testaddr1 testaddr1 testaddr1b)
+run_make_test(defined_test1 cp437 defined_test1 defined)
+run_make_test(defined_test2 cp437 defined_test2 defined defined2)
+#run_make_test(dirtest cp437 dirtest dirtest file)
+run_make_test(floatfolderr cp437 -norun floatfolderr floatfolderr)
+run_make_test(floatfold cp437 -pre floatfold floatfold reflect)
+
+# TZ
+#run_make_test(tostring cp437 -pre tostring tostring reflect)
+
+run_make_test(match cp437 -pre match match)
+run_make_test(inlineobj cp437 -pre inlineobj inlineobj dynfunc)
 
 run_preinit_test(preinit)
+
+run_run_test(strbuf_restore strbuf_restore strbuf -restore)
+run_run_test(dyncomp_save dyncomp_save dyncomp -save dyncomp.t3v)
+run_run_test(dyncomp_restore dyncomp_restore dyncomp -restore dyncomp.t3v)
 
 # Extra compiler sources for dynamic code compilation in interpreter.
 set (
@@ -499,7 +520,6 @@ add_executable (
     tads2/osstzprs.c
     tads2/ostzposix.c
 )
-
 target_link_libraries (
     test_obj
     ${CURL_LIBRARIES}
@@ -635,7 +655,6 @@ add_executable (
     tads2/ostzposix.c
     ${TARGET_OBJS_NO_LINK}
 )
-
 target_link_libraries (
     test_exec
     ${CURL_LIBRARIES}

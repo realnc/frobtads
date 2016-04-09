@@ -1,0 +1,15 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export listmod.t -> listmod.t3s
+	compile _main.t -> _main.t3o
+	compile listmod.t -> listmod.t3o
+	link -> listmod.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+l = [a, b, c]
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

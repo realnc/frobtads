@@ -1,0 +1,16 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export idxov.t -> idxov.t3s
+	compile _main.t -> _main.t3o
+	compile idxov.t -> idxov.t3o
+	link -> idxov.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+[]= is defined
+[] is defined
+abc
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

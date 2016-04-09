@@ -1,0 +1,39 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export newline_spacing.t -> newline_spacing.t3s
+	compile _main.t -> _main.t3o
+	compile newline_spacing.t -> newline_spacing.t3o
+	link -> newline_spacing.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+[default]
+a b: len=3, chars=(97,32,98)
+a
+b: len=8, chars=(97,10,32,32,32,32,32,98)
+a
+b
+c
+d e f g
+h: len=34,
+chars=(97,10,32,32,32,32,32,98,10,32,32,32,32,32,99,10,32,32,100,32,101,32,32,1
+02,32,103,32,10,32,32,32,32,32,104)
+
+[collapse]
+a b: len=3, chars=(97,32,98)
+
+[delete]
+ab: len=2, chars=(97,98)
+a
+b: len=8, chars=(97,10,32,32,32,32,32,98)
+
+[preserve]
+a
+b: len=8, chars=(97,10,32,32,32,32,32,98)
+a
+b: len=9, chars=(97,10,10,32,32,32,32,32,98)
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

@@ -1,0 +1,15 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export vecmod.t -> vecmod.t3s
+	compile _main.t -> _main.t3o
+	compile vecmod.t -> vecmod.t3o
+	link -> vecmod.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+v = [A, b, c]
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

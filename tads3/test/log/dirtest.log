@@ -1,0 +1,202 @@
+	Files to build: 7
+	symbol_export _main.t -> _main.t3s
+	symbol_export dirtest.t -> dirtest.t3s
+	symbol_export file.t -> file.t3s
+	compile _main.t -> _main.t3o
+	compile dirtest.t -> dirtest.t3o
+	compile file.t -> file.t3o
+	link -> dirtest.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+-----
+mkdir dirtest: ok
+./
+../
+-----
+mkdir dirtest/one: ok
+./
+../
+one/
+   ./
+   ../
+-----
+mkdir dirtest/two: ok
+./
+../
+one/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+mkdir dirtest/three: ok
+./
+../
+one/
+   ./
+   ../
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+cp ../data/dirtest-file-a.txt dirtest/one/file-a.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+cp ../data/dirtest-file-b.txt dirtest/one/file-b.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+cp ../data/dirtest-file-c.txt dirtest/one/file-c.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+   file-c.txt      1,087 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+cp ../data/dirtest-file-a.txt dirtest/two/file-a.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+   file-c.txt      1,087 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+-----
+mv dirtest/two/file-a.txt dirtest/two/file-x.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+   file-c.txt      1,087 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+   file-x.txt      2,250 bytes
+-----
+mv dirtest/two/file-x.txt dirtest/one/file-x.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+   file-c.txt      1,087 bytes
+   file-x.txt      2,250 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+mv dirtest/one/file-x.txt dirtest/one/file-a.txt: *** Exception: Runtime error:
+error renaming file
+-----
+mv dirtest/one/file-x.txt dirtest/two/file-a.txt: ok
+./
+../
+one/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+   file-b.txt      1,281 bytes
+   file-c.txt      1,087 bytes
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+-----
+rmdir dirtest/one: *** Exception: Runtime error: error deleting file
+-----
+rmdir-r dirtest/one: ok
+./
+../
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+   file-a.txt      2,250 bytes
+-----
+rmdir dirtest/two: *** Exception: Runtime error: error deleting file
+-----
+rm dirtest/two/file-a.txt: ok
+./
+../
+three/
+   ./
+   ../
+two/
+   ./
+   ../
+-----
+rmdir dirtest/two: ok
+./
+../
+three/
+   ./
+   ../
+-----
+rmdir dirtest: *** Exception: Runtime error: error deleting file
+-----
+rmdir-r dirtest: ok
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

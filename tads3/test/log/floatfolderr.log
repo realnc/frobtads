@@ -1,0 +1,21 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export floatfolderr.t -> floatfolderr.t3s
+floatfolderr.t(8): error: floating point values can't be used with this operator
+floatfolderr.t(9): error: floating point values can't be used with this operator
+floatfolderr.t(10): error: floating point values can't be used with this operator
+floatfolderr.t(14): error: floating point values can't be used with this operator
+floatfolderr.t(15): error: floating point values can't be used with this operator
+floatfolderr.t(16): error: floating point values can't be used with this operator
+floatfolderr.t(19): error: floating point values can't be used with this operator
+floatfolderr.t(20): error: floating point values can't be used with this operator
+floatfolderr.t(21): error: floating point values can't be used with this operator
+floatfolderr.t(24): error: floating point values can't be used with this operator
+floatfolderr.t(25): error: floating point values can't be used with this operator
+floatfolderr.t(26): error: floating point values can't be used with this operator
+Errors:   12
+Warnings: 0
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

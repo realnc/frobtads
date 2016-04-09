@@ -1,0 +1,30 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export propset.t -> propset.t3s
+	compile _main.t -> _main.t3o
+	compile propset.t -> propset.t3o
+	link -> propset.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+myObj.p1 = hello
+myObj.p2DobjTake = foo
+myObj.p3DobjTake = bar
+myObj.p4 = goodbye
+verDobjTake - actor=123
+verDobjDrop - actor=987
+verDobjPutIn - actor=45, iobj=67
+verDobjPutOn - actor=78, x=89, y=91
+verIobjTake - a=1, b=2
+verIobjDrop - a=3, b=4
+verIobjPutIn - a=5, iobj=6, b=7
+verIobjPutOn - a=8, x=9, y=10, b=11
+dobjTake - actor=111
+dobjDrop - actor=222
+dobjPutIn - iobj=333, actor=444
+dobjPutOn - dobj=555, iobj=666, actor=777
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

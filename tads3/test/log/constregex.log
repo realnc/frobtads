@@ -1,0 +1,20 @@
+	Files to build: 5
+	symbol_export _main.t -> _main.t3s
+	symbol_export constregex.t -> constregex.t3s
+	compile _main.t -> _main.t3o
+	compile constregex.t -> constregex.t3o
+	link -> constregex.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+[0-4]+ -> ... abcdefghijklmnopqrstuvwxyz [[[01234]]]56789 ...
+[5-9]+ -> ... abcdefghijklmnopqrstuvwxyz 01234[[[56789]]] ...
+[a-m]+ -> ... [[[abcdefghijklm]]]nopqrstuvwxyz 0123456789 ...
+%d+ -> ... abcdefghijklmnopqrstuvwxyz [[[0123456789]]] ...
+%w+ -> ... [[[abcdefghijklmnopqrstuvwxyz]]] [[[0123456789]]] ...
+this is a test string >>titleCase-> This Is A Test String
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0

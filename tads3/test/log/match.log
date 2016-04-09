@@ -1,0 +1,35 @@
+	Files to build: 6
+	symbol_export _main.t -> _main.t3s
+	symbol_export match.t -> match.t3s
+	compile _main.t -> _main.t3o
+	compile match.t -> match.t3o
+	link -> match.t3p
+	preinit -> match.t3
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
+'this is a subject string'.match('') = 0
+'this is a subject string'.match('this') = 4
+'this is a subject string'.match('is a subject') = nil
+'this is a subject string'.match('is a subject', 5) = nil
+'this is a subject string'.match('is a subject', 6) = 12
+'this is a subject string'.match('is a subject', 7) = nil
+'this is a subject string'.match('string') = nil
+'this is a subject string'.match('string', -4) = nil
+'this is a subject string'.match('string', -5) = nil
+'this is a subject string'.match('string', -6) = 6
+'this is a subject string'.match('string', -7) = nil
+'this is a subject string'.match(R'%w*') = 4
+'this is a subject string'.match(R'%w+') = 4
+'this is a subject string'.match(R'%w*', 5) = 0
+'this is a subject string'.match(R'%w+', 5) = nil
+'this is a subject string'.match(R'%w+', 6) = 2
+'this is a subject string'.match(R'%w+', -4) = 4
+'this is a subject string'.match(R'%w+', -5) = 5
+'this is a subject string'.match(R'%w+', -6) = 6
+'this is a subject string'.match(R'%w+', -7) = nil
+
+(T3VM) Memory blocks still in use:
+
+Total blocks in use: 0
