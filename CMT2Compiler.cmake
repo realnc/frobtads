@@ -1,7 +1,9 @@
-# TADS 2 compiler-only sources.
-set (
-    T2CSOURCES
+add_executable (
+    tadsc
+    ${TADS2_HEADERS}
+    src/osportable.cc
     src/t2compmain.c
+    tads2/osgen3.c
     tads2/tcd.c
     tads2/tcgdum.c
     tads2/linf.c
@@ -15,14 +17,8 @@ set (
     tads2/prs.c
     tads2/emt.c
     tads2/dbg.c
-)
-
-add_executable (
-    tadsc
-    ${COMMONSOURCES}
-    ${T2HEADERS}
-    ${T2RCSOURCES}
-    ${T2CSOURCES}
+    $<TARGET_OBJECTS:COMMON_OBJECTS>
+    $<TARGET_OBJECTS:TADS2_RC_OBJECTS>
 )
 
 add_executable (

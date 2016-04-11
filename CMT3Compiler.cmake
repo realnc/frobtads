@@ -1,6 +1,7 @@
-# TADS 3 compiler-only sources.
-set (
-    T3CSOURCES
+add_executable (
+    t3make
+    ${TADS3_HEADERS}
+    src/osportable.cc
     src/ost3comp.cc
     tads3/os_stdio.cpp
     tads3/rcmain.cpp
@@ -19,17 +20,11 @@ set (
     tads3/vmimgrb.cpp
     tads3/vmpreini.cpp
     tads3/vmwrtimg.cpp
+    tads3/vmrun.cpp
+    $<TARGET_OBJECTS:COMMON_OBJECTS>
+    $<TARGET_OBJECTS:TADS3_RC_OBJECTS>
+    $<TARGET_OBJECTS:TADS3_RC_OBJECTS_ND>
 )
-
-add_executable (
-    t3make
-    ${COMMONSOURCES}
-    ${T3HEADERS}
-    ${T3RCSOURCES}
-    ${T3RCSOURCES_ND}
-    ${T3CSOURCES}
-)
-
 target_include_directories (
     t3make PRIVATE
     ${PROJECT_SOURCE_DIR}/tads3/test

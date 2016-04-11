@@ -54,9 +54,8 @@ check_cxx_source_compiles ("
 )
 set(CMAKE_REQUIRED_DEFINITIONS)
 
-# Sources needed only by the interpreter.
-set (
-    FROBSOURCES
+add_library (
+    FROB_OBJECTS OBJECT
     src/colors.h
     src/frobappctx.cc
     src/frobappctx.h
@@ -73,11 +72,7 @@ set (
     src/options.h
     src/oscurses.cc
     src/osscurses.cc
-)
-
-# TADS 2 runtime sources.
-set (
-    T2RSOURCES
+    tads2/osgen3.c
     tads2/dbgtr.c
     tads2/trd.c
     tads2/execmd.c
@@ -87,11 +82,6 @@ set (
     tads2/argize.c
     tads2/ply.c
     tads2/linfdum.c
-)
-
-# TADS 3 runtime sources.
-set (
-    T3RSOURCES
     tads3/osifcnet.cpp
     tads3/tcprsnf.cpp
     tads3/tcprsnl.cpp
@@ -110,18 +100,22 @@ set (
     tads3/vmnetfil.cpp
     tads3/vmsa.cpp
 )
+target_compile_definitions (
+    FROB_OBJECTS PRIVATE
+    RUNTIME
+)
 
 add_executable (
     frob
-    ${FROBSOURCES}
-    ${COMMONSOURCES}
-    ${T2HEADERS}
-    ${T2RSOURCES}
-    ${T2RCSOURCES}
-    ${T3HEADERS}
-    ${T3RSOURCES}
-    ${T3RCSOURCES}
-    ${T3RCSOURCES_ND}
+    ${TADS2_HEADERS}
+    ${TADS3_HEADERS}
+    src/osportable.cc
+    tads3/vmrun.cpp
+    $<TARGET_OBJECTS:FROB_OBJECTS>
+    $<TARGET_OBJECTS:COMMON_OBJECTS>
+    $<TARGET_OBJECTS:TADS2_RC_OBJECTS>
+    $<TARGET_OBJECTS:TADS3_RC_OBJECTS>
+    $<TARGET_OBJECTS:TADS3_RC_OBJECTS_ND>
 )
 
 target_compile_definitions (
@@ -145,17 +139,19 @@ target_link_libraries (
 if (ENABLE_FROBD)
     add_executable (
         frobd
-        ${FROBSOURCES}
-        ${COMMONSOURCES}
-        ${T2HEADERS}
-        ${T2RSOURCES}
-        ${T2RCSOURCES}
-        ${T3HEADERS}
-        ${T3RSOURCES}
-        ${T3RCSOURCES}
-        ${T3RCSOURCES_D}
+        ${TADS2_HEADERS}
+        ${TADS3_HEADERS}
+        src/osportable.cc
         src/debugui.cc
         tads3/vmdbg.cpp
+        tads3/vmrun.cpp
+        tads3/vmbt3_d.cpp
+        tads3/vmimg_d.cpp
+        tads3/vmini_d.cpp
+        $<TARGET_OBJECTS:FROB_OBJECTS>
+        $<TARGET_OBJECTS:COMMON_OBJECTS>
+        $<TARGET_OBJECTS:TADS2_RC_OBJECTS>
+        $<TARGET_OBJECTS:TADS3_RC_OBJECTS>
     )
 
     target_compile_definitions (

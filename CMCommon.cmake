@@ -1,6 +1,6 @@
-# Sources needed by both the interpreter as well as the compilers.
-set (
-    COMMONSOURCES
+# Shared by interpreter, T2 compiler and T3 compiler.
+add_library (
+    COMMON_OBJECTS OBJECT
     src/common.h
     src/missing.cc
     src/missing.h
@@ -8,7 +8,6 @@ set (
     src/osdos.h
     src/osfrobtads.h
     src/osos2.h
-    src/osportable.cc
     src/osunixt.h
     src/oswin.h
     tads2/osifc.c
@@ -17,9 +16,8 @@ set (
     tads2/osrestad.c
 )
 
-# TADS 2 headers.
 set (
-    T2HEADERS
+    TADS2_HEADERS
     tads2/appctx.h
     tads2/argize.h
     tads2/bif.h
@@ -66,9 +64,9 @@ set (
     tads2/tcg.h
 )
 
-# TADS 2 runtime and compiler sources.
-set (
-    T2RCSOURCES
+# Shared by interpreter and T2 compiler.
+add_library (
+    TADS2_RC_OBJECTS OBJECT
     tads2/askf_tx.c
     tads2/bif.c
     tads2/bifgdum.c
@@ -87,7 +85,6 @@ set (
     tads2/mcs.c
     tads2/obj.c
     tads2/oserr.c
-    tads2/osgen3.c
     tads2/out.c
     tads2/output.c
     tads2/regex.c
@@ -96,9 +93,8 @@ set (
     tads2/voc.c
 )
 
-# TADS 3 headers.
 set (
-    T3HEADERS
+    TADS3_HEADERS
     tads3/charmap.h
     tads3/core.h
     tads3/md5.h
@@ -229,26 +225,17 @@ set (
     tads3/vmwrtimg.h
 )
 
-# TADS 3 runtime and compiler sources.
-
-# Non-debugger versions.
-set (
-    T3RCSOURCES_ND
+# Shared by interpreter and T3 compiler (non-debugger versions).
+add_library (
+    TADS3_RC_OBJECTS_ND OBJECT
     tads3/vmbt3_nd.cpp
     tads3/vmimg_nd.cpp
     tads3/vmini_nd.cpp
 )
 
-# Debugger versions.
-set (
-    T3RCSOURCES_D
-    tads3/vmbt3_d.cpp
-    tads3/vmimg_d.cpp
-    tads3/vmini_d.cpp
-)
-
-set (
-    T3RCSOURCES
+# Shared by interpreter and T3 compiler.
+add_library (
+    TADS3_RC_OBJECTS OBJECT
     tads2/ostzposix.c
     tads3/askf_tx3.cpp
     tads3/charmap.cpp
@@ -330,7 +317,6 @@ set (
     #tads3/vmpoolfl.cpp
     tads3/vmrefcnt.cpp
     tads3/vmregex.cpp
-    tads3/vmrun.cpp
     tads3/vmrunsym.cpp
     tads3/vmsave.cpp
     tads3/vmsort.cpp
