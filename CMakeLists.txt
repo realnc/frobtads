@@ -26,6 +26,12 @@ option (
 )
 
 option (
+    ENABLE_T3_TEST_SUITE
+    "Build the TADS 3 test suite (requires ENABLE_T3_DEBUG)."
+    OFF
+)
+
+option (
     ENABLE_T2_RUNTIME_CHECKS
     "Enable TADS2 runtime error checks."
     OFF
@@ -191,7 +197,7 @@ endif()
 
 if (ENABLE_T3_COMPILER)
     include(CMT3Compiler.cmake)
-    if (ENABLE_T3_DEBUG)
+    if (ENABLE_T3_DEBUG AND ENABLE_T3_TEST_SUITE)
         include(CMTestsuite.cmake)
     endif()
 endif()
