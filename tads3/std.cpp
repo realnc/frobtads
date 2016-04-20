@@ -155,9 +155,9 @@ int lib_strequal_collapse_spaces(const char *a, size_t a_len,
  *   bytes of the 'b' string that we matched.  This might differ from the
  *   length of the 'a' string because of case folding.  To match as a leading
  *   substring, we have to match to a character boundary.  E.g., we won't
- *   match "weis" as a leading substring of "weiﬂ": while "weis" is indeed a
+ *   match "weis" as a leading substring of "wei": while "weis" is indeed a
  *   leading substring of "weiss", which is the case-folded version of
- *   "weiﬂ", it doesn't end at a character boundary in the original.
+ *   "wei", it doesn't end at a character boundary in the original.
  */
 int t3_compare_case_fold(
     const char *a, size_t alen,
@@ -1179,7 +1179,11 @@ void t3free(void *ptr, int alloc_type)
     static int check = 0;
     static int double_check = 0;
     static int check_heap = 0;
-    static long ckblk[] = { 0xD9D9D9D9, 0xD9D9D9D9, 0xD9D9D9D9 };
+    static unsigned char ckblk[] = {
+        0xD9, 0xD9, 0xD9, 0xD9,
+        0xD9, 0xD9, 0xD9, 0xD9,
+        0xD9, 0xD9, 0xD9, 0xD9
+    };
 
     /* ignore freeing null */
     if (ptr == 0)
