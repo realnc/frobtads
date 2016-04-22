@@ -1252,23 +1252,26 @@ os_get_charmap( char* mapname, int charmap_id )
  * Note that this function is used only by Tads 2.  Tads 3 does mappings
  * automatically.
  *
- * We omit this implementation when not compiling the interpreter (in
- * which case os_xlat_html4 will have been defined as an empty macro in
- * osfrobtads.h).  We do this because we don't want to introduce any
- * TADS 3 dependencies upon the TADS 2 compiler, which should compile
- * regardless of whether the TADS 3 sources are available or not.
+ * We omit an implementation when not compiling the interpreter.   We do this
+ * because we don't want to introduce any TADS 3 dependencies in the TADS 2
+ * compiler, which should compile regardless of whether we're building TADS 3
+ * or not.
  */
-#ifndef os_xlat_html4
 void
 os_xlat_html4( unsigned int html4_char, char* result, size_t result_buf_len )
 {
+#ifdef RUNTIME
     // HTML 4 characters are Unicode.  Tads 3 provides just the
     // right mapper: Unicode to ASCII.  We make it static in order
     // not to create a mapper on each call and save CPU cycles.
     static CCharmapToLocalASCII mapper;
     result[mapper.map_char(html4_char, result, result_buf_len)] = '\0';
-}
+#else
+    (void)html4_char;
+    (void)result;
+    (void)result_buf_len;
 #endif
+}
 
 
 /* =====================================================================

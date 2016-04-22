@@ -150,9 +150,6 @@ extern int frobVmUndoMaxRecords;
 #  define USE_STDIO
    /* Use a do-nothing os_score() function. */
 #  define USE_NULLSCORE
-   /* The compiler doesn't actually use os_xlat_html4(); we just define
-    * it as an empty macro so the linker won't bark. */
-#  define os_xlat_html4(html4_char,result,result_buf_len)
 #endif
 
 /* Tell tads2/osnoui.c that we provide our own implementation of
