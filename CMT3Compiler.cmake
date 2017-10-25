@@ -16,7 +16,6 @@ add_executable (
     tads3/tct3prg.cpp
     tads3/vmbifc.cpp
     tads3/vmbifreg.cpp
-    tads3/vmhttpdum.cpp
     tads3/vmimgrb.cpp
     tads3/vmpreini.cpp
     tads3/vmwrtimg.cpp
@@ -25,6 +24,12 @@ add_executable (
     $<TARGET_OBJECTS:TADS3_RC_OBJECTS>
     $<TARGET_OBJECTS:TADS3_RC_OBJECTS_ND>
 )
+if (ENABLE_TADSNET)
+    target_sources(t3make PUBLIC
+        tads3/vmhttpdum.cpp
+    )
+endif()
+
 target_include_directories (
     t3make PRIVATE
     ${PROJECT_SOURCE_DIR}/tads3/test

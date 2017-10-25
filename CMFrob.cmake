@@ -1,6 +1,8 @@
 find_package(Threads REQUIRED)
 find_package(Curses REQUIRED)
-find_package(CURL REQUIRED)
+if (ENABLE_TADSNET)
+    find_package(CURL REQUIRED)
+endif()
 
 set(CMAKE_REQUIRED_LIBRARIES ${CURSES_LIBRARIES})
 check_function_exists(use_default_colors HAVE_USE_DEFAULT_COLORS)
@@ -82,24 +84,32 @@ add_library (
     tads2/argize.c
     tads2/ply.c
     tads2/linfdum.c
-    tads3/osifcnet.cpp
     tads3/tcprsnf.cpp
     tads3/tcprsnl.cpp
     tads3/tcprs_rt.cpp
     tads3/tct3_d.cpp
     tads3/tct3nl.cpp
-    tads3/unix/osnetunix.cpp
     tads3/vmbifl.cpp
-    tads3/vmbifnet.cpp
-    tads3/vmbifregn.cpp
-    tads3/vmhttpreq.cpp
-    tads3/vmhttpsrv.cpp
     tads3/vmmain.cpp
-    tads3/vmnetcfg.cpp
-    tads3/vmnet.cpp
-    tads3/vmnetfil.cpp
     tads3/vmsa.cpp
 )
+if (ENABLE_TADSNET)
+    target_sources(FROB_OBJECTS PUBLIC
+        tads3/osifcnet.cpp
+        tads3/unix/osnetunix.cpp
+        tads3/vmbifnet.cpp
+        tads3/vmbifregn.cpp
+        tads3/vmhttpreq.cpp
+        tads3/vmhttpsrv.cpp
+        tads3/vmnetcfg.cpp
+        tads3/vmnet.cpp
+        tads3/vmnetfil.cpp
+    )
+else()
+    target_sources(FROB_OBJECTS PUBLIC
+        tads3/vmbifreg.cpp
+    )
+endif()
 target_compile_definitions (
     FROB_OBJECTS PRIVATE
     RUNTIME

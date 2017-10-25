@@ -75,7 +75,9 @@ const char helpOutput[] =
 "  -d, --no-chdir       Don't change the current directory\n"
 "  -S, --no-seed-rand   Do not seed the random number generator\n"
 "  -s, --safety-level   File I/O safety level (default is 2)\n"
+#ifdef TADSNET
 "  -N, --net-safety-level Network safety level\n"
+#endif
 "  -e, --scroll-buffer  Size of the scroll-back buffer. Must be between 8 and\n"
 "                       8192kB (default is 512kB)\n"
 "  -r, --restore        Load a saved game position\n"
@@ -162,7 +164,9 @@ int main( int argc, char** argv )
         "k:character-set <charset>",
         "l:stat-tcolor <0..7>",
         "n|no-colors",
+#ifdef TADSNET
         "N:net-safety-level <00..44>",
+#endif
         "o|no-defcolors",
         "p|no-pause",
         "R:replay <filename>",
@@ -363,6 +367,7 @@ int main( int argc, char** argv )
         break;
       }
 
+#ifdef TADSNET
       // --net-safety-level
       case 'N': {
         if (optionError) break;
@@ -394,6 +399,7 @@ int main( int argc, char** argv )
         frobOpts.netSafetyLevelS = tmpS;
         break;
       }
+#endif
 
       // --no-seed-rand
       case 'S': {

@@ -8,6 +8,12 @@ option (
 )
 
 option (
+    ENABLE_TADSNET
+    "Enable the TADS networking layer."
+    OFF
+)
+
+option (
     ENABLE_T2_COMPILER
     "Build the TADS 2 compiler (tadsc)."
     ON
@@ -88,9 +94,6 @@ add_definitions (
     # needed by the runtime, since it does dynamic compiling.
     -DTC_TARGET_T3
 
-    # Enable the TADS 3 networking layer.
-    -DTADSNET
-
     # Tells the T3VM to use the "flat" pool manager. A flat pool is somewhat
     # faster than the default paged pool normaly used by the VM, but lacks
     # dynamic memory capabilites. The paged pool is only useful for debuggers
@@ -101,6 +104,14 @@ add_definitions (
     -D_SVID_SOURCE
     -D_DEFAULT_SOURCE
 )
+
+if (ENABLE_TADSNET)
+    add_definitions (
+        # Enable the TADS 3 networking layer.
+        -DTADSNET
+    )
+endif()
+
 
 check_function_exists(mkdir HAVE_MKDIR)
 if (NOT HAVE_MKDIR)
