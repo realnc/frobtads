@@ -289,7 +289,7 @@ struct os_file_time_t {
     #define OS_DECLARATIVE_TLS
     #ifdef __APPLE__
         // Clang as shipped by XCode does not support thread_local.
-        #define OS_DECL_TLS(typ, varname) __thread typ varname asdasd
+        #define OS_DECL_TLS(typ, varname) __thread typ varname
     #else
         #define OS_DECL_TLS(typ, varname) thread_local typ varname
     #endif
