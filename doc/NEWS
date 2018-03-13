@@ -1,13 +1,29 @@
 v1.3.0 - ????-??-??
 ===================
 
-  - The tadsrsc binary is now included in the build (TADS 2 resource
-    manager.)
-
   - C11 and C++14 are now required to compile FrobTADS.
 
   - CMake is now used as the build system. The autoconf/automake system has
     been removed.
+
+
+v1.2.4 - 2018-03-13
+===================
+
+  - Added a "frobd" binary which is useful for hooking up external
+    debuggers. This is frob built against debugger-enabled TADS 3 sources.
+    This is not a debugger! It only allows to build debugger front-ends
+    around it.
+
+    Disabled by default, unless --enable-frobd is passed to
+    ./configure.
+
+    (This change was submitted by "dddddd" on intfiction.org.)
+
+  - Added tadsrsc utility (TADS 2 resource manager.)
+
+  - A couple fixes addressing build failures on modern Clang and GCC
+    versions.
 
 
 v1.2.3 - 2013-05-17
