@@ -111,11 +111,15 @@
 #  include <stdlib.h>
 #elif !defined(WIN32)
 #  include <stdlib.h>
-#  if !defined (_ENDIAN_H)
+#  define _ENDIAN_H_DO_EXPAND(VAL) VAL ## 1
+#  define _ENDIAN_H_EXPAND(VAL)    _ENDIAN_H_DO_EXPAND(VAL)
+#  if !defined (_ENDIAN_H) || (_ENDIAN_H_EXPAND(_ENDIAN_H) == 1)
 #    include <sys/param.h>
 #  else
 #    include _ENDIAN_H
 #  endif
+#  undef _ENDIAN_H_EXPAND
+#  undef _ENDIAN_H_DO_EXPAND
 #endif
 
 /*  2. BYTE ORDER IN 32-BIT WORDS
