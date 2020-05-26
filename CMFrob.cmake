@@ -1,4 +1,5 @@
 find_package(Threads REQUIRED)
+set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses REQUIRED)
 if (ENABLE_TADSNET)
     find_package(CURL REQUIRED)
