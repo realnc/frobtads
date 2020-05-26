@@ -49,6 +49,8 @@ option (
     OFF
 )
 
+cmake_policy(SET CMP0076 NEW)
+
 set(FROB_VERSION "1.2.3")
 set(FROB_MAINTAINER "Nikos Chantziaras")
 set(FROB_BUG_REPORT_EMAIL "realnc@gmail.com")
