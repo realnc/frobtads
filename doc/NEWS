@@ -6,6 +6,11 @@ v1.3.0 - ????-??-??
   - CMake is now used as the build system. The autoconf/automake system has
     been removed.
 
+  - NCurses is now required. Other curses libraries are not supported. This
+    might change again in the future.
+
+  - Imported latest available TADS base code sources.
+
 
 v1.2.4 - 2018-03-13
 ===================
