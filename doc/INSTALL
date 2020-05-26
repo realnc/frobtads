@@ -7,11 +7,12 @@ Enter the directory where you unpacked this package. For example:
 
 Then:
 
-  cmake .
-  cmake --build .
+  mkdir build
+  cd build
+  cmake ..
   cmake --build . --target install
 
-Play TADS games:
+This will build and install frobtads into /usr/local. To play TADS games:
 
   frob ~/games/tads/arrival.gam
 
@@ -28,13 +29,11 @@ Requirements
 Libraries
 .........
 
-FrobTADS requires a curses compatible library along with its <curses.h> or
-<ncurses.h> header file (that means you have to install a curses development
-package, not only the runtime package). Ncurses, plain old curses as well as
-PDCurses are supported.
+FrobTADS requires ncurses. You have to install the ncurses development package,
+not only the runtime package.
 
-If no curses library is found, you can still build and use the compilers, since
-only the interpreter needs curses.
+If the ncurses library is not found, you can still build and use the compilers,
+since only the interpreter needs ncurses.
 
 In additon, you will need libcurl and its development files installedss. This
 is needed for some of the network functionality of TADS 3.
@@ -77,9 +76,8 @@ source package. For example, you can do something like this:
   cmake --build . --target install
 
 Note that on Unix systems, cmake will by default generate a Makefile and thus
-you can also use "make" to build and install:
+you can also use "make" to build and install instead of "cmake --build":
 
-  cmake .
   make
   make install
 
@@ -146,34 +144,18 @@ Operating systems
 =================
 
 
-Mac OS X
-........
+macOS
+.....
 
-OS X should work just like "regular" Unix. Nothing special is required to build
-the interpreter on OS X, and therefore the above instructions also apply for OS
-X. Don't forget to install the OS X curses/ncurses and libcurl development
-packages first.
+macOS should work just like "regular" Unix. Nothing special is required to
+build the interpreter on macOS, and therefore the above instructions also apply
+for macOS. Don't forget to install the ncurses and libcurl development packages
+first.
 
 
 Microsoft Windows
 .................
 
-** The below is outdated; it is currently NOT possible to build FrobTADS
-** on Windows with MinGW/MSYS.  The last known version to build on
-** Windows is 1.0.  It might be possible to build using Cygwin.
-
-Yes, you can compile FrobTADS even in Windows. If you're using MinGW/MSYS or
-cygwin, just configure and compile like in Unix. Of course, you must have a
-curses or ncurses library installed in a place where the compiler and linker
-can find it (PDCurses is known to work).
-
-Note that the TADS 3 test suite won't work in Windows, because of the
-difference in text line terminators.
-
-You can also cross-compile from Unix to Windows. If your cross-compiler is, for
-example "i586-pc-mingw32-gcc", configure with:
-
-  ./configure --host=i586-pc-mingw32
-
-and after "make" you should have your Windows *.exe files. This is in fact
-supported, tested and known to work.
+It is currently NOT possible to build FrobTADS on Windows with MinGW/MSYS. The
+last known version to build on Windows is 1.0. It might be possible to build
+using Cygwin.
