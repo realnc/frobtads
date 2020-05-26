@@ -10,7 +10,7 @@ option (
 option (
     ENABLE_TADSNET
     "Enable the TADS networking layer."
-    OFF
+    ON
 )
 
 option (
