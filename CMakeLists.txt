@@ -49,7 +49,9 @@ option (
     OFF
 )
 
-cmake_policy(SET CMP0076 NEW)
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
+    cmake_policy(SET CMP0076 NEW)
+endif()
 
 set(FROB_VERSION "1.2.3")
 set(FROB_MAINTAINER "Nikos Chantziaras")
