@@ -104,8 +104,9 @@ void oss_debug_log(const char *fmt, ...);
  *   in GCC nor in Clang.
  */
 #ifndef __has_builtin
-    /* compatibility with compilers other than Clang */
+    /* compatibility with compilers other than Clang and GCC >= 10 */
     #define __has_builtin(x) 0
+	#define HAS_BUILTIN_DEFINED
 #endif
 #if __cplusplus >= 201103L
     #include <atomic>
@@ -218,10 +219,9 @@ private:
 # undef ATOMIC_INC_FETCH
 # undef ATOMIC_DEC_FETCH
 #endif
-#ifndef __clang__
-# if __has_builtin == 0
-#  undef __has_builtin
-# endif
+#ifdef HAS_BUILTIN_DEFINED
+# undef __has_builtin
+# undef HAS_BUILTIN_DEFINED
 #endif
 
 /* ------------------------------------------------------------------------ */
