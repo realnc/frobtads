@@ -53,7 +53,7 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
     cmake_policy(SET CMP0076 NEW)
 endif()
 
-set(FROB_VERSION "1.2.3")
+set(FROB_VERSION "1.2.4.99")
 set(FROB_MAINTAINER "Nikos Chantziaras")
 set(FROB_BUG_REPORT_EMAIL "realnc@gmail.com")
 set(TADS_OEM_VERSION "1")
