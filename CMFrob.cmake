@@ -182,6 +182,8 @@ if (ENABLE_FROBD)
         ${CURSES_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
     )
+
+    install(TARGETS frobd)
 endif(ENABLE_FROBD)
 
-install(TARGETS frob DESTINATION bin)
+install(TARGETS frob)

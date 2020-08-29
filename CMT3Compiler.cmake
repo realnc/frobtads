@@ -35,6 +35,8 @@ target_include_directories (
     ${PROJECT_SOURCE_DIR}/tads3/test
 )
 
+install(TARGETS t3make)
+
 install (
     DIRECTORY tads3/include/
     DESTINATION ${T3_INC_DIR}

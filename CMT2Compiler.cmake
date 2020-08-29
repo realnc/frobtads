@@ -30,6 +30,8 @@ add_executable (
     tads2/osterm.c
 )
 
+install(TARGETS tadsc tadsrsc)
+
 install (
     FILES
     tads2/adv.t tads2/std.t tads2/gameinfo.t
