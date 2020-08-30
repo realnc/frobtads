@@ -183,7 +183,7 @@ if (ENABLE_FROBD)
         ${CMAKE_THREAD_LIBS_INIT}
     )
 
-    install(TARGETS frobd)
+    install(TARGETS frobd DESTINATION bin)
 endif(ENABLE_FROBD)
 
-install(TARGETS frob)
+install(TARGETS frob DESTINATION bin)

@@ -30,7 +30,7 @@ add_executable (
     tads2/osterm.c
 )
 
-install(TARGETS tadsc tadsrsc)
+install(TARGETS tadsc tadsrsc DESTINATION bin)
 
 install (
     FILES
