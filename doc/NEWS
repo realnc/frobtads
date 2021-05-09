@@ -1,16 +1,17 @@
-v1.3.0 - ????-??-??
-===================
+v2.0 - 2021-05-09
+=================
 
   - C11 and C++14 are now required to compile FrobTADS.
 
   - CMake is now used as the build system. The autoconf/automake system has
     been removed.
 
-  - NCurses is now required. Other curses libraries are not supported. This
-    might change again in the future.
+  - NCurses is now required. Other curses libraries are not supported.
 
   - Imported latest available TADS base code sources.
 
+  - Increased frob's maximum line width to 2048 characters. This fixes output
+    on very wide terminals.
 
 v1.2.4 - 2018-03-13
 ===================
