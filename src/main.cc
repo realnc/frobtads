@@ -66,6 +66,7 @@ const char helpOutput[] =
 "  -f, --force-colors   Try to enable colors even if the system claims that\n"
 "                       colors aren't available\n"
 "  -o, --no-defcolors   Don't use the terminal's default colors\n"
+"  -L, --log-input      Log console input to file\n"
 "  -t, --tcolor         Text color (default white)\n"
 "  -b, --bcolor         Background color (default black)\n"
 "  -l, --stat-tcolor    Statusline text color (default is -b)\n"
@@ -163,6 +164,7 @@ int main( int argc, char** argv )
 #endif
         "k:character-set <charset>",
         "l:stat-tcolor <0..7>",
+        "L:log-input <filename>",
         "n|no-colors",
 #ifdef TADSNET
         "N:net-safety-level <00..44>",
@@ -247,6 +249,7 @@ int main( int argc, char** argv )
         // is finally implemented.
         "us-ascii",  // Character set.
         0,           // Replay file.
+        0,           // Command input file.
         true         // seedRand.
     };
 
@@ -283,6 +286,18 @@ int main( int argc, char** argv )
       // --no-defcolors
       case 'o':
         frobOpts.defColors = false;
+        break;
+
+      // --log-input
+      case 'L':
+        if (optionError) break;
+        if (optArg == 0) {
+            // Argument is missing.
+            optionError = true;
+            break;
+        }
+        frobOpts.cmdLogFile = optArg;
+        /* log console input to file */
         break;
 
       // --no-scrolling

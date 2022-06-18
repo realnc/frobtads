@@ -126,6 +126,7 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
     params.seed_rand = this->options.seedRand;
     params.saved_state = savedState;
     params.netconfig = netconfig;
+    params.cmd_log_file = this->options.cmdLogFile;
 
     // Invoke the VM to run the program.
     int vmRet = vm_run_image(&params);
