@@ -46,7 +46,8 @@ class FrobTadsApplication {
         int netSafetyLevelS;    // Network safety level - server.
         char characterSet[40];  // Local character set name.
         const char* replayFile; // Replay file.
-        int seedRand;          // Enable automatic initial seeding of RNG in interpreter?
+        const char* cmdLogFile; // Command input file.
+        int seedRand;           // Enable automatic initial seeding of RNG in interpreter?
     };
 
     // Our options.  Once set, they remain constant during run-time
