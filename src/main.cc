@@ -264,16 +264,19 @@ int main( int argc, char** argv )
         break;
 
       // --log-input
-      case 'L':
+      case 'L': {
         if (optionError) break;
         if (optArg == 0) {
             // Argument is missing.
             optionError = true;
             break;
         }
-        frobOpts.cmdLogFile = optArg;
-        /* log console input to file */
+        char absPath[OSFNMAX]{};
+        if (os_get_abs_filename(absPath, OSFNMAX, optArg)) {
+            frobOpts.cmdLogFile = absPath;
+        }
         break;
+      }
 
       // --no-scrolling
       case 'c':
@@ -436,15 +439,19 @@ int main( int argc, char** argv )
         break;
 
       // --replay
-      case 'R':
+      case 'R': {
         if (optionError) break;
         if (optArg == 0) {
             // Argument is missing.
             optionError = true;
             break;
         }
-        frobOpts.replayFile = optArg;
+        char absPath[OSFNMAX]{};
+        if (os_get_abs_filename(absPath, OSFNMAX, optArg)) {
+            frobOpts.replayFile = absPath;
+        }
         break;
+      }
 
       // --undo-size
       case 'u': {
