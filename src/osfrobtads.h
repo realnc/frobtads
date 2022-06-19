@@ -182,7 +182,7 @@ extern int frobVmUndoMaxRecords;
 #define OSMALMAX 0xffffffffL
 
 /* Maximum length of a filename. */
-#define OSFNMAX 255
+#define OSFNMAX 4096
 
 #ifndef OSPATHALT
 /* Other path separator characters. */
