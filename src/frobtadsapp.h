@@ -14,6 +14,10 @@
 extern "C" {
 #include "osgen.h"
 }
+#include "colors.h"
+#include "vmhost.h"
+
+#include <string>
 
 
 /* Global application pointer.
@@ -29,25 +33,27 @@ class FrobTadsApplication {
     // Instead of using a gazillion of constructor-arguments, we
     // group them inside this structure.
     struct FrobOptions {
-        bool useColors;         // Enable colors?
-        bool forceColors;       // Force colors?
-        bool defColors;         // Use default colors for color pair 0?
-        bool softScroll;        // Scroll softly?
-        bool exitPause;         // Pause prior to exit?
-        bool changeDir;         // Change to the game's directory?
-        int textColor;          // Default text color.
-        int bgColor;            // Default background color.
-        int statTextColor;      // Default text color of statusline.
-        int statBgColor;        // Default background color of statusline.
-        unsigned scrollBufSize; // Scroll-back buffer size.
-        int safetyLevelR;       // File I/O safety level - read.
-        int safetyLevelW;       // File I/O safety level - write.
-        int netSafetyLevelC;    // Network safety level - client.
-        int netSafetyLevelS;    // Network safety level - server.
-        char characterSet[40];  // Local character set name.
-        const char* replayFile; // Replay file.
-        const char* cmdLogFile; // Command input file.
-        int seedRand;           // Enable automatic initial seeding of RNG in interpreter?
+        // We assume some defaults.  They might change while
+        // parsing the command line.
+        bool useColors = true;                         // Enable colors?
+        bool forceColors = false;                      // Force colors?
+        bool defColors = true;                         // Use default colors for color pair 0?
+        bool softScroll = true;                        // Scroll softly?
+        bool exitPause = true;                         // Pause prior to exit?
+        bool changeDir = true;                         // Change to the game's directory?
+        int textColor = FROB_WHITE;                    // Default text color.
+        int bgColor = FROB_BLACK;                      // Default background color.
+        int statTextColor = -1;                        // Default text color of statusline.
+        int statBgColor = -1;                          // Default background color of statusline.
+        unsigned scrollBufSize = 512 * 1024;           // Scroll-back buffer size.
+        int safetyLevelR = VM_IO_SAFETY_READWRITE_CUR; // File I/O safety level - read.
+        int safetyLevelW = VM_IO_SAFETY_READWRITE_CUR; // File I/O safety level - write.
+        int netSafetyLevelC = 2;                       // Network safety level - client.
+        int netSafetyLevelS = 2;                       // Network safety level - server.
+        std::string characterSet = "us-ascii";         // Local character set name.
+        std::string replayFile;                        // Replay file.
+        std::string cmdLogFile;                        // Command input file.
+        int seedRand = true; // Enable automatic initial seeding of RNG in interpreter?
     };
 
     // Our options.  Once set, they remain constant during run-time

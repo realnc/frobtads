@@ -1198,9 +1198,9 @@ os_get_charmap( char* mapname, int charmap_id )
 #ifdef RUNTIME
     // If there was a command line option, it takes precedence.
     // User knows better, so do not try to modify his setting.
-    if (globalApp->options.characterSet[0] != '\0') {
+    if (not globalApp->options.characterSet.empty()) {
         // One charset for all.
-        strncpy(mapname, globalApp->options.characterSet, 32);
+        strncpy(mapname, globalApp->options.characterSet.c_str(), 32);
         return;
     }
 #endif

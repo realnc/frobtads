@@ -92,8 +92,8 @@ FrobTadsApplication::fRunTads2( char* filename )
     char* argv[2] = {argv0, filename};
 
     // If a replay file was specified, load it.
-    if (this->options.replayFile != 0) {
-        qasopn((char *)this->options.replayFile, 1);
+    if (this->options.replayFile.empty()) {
+        qasopn((char *)this->options.replayFile.c_str(), 1);
     }
 
     // Run the Tads 2 VM.
@@ -122,11 +122,11 @@ FrobTadsApplication::fRunTads3( char* filename, int argc, const char* const* arg
     vm_run_image_params params(&clientifc, hostifc.get(), filename);
     params.prog_argv = argv;
     params.prog_argc = argc;
-    params.script_file = this->options.replayFile;
+    params.script_file = this->options.replayFile.c_str();
     params.seed_rand = this->options.seedRand;
     params.saved_state = savedState;
     params.netconfig = netconfig;
-    params.cmd_log_file = this->options.cmdLogFile;
+    params.cmd_log_file = this->options.cmdLogFile.c_str();
 
     // Invoke the VM to run the program.
     int vmRet = vm_run_image(&params);

@@ -226,32 +226,7 @@ int main( int argc, char** argv )
 
     // Increase the T3VM undo-size 16 times by default.
     frobVmUndoMaxRecords = defaultVmUndoMaxRecords * 16;
-    FrobTadsApplication::FrobOptions frobOpts = {
-        // We assume some defaults.  They might change while
-        // parsing the command line.
-        true,       // Use colors.
-        false,      // Don't force colors.
-        true,       // Use terminal's defaults for color pair 0.
-        true,       // Enable soft-scrolling.
-        true,       // Pause prior to exit.
-        true,       // Change to the game's directory.
-        FROB_WHITE, // Text.
-        FROB_BLACK, // Background.
-        -1,         // Statusline text; none yet.
-        -1,         // Statusline background; none yet.
-        512*1024,   // Scroll-back buffer size.
-        // Default file I/O safety level is read/write access
-        // in current directory only.
-        VM_IO_SAFETY_READWRITE_CUR, VM_IO_SAFETY_READWRITE_CUR,
-        // Default network I/O safety level is no access
-        2, 2,
-        // TODO: Revert the default back to "\0" when Unicode output
-        // is finally implemented.
-        "us-ascii",  // Character set.
-        0,           // Replay file.
-        0,           // Command input file.
-        true         // seedRand.
-    };
+    FrobTadsApplication::FrobOptions frobOpts;
 
     // Name of the game to run.
     const char* filename = 0;
@@ -504,8 +479,7 @@ int main( int argc, char** argv )
             optionError = true;
             break;
         }
-        strncpy(frobOpts.characterSet, optArg, 16);
-        frobOpts.characterSet[15] = '\0';
+        frobOpts.characterSet = optArg;
         break;
 
       // --interface
